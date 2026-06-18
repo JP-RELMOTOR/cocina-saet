@@ -306,9 +306,9 @@ if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudf
 const DEFAULT={
   title:'Cocina SAET', sub:'Salón Asambleas El Trébol',
   menu:[
-    {tag:'ALMUERZO', cls:'al', text:'Fetuccini con salsa Alfredo'},
-    {tag:'ENSALADA', cls:'en', text:'Zanahoria mayo maní / apio palta'},
-    {tag:'ONCE', cls:'on', text:'Crêpes de espinaca rellenas de pollo, pimentón, cebolla, choclo y béchamel · Quinoa'},
+    {tag:'ALMUERZO', cls:'al', text:'Carne al jugo con pastelera de choclo'},
+    {tag:'ENSALADA', cls:'en', text:'Chilena / betarraga cocida'},
+    {tag:'ONCE', cls:'on', text:'Menú 1: Pie de limón · Menú 2: Pan, quesillo, oliva, tomate, ají verde, lechuga · Menú 3: Crema de zapallo'},
   ],
   cooks:[
     {id:'c1',name:'Juan Pablo',color:'#2563eb',sub:false},
@@ -336,15 +336,15 @@ const DEFAULT={
   ],
   selThu:0,
   thursdays:[
-    {label:'Jueves 16 de julio de 2026',dish:'Fetuccini con salsa Alfredo',ens:'Zanahoria mayo maní / apio palta',cant:'5 kg de fetuccini, 1 lt de crema, 4 lt de leche, 500 gr mantequilla. 1 nuez moscada, 400 gr queso parmesano rallado. 1,5 kg de jamón, 1 lt de aceite. Ensaladas: 4 kg de zanahorias, 400 g de maní tostado sin sal, 1 kg de mayonesa, 3 matas de apio grandes, 2 kg de paltas, 2 kg de limones.'},
-    {label:'Jueves 23 de julio de 2026',dish:'Lasaña de carne',ens:'Porotos verdes / habas nevadas',cant:'7 paquetes (400 gr) de lasaña pre cocida, 4 kg carne molida. 8 kg de tomates, 10 cebollas, 1 kg de zanahoria, 1 nuez moscada. 5 lts de leche, 1 lt de crema, 500 gr de mantequilla, 500 gr de harina. 10 sobres de 40 g de queso rallado, 50 láminas de queso. Ensaladas: 3 kg de porotos verdes, 2 cebollas medianas, 3 kg de habas congeladas, 2 kg de limones.'},
-    {label:'Jueves 30 de julio de 2026',dish:'Tallarines con salsa boloñesa',ens:'Zanahoria maní, mayo / betarraga cocida',cant:'5 kg de tallarines n°77, 3 kilos de carne molida, 8 kg de tomate, 6 cebollas, 1 kg de zanahoria, 2 cabezas de ajo. 10 pqts. 40 gr de queso rallado, 8 paquetes de salsa de tomate de 200 gr. Ensaladas: 4 kg de zanahorias, 400 g de maní tostado sin sal, 1 kg de mayonesa, 15 betarragas medianas, 2 kg de limones.'},
-    {label:'Jueves 6 de agosto de 2026',dish:'Lasaña de verdura',ens:'Coliflor al perejil / Porotos con cebolla',cant:'7 paquetes (400 gr) de lasaña pre cocida, 10 zapallos italianos. 10 berenjenas, 6 kg de tomate, 8 cebollas, 1 kg de zanahoria. 5 lts de leche, 1 lt crema, 250 gr mantequilla. 5 sobres de 80 gr de queso rallado, 500 grs de harina. 1 nuez moscada, 50 láminas de queso. Ensaladas: 3 coliflores medianas, 1 atado de perejil, 2 kg de porotos congelados, 2 cebollas medianas, 2 kg de limones.'},
-    {label:'Jueves 13 de agosto de 2026',dish:'Tallarines con salsa boloñesa',ens:'Primavera / Brócoli',cant:'5 kg de tallarines n°77, 3 kilos de carne molida, 9 kg de tomate, 6 cebollas, 1 kg de zanahoria, 2 cabezas de ajo. 10 pqts. 40 gr de queso rallado, 8 paquetes de salsa de tomate de 200 gr. Ensaladas: 1,5 kg de arvejas congeladas, 2 kg de zanahorias, 1,5 kg de choclo congelado, 1 kg de mayonesa, 5 brócolis medianos, 1 atado de cilantro, 2 kg de limones.'},
-    {label:'Jueves 20 de agosto de 2026',dish:'Fetuccini con salsa Alfredo',ens:'Tomate con alcachofa / Repollo al limón',cant:'5 kg de fetuccini, 1 lt de crema, 4 lt de leche, 500 gr mantequilla. 1 nuez moscada, 400 gr queso parmesano rallado. 1,5 kg de jamón, 1 lt de aceite. Ensaladas: 4 kg de tomates, 5 latas (400 g) de corazones de alcachofa, 1 repollo mediano, 2 kg de limones.'},
-    {label:'Jueves 27 de agosto de 2026',dish:'Lasaña de verdura',ens:'Apio Palmito / Coliflor al limón',cant:'7 paquetes (400 gr) de lasaña pre cocida, 10 zapallos italianos. 10 berenjenas, 6 kg de tomate, 8 cebollas, 1 kg de zanahoria. 5 lts de leche, 1 lt crema, 250 gr mantequilla. 5 sobres de 80 gr de queso rallado, 500 grs de harina. 1 nuez moscada, 50 láminas de queso. Ensaladas: 3 matas de apio grandes, 4 latas (400 g) de palmitos, 3 coliflores medianas, 2 kg de limones.'},
-    {label:'Jueves 3 de septiembre de 2026',dish:'Tallarines con salsa boloñesa',ens:'Betarraga cruda rallada y perejil / Brócoli al limón',cant:'5 kg de tallarines n°77, 3 kilos de carne molida, 8 kg de tomate, 6 cebollas, 1 kg de zanahoria, 2 cabezas de ajo. 10 pqts. 40 gr de queso rallado, 8 paquetes de salsa de tomate de 200 gr. Ensaladas: 15 betarragas medianas, 5 brócolis medianos, 2 kg de limones, 1 atado de perejil.'},
-    {label:'Jueves 10 de septiembre de 2026',dish:'Lasaña de carne',ens:'Chilena',cant:'7 paquetes (400 gr) de lasaña pre cocida, 4 kg carne molida. 8 kg de tomates, 10 cebollas, 1 kg de zanahoria, 1 nuez moscada. 5 lts de leche, 1 lt de crema, 500 gr de mantequilla, 500 gr de harina. 10 sobres de 40 g de queso rallado, 50 láminas de queso. Ensaladas: 5 kg de tomates, 5 cebollas grandes, 2 paq. de cilantro, 10 ají verde.'},
+    {label:'Jueves 16 de julio de 2026',dish:'Carne al jugo con pastelera de choclo',ens:'Chilena / betarraga cocida',cant:'12 kg de vacuno (abastero, choclillo o pollo ganso), 8 cebollas, 2 kg de zanahoria, 2 cabezas de ajo. 1 lt de aceite, 12 kg de pastelera de choclo con albahaca congelada. Ensaladas: 4 kg de tomates, 2 cebollas medianas, 15 betarragas medianas, 2 kg de limones.'},
+    {label:'Jueves 23 de julio de 2026',dish:'Croquetas de jurel con papas mayo · Caldillo de mariscos',ens:'Tomate, perejil, cebolla',cant:'15 tarros de jurel de 425 gr, 20 huevos, 10 kg de papas. 6 cebollas grandes, 10 zanahorias, 5 pimentones rojos, 2 lts de aceite. 2 cabezas de ajo, 100 gr de ají de color, 2 paq. de cilantro, 2 kg de mayonesa. Caldillo: 2 kg de surtido de mariscos, 4 cebollas, 4 zanahorias, 1 pimentón rojo, 2 lts de vino blanco. Ensaladas: 4 kg de tomates, 2 cebollas medianas, 1 atado de perejil.'},
+    {label:'Jueves 30 de julio de 2026',dish:'Pescado a la plancha con papas salteadas',ens:'Chilena',cant:'50 porciones de reineta, 3 cabezas de ajo, 2 paq. de mantequilla de 250 gr, 8 cebollas, 4 pimentones rojos, 1 lt de aceite de maravilla, 12 kg de papas. Ensaladas: 5 kg de tomates, 5 cebollas grandes, 2 paq. de cilantro, 10 ají verde.'},
+    {label:'Jueves 6 de agosto de 2026',dish:'Pescado frito con puré',ens:'Tomate con alcachofa / Repollo al limón',cant:'50 porciones de pescado (reineta o merluza), 500 gr de harina, 20 huevos, 1 lt de leche, 4 lt de aceite, 10 kg de papas. 2 paq. de cilantro, 2 cabezas de ajo, 1 lt de cerveza, 2 lts de agua con gas. Ensaladas: 4 kg de tomates, 5 latas (400 g) de corazones de alcachofa, 1 repollo mediano, 2 kg de limones.'},
+    {label:'Jueves 13 de agosto de 2026',dish:'Pescado a la plancha con papas salteadas',ens:'Chilena',cant:'50 porciones de reineta, 3 cabezas de ajo, 2 paq. de mantequilla de 250 gr, 8 cebollas, 4 pimentones rojos, 1 lt de aceite de maravilla, 12 kg de papas. Ensaladas: 5 kg de tomates, 5 cebollas grandes, 2 paq. de cilantro, 10 ají verde.'},
+    {label:'Jueves 20 de agosto de 2026',dish:'Croquetas de jurel con papas mayo · Caldillo de mariscos',ens:'Tomate, perejil, cebolla',cant:'15 tarros de jurel de 425 gr, 20 huevos, 10 kg de papas. 6 cebollas grandes, 10 zanahorias, 5 pimentones rojos, 2 lts de aceite. 2 cabezas de ajo, 100 gr de ají de color, 2 paq. de cilantro, 2 kg de mayonesa. Caldillo: 2 kg de surtido de mariscos, 4 cebollas, 4 zanahorias, 1 pimentón rojo, 2 lts de vino blanco. Ensaladas: 4 kg de tomates, 2 cebollas medianas, 1 atado de perejil.'},
+    {label:'Jueves 27 de agosto de 2026',dish:'Pescado a la plancha con puré',ens:'Apio Palmito / Coliflor al limón',cant:'50 porciones de reineta, 3 cabezas de ajo, 2 paq. de mantequilla de 250 gr, 3 cebollas, 3 pimentones rojos, 1 lt de aceite de maravilla, 10 kg de papas, 1 paq. de perejil. Ensaladas: 3 matas de apio grandes, 4 latas (400 g) de palmitos, 3 coliflores medianas, 2 kg de limones.'},
+    {label:'Jueves 3 de septiembre de 2026',dish:'Pescado frito con puré',ens:'Pepino / Primavera (choclo+arveja)',cant:'50 porciones de pescado (reineta o merluza), 500 gr de harina, 20 huevos, 1 lt de leche, 4 lt de aceite, 10 kg de papas. 2 paq. de cilantro, 2 cabezas de ajo, 1 lt de cerveza, 2 lts de agua con gas. Ensaladas: 8 pepinos grandes, 2,5 kg de arvejas congeladas, 1 kg de choclo congelado, 2 kg de limones.'},
+    {label:'Jueves 10 de septiembre de 2026',dish:'Pescado a la plancha con puré',ens:'Tomate en gajos / Brócoli',cant:'50 porciones de reineta, 3 cabezas de ajo, 2 paq. de mantequilla de 250 gr, 3 cebollas, 3 pimentones rojos, 1 lt de aceite de maravilla, 10 kg de papas, 1 paq. de perejil. Ensaladas: 4 kg de tomates, 5 brócolis medianos, 2 kg de limones.'},
   ],
 };
 /* desayuno fijo de todos los viernes (se adelanta el jueves) */
@@ -429,8 +429,29 @@ const SEED_ONCE=[
  extra:'',
  cant:'Pizza: ver recetario. Pepperoni: 300 g por lata aprox. Queso mozzarella: 850 g por lata. Aceituna sevillana: 1 kilo.'},
 ];
+/* === DESFASE: el equipo cocina al día siguiente de lo que aporta la congregación.
+   cook(día) = congregación(día anterior). Por eso corremos cada menú +1 día. === */
+const MONTHS_ES={enero:0,febrero:1,marzo:2,abril:3,mayo:4,junio:5,julio:6,agosto:7,septiembre:8,setiembre:8,octubre:9,noviembre:10,diciembre:11};
+const MON_SHORT=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const WD_ES=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function shiftCalEntry(e){
+  const m=String(e.dt||'').match(/(\d+)\s+([a-záéíóú]+)/i);
+  if(!m)return e;
+  const day=+m[1], idx=MON_SHORT.indexOf(m[2].slice(0,3).toLowerCase());
+  if(idx<0)return e;
+  const d=new Date(2026,idx,day+1);
+  return {wd:WD_ES[d.getDay()],dt:d.getDate()+' '+MON_SHORT[d.getMonth()],dish:e.dish,ens:e.ens,cong:e.cong};
+}
+function shiftParsed(e){
+  const idx=MONTHS_ES[e.month]; if(idx==null)return e;
+  const d=new Date(e.year,idx,e.day+1);
+  const wd=WD_ES[d.getDay()];
+  const mname=Object.keys(MONTHS_ES).find(k=>MONTHS_ES[k]===d.getMonth())||e.month;
+  return {wd,day:d.getDate(),month:mname,year:d.getFullYear(),
+    label:C(wd)+' '+d.getDate()+' de '+mname+' de '+d.getFullYear(),dish:e.dish,ens:e.ens,cant:e.cant};
+}
 let state, admin=false, filter='todos', currentView='hoy', menuCat='alm', selOnce=null;
-const KEY='cocina_saet_v3';
+const KEY='cocina_saet_v4';
 
 /* ===================== SINCRONIZACIÓN EN LA NUBE (Firebase) =====================
    👉 PEGA AQUÍ la config de tu proyecto Firebase (Realtime Database).
@@ -487,7 +508,7 @@ function cloudBrkDone(id,val){if(fbReady&&!applyingRemote)fbRef.child('brkDone/'
 function load(){try{const s=localStorage.getItem(KEY);state=s?JSON.parse(s):structuredClone(DEFAULT);}catch(e){state=structuredClone(DEFAULT);}
   if(!Array.isArray(state.thursdays))state.thursdays=structuredClone(DEFAULT.thursdays);
   if(state.selThu===undefined)state.selThu=null;
-  if(!Array.isArray(state.days))state.days=structuredClone(SEED_DAYS);
+  if(!Array.isArray(state.days))state.days=SEED_DAYS.map(shiftCalEntry);
   if(!Array.isArray(state.onceDays))state.onceDays=structuredClone(SEED_ONCE);
   if(state.selOnce===undefined)state.selOnce=null;
   if(!state.brkMenu||Array.isArray(state.brkMenu)||typeof state.brkMenu!=='object')state.brkMenu=structuredClone(BRK_MENU);
@@ -653,7 +674,7 @@ async function handlePDF(file){
     const pdf=await pdfjsLib.getDocument({data:buf}).promise;
     let text='';
     for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const tc=await pg.getTextContent();text+=' '+tc.items.map(x=>x.str).join(' ');}
-    const all=parseCalendar(text);
+    const all=parseCalendar(text).map(shiftParsed);
     const thu=all.filter(d=>/^juev/i.test(d.wd));
     if(!thu.length){toast('No encontré jueves en ese PDF 🤔');return;}
     state.thursdays=thu;state.selThu=null;
@@ -755,7 +776,7 @@ function renderMenus(){
       :!f.length?'<p class="about">Sin resultados</p>'
       :f.map(d=>{const thu=/^juev/i.test(d.wd||'');
         return `<div class="mday${thu?' thu':''}"><div class="md-top"><span class="md-date">${esc((d.wd||'')+' '+(d.dt||''))}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
-        <div class="md-dish">${esc(d.dish||'')}</div>${d.ens?`<div class="md-ens">🥗 ${esc(d.ens)}</div>`:''}${d.cong?`<div class="md-cong">📍 ${esc(d.cong)}</div>`:''}</div>`;}).join('');
+        <div class="md-dish">${esc(d.dish||'')}</div>${d.ens?`<div class="md-ens">🥗 ${esc(d.ens)}</div>`:''}${d.cong?`<div class="md-cong">📍 aporta: ${esc(d.cong)}</div>`:''}</div>`;}).join('');
   }
   document.getElementById('menusList').innerHTML=toggle+body;
 }
