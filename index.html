@@ -1039,10 +1039,26 @@ function renderTurnos(){
   }).join('');
 }
 function renderRecetas(){
-  const url='https://sites.google.com/view/residencia-saet/cocina/recetas/introducción';
-  document.getElementById('recetasList').innerHTML=
-    `<a class="reclink" href="${url}" target="_blank" rel="noopener">📖 Abrir recetario completo en el sitio →</a>`
-    + RECETAS.map(r=>`<details class="pauta"><summary>${esc(r.cat)} <span class="reccount">${r.items.length}</span></summary><div class="pbody"><div class="reclist">${r.items.map(i=>`<span>${esc(i)}</span>`).join('')}</div></div></details>`).join('');
+  const data=(typeof RECETAS_FULL!=='undefined')?RECETAS_FULL:{};
+  const cats=Object.keys(data);
+  const q=(document.getElementById('recSearch')?document.getElementById('recSearch').value:'').toLowerCase();
+  const search=`<input class="search" id="recSearch" placeholder="🔎 Buscar receta…" value="${esc(q)}" oninput="renderRecetas()" style="margin-top:4px">`;
+  let body=cats.map((cat,ci)=>{
+    const items=data[cat].map((r,i)=>({r,i})).filter(o=>!q||o.r.name.toLowerCase().includes(q));
+    if(!items.length)return'';
+    return `<details class="pauta"${q?' open':''}><summary>${esc(cat)} <span class="reccount">${items.length}</span></summary><div class="pbody"><div class="recitems">${items.map(o=>`<button class="recitem" onclick="openReceta(${ci},${o.i})">${esc(o.r.name)}<span>›</span></button>`).join('')}</div></div></details>`;
+  }).join('');
+  if(q&&!body)body='<p class="about">Sin resultados</p>';
+  document.getElementById('recetasList').innerHTML=search+body;
+}
+function openReceta(ci,i){
+  const cats=Object.keys(RECETAS_FULL);const cat=cats[ci];const r=RECETAS_FULL[cat]&&RECETAS_FULL[cat][i];if(!r)return;
+  const ing=(r.ingredients||[]).map(x=>`<li>${esc(x)}</li>`).join('')||'<li>—</li>';
+  const st=(r.steps||[]).map(x=>`<li>${esc(x)}</li>`).join('')||'<li>Ver detalle en el sitio.</li>';
+  openModal(`<h2>${esc(r.name)}</h2><p class="desc">${esc(cat)} · 50 porciones</p>
+    <div class="fld"><label>🧾 Ingredientes</label><ul class="reclist-d">${ing}</ul></div>
+    <div class="fld"><label>👨‍🍳 Preparación</label><ol class="recsteps">${st}</ol></div>
+    <div class="btns"><button class="btn primary" onclick="closeModal()">Listo</button></div>`);
 }
 
 /* ---- vista Menús (calendario completo) ---- */
