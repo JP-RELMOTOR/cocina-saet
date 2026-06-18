@@ -1033,7 +1033,7 @@ function applyOnce(i){
 /* ---- navegación entre vistas ---- */
 function switchView(v){currentView=v;
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+v));
-  const navV=['turnos','recetas','desayuno'].includes(v)?'mas':v;
+  const navV=['turnos','recetas','pautas','tutoriales'].includes(v)?'mas':v;
   document.querySelectorAll('.bnav button').forEach(b=>b.classList.toggle('active',b.dataset.v===navV));
   document.getElementById('chips').style.display=(v==='hoy')?'':'none';
   if(v==='menus')renderMenus();
