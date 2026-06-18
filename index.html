@@ -886,8 +886,6 @@ function render(){
   // banner del jueves + ingredientes + botones PDF
   const sel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu]:null;
   document.getElementById('thuBanner').innerHTML=sel?`<div class="thu-banner">📅 ${esc(sel.label)} · del menú mensual</div>`:'';
-  const ib=document.getElementById('ingrBox');
-  ib.innerHTML=(sel&&sel.cant)?`<details class="ingr"><summary>🧾 Ingredientes sugeridos · 50 porciones</summary><div class="ibody">${esc(sel.cant)}</div></details>`:'';
   document.getElementById('pdfRow').classList.toggle('hidden',!admin);
   document.getElementById('pickThuBtn').style.display=state.thursdays.length?'':'none';
   // quiénes trabajan ese jueves (del roster del sitio)
