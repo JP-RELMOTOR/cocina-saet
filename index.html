@@ -719,6 +719,12 @@ function render(){
   ib.innerHTML=(sel&&sel.cant)?`<details class="ingr"><summary>🧾 Ingredientes sugeridos · 50 porciones</summary><div class="ibody">${esc(sel.cant)}</div></details>`:'';
   document.getElementById('pdfRow').classList.toggle('hidden',!admin);
   document.getElementById('pickThuBtn').style.display=state.thursdays.length?'':'none';
+  // quiénes trabajan ese jueves (del roster del sitio)
+  const selLabel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
+  const crew=(selLabel&&TURNOS[selLabel])?TURNOS[selLabel]:null;
+  document.getElementById('todayCrew').innerHTML=crew
+    ?`<div class="tcrew"><h4>👥 Trabajan · ${esc(selLabel.replace(/ de 2026$/,''))}</h4><div class="tchips">${crew.map(n=>`<span class="${BASE_TEAM.includes(n)?'':'rot'}">${esc(n)}</span>`).join('')}</div></div>`
+    :'';
   // turnos
   const tc=document.getElementById('turnos');tc.innerHTML='';
   state.sections.forEach(sec=>{
