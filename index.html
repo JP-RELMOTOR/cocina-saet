@@ -1032,6 +1032,7 @@ function delCook(id){if(!admin)return;if(!confirm('¿Quitar a '+cook(id).name+' 
 let tmo;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
   clearTimeout(tmo);tmo=setTimeout(()=>t.classList.remove('show'),1800);}
 
+function imgFail(el){el.style.display='none';if(el.nextElementSibling)el.nextElementSibling.style.display='flex';}
 load();render();cloudInit();
 </script>
 
