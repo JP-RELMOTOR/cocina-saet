@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cocina SAET — Elige un diseño</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#0f172a; color:#e2e8f0; min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; padding:32px 20px 48px;
+  }
+  .logo { width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#f97316,#ea580c);
+    display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:16px;
+    box-shadow:0 12px 30px rgba(249,115,22,.35); }
+  h1 { font-size:26px; font-weight:800; letter-spacing:-.5px; text-align:center; }
+  .sub { color:#94a3b8; font-size:15px; margin-top:8px; text-align:center; max-width:340px; line-height:1.5; }
+  .cards { display:flex; flex-direction:column; gap:16px; width:100%; max-width:420px; margin-top:32px; }
+  a.card { text-decoration:none; color:inherit; background:#1e293b; border:1px solid #334155;
+    border-radius:18px; padding:20px; display:flex; gap:16px; align-items:center;
+    transition:transform .15s ease, border-color .15s ease; }
+  a.card:active { transform:scale(.98); }
+  a.card:hover { border-color:#475569; }
+  .ico { width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0; }
+  .a .ico{ background:#eff6ff; } .b .ico{ background:#ecfdf5; } .c .ico{ background:#fff7ed; }
+  .ct h2 { font-size:17px; font-weight:700; }
+  .ct p { font-size:13px; color:#94a3b8; margin-top:3px; line-height:1.4; }
+  .arrow { margin-left:auto; color:#64748b; font-size:22px; }
+  .foot { margin-top:36px; color:#64748b; font-size:13px; text-align:center; max-width:340px; line-height:1.5;}
+</style>
+</head>
+<body>
+  <div class="logo">🍳</div>
+  <h1>Cocina SAET</h1>
+  <p class="sub"><b style="color:#cbd5e1">Salón Asambleas El Trébol</b><br>3 diseños para organizar las tareas de tu equipo. Ábrelos, pruébalos y dime cuál te gusta más.</p>
+
+  <div class="cards">
+    <a class="card a" href="opcion-a-agenda.html">
+      <div class="ico">🗓️</div>
+      <div class="ct"><h2>Opción A — Agenda del día</h2><p>Línea de tiempo por horas. Todo el cronograma de un vistazo.</p></div>
+      <div class="arrow">›</div>
+    </a>
+    <a class="card b" href="opcion-b-personas.html">
+      <div class="ico">👥</div>
+      <div class="ct"><h2>Opción B — Por cocinero</h2><p>Filtra por persona. Cada uno ve solo sus tareas.</p></div>
+      <div class="arrow">›</div>
+    </a>
+    <a class="card c" href="opcion-c-tablero.html">
+      <div class="ico">📊</div>
+      <div class="ct"><h2>Opción C — Tablero del jefe</h2><p>Avance en tiempo real y progreso por cocinero.</p></div>
+      <div class="arrow">›</div>
+    </a>
+  </div>
+
+  <p class="foot">💡 En las 3 puedes tocar una tarea para marcarla como <b>lista ✅</b>. Son maquetas de prueba con los datos de tu cronograma real.</p>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cocina SAET — Por turnos</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#0f172a;color:#e2e8f0;min-height:100vh;}
+  .wrap{max-width:480px;margin:0 auto;background:#0f172a;min-height:100vh;padding-bottom:40px;}
+  .bar{padding:22px 20px 18px;}
+  .bar .top{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;letter-spacing:.5px;color:#94a3b8;}
+  .bar .leaf{background:#1e293b;padding:4px 10px;border-radius:20px;color:#cbd5e1;}
+  .bar h1{font-size:23px;font-weight:800;margin-top:8px;letter-spacing:-.5px;color:#f8fafc;}
+  .bar .date{font-size:13.5px;color:#94a3b8;margin-top:2px;}
+  /* overall progress */
+  .ov{margin:6px 16px 0;background:#1e293b;border-radius:18px;padding:16px 18px;display:flex;align-items:center;gap:16px;}
+  .ring{position:relative;width:62px;height:62px;flex-shrink:0;}
+  .ring svg{transform:rotate(-90deg);}
+  .ring .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#f8fafc;}
+  .ov .info h4{font-size:14px;font-weight:700;color:#f8fafc;}
+  .ov .info p{font-size:12.5px;color:#94a3b8;margin-top:3px;line-height:1.4;}
+  /* per cook bars */
+  .crew{margin:14px 16px 0;background:#1e293b;border-radius:18px;padding:14px 16px;}
+  .crew h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:12px;}
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:11px;}.row:last-child{margin-bottom:0;}
+  .row .avi{width:26px;height:26px;border-radius:50%;background:var(--c);color:#fff;font-size:10px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .row .nm{font-size:12.5px;font-weight:600;color:#e2e8f0;width:78px;flex-shrink:0;}
+  .row .pb{flex:1;height:7px;background:#0f172a;border-radius:7px;overflow:hidden;}
+  .row .pb i{display:block;height:100%;background:var(--c);width:0;transition:width .35s;border-radius:7px;}
+  .row .pc{font-size:11.5px;color:#94a3b8;width:34px;text-align:right;flex-shrink:0;}
+  /* turno block */
+  .turno{margin:18px 16px 0;}
+  .turno .th{display:flex;align-items:center;gap:9px;margin-bottom:11px;}
+  .turno .th .ic{font-size:18px;}
+  .turno .th .nm{font-size:15px;font-weight:800;color:#f8fafc;letter-spacing:.3px;}
+  .turno .th .ct{font-size:11px;color:#64748b;background:#1e293b;padding:2px 8px;border-radius:20px;margin-left:auto;}
+  .task{background:#1e293b;border-radius:14px;padding:13px 14px;margin-bottom:9px;display:flex;gap:12px;
+    border-left:4px solid var(--c);cursor:pointer;transition:transform .12s,opacity .2s;}
+  .task:active{transform:scale(.985);}
+  .task .chk{width:23px;height:23px;border-radius:7px;border:2px solid #475569;flex-shrink:0;margin-top:1px;
+    display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;transition:.2s;}
+  .task.done .chk{background:#22c55e;border-color:#22c55e;}
+  .task .body{flex:1;}
+  .task .txt{font-size:13.5px;line-height:1.4;color:#f1f5f9;margin-bottom:7px;}
+  .task.done .txt{text-decoration:line-through;color:#64748b;}.task.done{opacity:.65;}
+  .task .who{display:flex;gap:6px;flex-wrap:wrap;}
+  .pill{display:flex;align-items:center;gap:5px;background:#0f172a;padding:3px 9px 3px 4px;border-radius:20px;font-size:11.5px;font-weight:600;color:#cbd5e1;}
+  .pill .dot{width:16px;height:16px;border-radius:50%;background:var(--pc);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .pill.rmp{border:1px dashed #475569;color:#94a3b8;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div class="top"><span>CRONOGRAMA · POR TURNOS</span><span class="leaf">🍀 SAET</span></div>
+    <h1>Tablero del día</h1>
+    <div class="date">Jueves · 50 cubiertos</div>
+  </div>
+
+  <div class="ov">
+    <div class="ring">
+      <svg width="62" height="62"><circle cx="31" cy="31" r="26" stroke="#0f172a" stroke-width="7" fill="none"/>
+      <circle id="ringc" cx="31" cy="31" r="26" stroke="#22c55e" stroke-width="7" fill="none"
+        stroke-linecap="round" stroke-dasharray="163" stroke-dashoffset="163"/></svg>
+      <div class="num" id="ringn">0%</div>
+    </div>
+    <div class="info"><h4>Avance del día</h4><p id="ovtxt">0 de 9 tareas completadas</p></div>
+  </div>
+
+  <div class="crew">
+    <h3>👥 Equipo · carga de hoy</h3>
+    <div id="crew"></div>
+  </div>
+
+  <div id="turnos"></div>
+</div>
+
+<script>
+const COOKS={
+  'Juan Pablo':{c:'#2563eb',i:'JP'},'Mijal':{c:'#059669',i:'Mi'},
+  'Melissa':{c:'#e11d48',i:'Me'},'Vanesa':{c:'#7c3aed',i:'Va'},
+  'Gabriel':{c:'#d97706',i:'Ga'},'Sofía':{c:'#0891b2',i:'So'}};
+const TURNOS=[
+ {ic:'🍽️',nm:'ALMUERZO',tasks:[
+   {n:1,w:['Juan Pablo','Mijal','Melissa'],x:'Almuerzo'},
+   {n:2,w:['Vanesa'],x:'Ensalada y comedor'},
+   {n:3,w:['Sofía'],x:'Limpieza utensilios desayuno, hervidores y desayuno viernes'},
+ ]},
+ {ic:'🔄',nm:'INTERMEDIO',tasks:[
+   {n:4,w:['Melissa','Vanesa'],x:'Lavado loza'},
+   {n:5,w:['Juan Pablo','Mijal'],x:'Lavado budineras y ollas'},
+   {n:6,w:['Sofía'],x:'Calentar comida 2º turno y poner mesa 2º turno · Limpieza comedor término'},
+ ]},
+ {ic:'🌆',nm:'TARDE',tasks:[
+   {n:7,w:['Juan Pablo','Mijal'],x:'Menú 1'},
+   {n:8,w:['Melissa','Sofía'],x:'Menú 2'},
+   {n:9,w:['Vanesa'],x:'Menú 3 y comedor'},
+ ]},
+];
+const ALL=TURNOS.flatMap(t=>t.tasks);
+const done=new Set();
+const tc=document.getElementById('turnos');
+TURNOS.forEach(tn=>{
+  const blk=document.createElement('div');blk.className='turno';
+  blk.innerHTML=`<div class="th"><span class="ic">${tn.ic}</span><span class="nm">${tn.nm}</span><span class="ct">${tn.tasks.length} tareas</span></div>`;
+  tn.tasks.forEach(t=>{
+    const main=COOKS[t.w[0]];
+    const pills=t.w.map(n=>`<span class="pill ${n==='Sofía'?'rmp':''}" style="--pc:${COOKS[n].c}"><span class="dot">${COOKS[n].i}</span>${n}${n==='Sofía'?' ↩︎':''}</span>`).join('');
+    const el=document.createElement('div');el.className='task';el.style.setProperty('--c',main.c);
+    el.innerHTML=`<div class="chk">✓</div><div class="body"><div class="txt">${t.x}</div><div class="who">${pills}</div></div>`;
+    el.onclick=()=>{done.has(t.n)?done.delete(t.n):done.add(t.n);el.classList.toggle('done');upd();};
+    blk.appendChild(el);
+  });
+  tc.appendChild(blk);
+});
+function upd(){
+  const p=done.size/ALL.length;
+  document.getElementById('ringc').style.strokeDashoffset=163*(1-p);
+  document.getElementById('ringn').textContent=Math.round(p*100)+'%';
+  document.getElementById('ovtxt').textContent=`${done.size} de ${ALL.length} tareas completadas`;
+  buildCrew();
+}
+function buildCrew(){
+  const crew=document.getElementById('crew');crew.innerHTML='';
+  Object.keys(COOKS).forEach(n=>{
+    const mine=ALL.filter(t=>t.w.includes(n));
+    if(!mine.length)return;
+    const dn=mine.filter(t=>done.has(t.n)).length;
+    const pct=Math.round(dn/mine.length*100);
+    const c=COOKS[n].c;
+    const row=document.createElement('div');row.className='row';row.style.setProperty('--c',c);
+    row.innerHTML=`<span class="avi">${COOKS[n].i}</span><span class="nm">${n}${n==='Sofía'?' ↩︎':''}</span>
+      <span class="pb"><i style="width:${pct}%"></i></span><span class="pc">${dn}/${mine.length}</span>`;
+    crew.appendChild(row);
+  });
+}
+buildCrew();
+</script>
+</body>
+</html>

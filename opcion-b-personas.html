@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cocina SAET — Por cocinero</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#f1f5f9;color:#0f172a;min-height:100vh;}
+  .wrap{max-width:480px;margin:0 auto;background:#f8fafc;min-height:100vh;padding-bottom:40px;}
+  .bar{background:#fff;padding:20px 20px 8px;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:10;}
+  .bar .top{display:flex;align-items:center;justify-content:space-between;}
+  .bar .ttl{font-size:13px;font-weight:800;letter-spacing:.5px;color:#0f766e;}
+  .bar .leaf{font-size:12px;color:#64748b;font-weight:600;}
+  .bar h1{font-size:22px;font-weight:800;margin-top:6px;letter-spacing:-.5px;}
+  .bar .date{font-size:13.5px;color:#64748b;margin-top:1px;margin-bottom:12px;}
+  /* chips */
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin:0 -20px;padding-left:20px;padding-right:20px;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{flex-shrink:0;padding:8px 14px;border-radius:30px;font-size:13.5px;font-weight:700;cursor:pointer;
+    border:2px solid #e2e8f0;background:#fff;color:#475569;display:flex;align-items:center;gap:7px;transition:.15s;}
+  .chip .d{width:10px;height:10px;border-radius:50%;background:var(--c);}
+  .chip.on{border-color:var(--c);background:var(--c);color:#fff;}
+  .chip.on .d{background:#fff;}
+  .chip.all{--c:#0f766e;}
+  /* menu */
+  .menu{margin:16px;background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border-radius:18px;padding:16px 18px;
+    box-shadow:0 8px 20px rgba(13,148,136,.25);}
+  .menu h3{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;opacity:.85;margin-bottom:10px;}
+  .ml{display:flex;gap:10px;margin-bottom:9px;}.ml:last-child{margin-bottom:0;}
+  .ml .tag{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:7px;height:fit-content;white-space:nowrap;background:rgba(255,255,255,.2);}
+  .ml p{font-size:13px;line-height:1.45;opacity:.96;}
+  /* count */
+  .cnt{margin:4px 16px 0;font-size:13px;color:#64748b;font-weight:600;}
+  .cnt b{color:#0f766e;}
+  /* task */
+  #list{padding:8px 16px 0;}
+  .task{background:#fff;border-radius:14px;padding:13px 14px;margin-bottom:10px;display:flex;gap:12px;
+    box-shadow:0 2px 8px rgba(15,23,42,.06);border-left:4px solid var(--c);cursor:pointer;transition:transform .12s,opacity .2s;}
+  .task:active{transform:scale(.985);}
+  .task .chk{width:24px;height:24px;border-radius:7px;border:2px solid #cbd5e1;flex-shrink:0;margin-top:1px;
+    display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;transition:.2s;}
+  .task.done .chk{background:#22c55e;border-color:#22c55e;}
+  .task .body{flex:1;}
+  .task .meta{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+  .task .time{font-size:13px;font-weight:800;color:var(--c);}
+  .task .who{font-size:11.5px;color:#64748b;font-weight:600;}
+  .task .txt{font-size:13.5px;line-height:1.45;color:#1e293b;}
+  .task.done .txt{text-decoration:line-through;color:#94a3b8;}.task.done{opacity:.7;}
+  .empty{text-align:center;color:#94a3b8;padding:40px 20px;font-size:14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div class="top"><span class="ttl">CRONOGRAMA</span><span class="leaf">🍀 SAET · El Trébol</span></div>
+    <h1>Tareas por cocinero</h1>
+    <div class="date">Sábado 16 de mayo de 2026</div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="menu">
+    <h3>🍽️ Menú de hoy</h3>
+    <div class="ml"><span class="tag">ALMUERZO</span><p>Porotos con mazamorra · Ensaladas Chilena / Apio-Palta</p></div>
+    <div class="ml"><span class="tag">ONCE</span><p>Crêpes de espinaca rellena de pollo, pimentón, cebolla, choclo y béchamel · Quinoa</p></div>
+  </div>
+
+  <div class="cnt" id="cnt"></div>
+  <div id="list"></div>
+</div>
+
+<script>
+const COOKS={
+  'Juan Pablo':{c:'#2563eb',i:'JP'},'Mijal':{c:'#059669',i:'Mi'},
+  'Gabriel':{c:'#d97706',i:'Ga'},'Vanesa':{c:'#7c3aed',i:'Va'},'Melissa':{c:'#e11d48',i:'Me'}};
+const TASKS=[
+ {n:1,t:'9:00',w:['Juan Pablo'],x:'Trozar pollo, adobar (limón y sal). Reservar para la Once. Limpiar utensilios y superficies usados.'},
+ {n:2,t:'9:00',w:['Mijal','Gabriel'],x:'Preparación de Porotos, Mazamorra, Color.'},
+ {n:3,t:'9:00',w:['Vanesa','Juan Pablo'],x:'Ensaladas: tomate, cebolla pluma, cilantro; apio y palta.'},
+ {n:4,t:'9:00',w:['Melissa'],x:'Asegurarse de insumos y menú para la once.'},
+ {n:5,t:'11:00',w:['Mijal','Gabriel'],x:'Preparación de la mezcla para crêpes.'},
+ {n:6,t:'11:00',w:['Vanesa'],x:'Montar las 4 mesas.'},
+ {n:7,t:'11:00',w:['Juan Pablo'],x:'Preparación de rellenos para crêpes (pimentón asado, cebolla caramelizada).'},
+ {n:8,t:'13:30',w:['Mijal','Vanesa','Juan Pablo'],x:'Reducción cocina 2 (caliente).'},
+ {n:9,t:'13:30',w:['Gabriel'],x:'Reducción cocina 1 (frío).'},
+ {n:10,t:'15:00',w:['Juan Pablo'],x:'Saltear pollo. Rallar el queso.'},
+ {n:11,t:'15:00',w:['Mijal'],x:'Crêpes.'},
+ {n:12,t:'16:00',w:['Gabriel'],x:'Montar 2 mesas y preparar desayuno.'},
+ {n:13,t:'16:00',w:['Vanesa'],x:'Preparación de la Quinoa.'},
+ {n:14,t:'16:30',w:['Melissa'],x:'Béchamel.'},
+ {n:15,t:'16:40',w:['Juan Pablo','Vanesa','Mijal','Gabriel'],x:'Rellenar y montar crêpes.'},
+];
+const done=new Set();let filter='Todos';
+const chips=document.getElementById('chips');
+function chip(name,c){const el=document.createElement('div');
+  el.className='chip'+(name===filter?' on':'')+(name==='Todos'?' all':'');
+  el.style.setProperty('--c',c);
+  el.innerHTML=`<span class="d"></span>${name}`;
+  el.onclick=()=>{filter=name;render();};chips.appendChild(el);}
+function render(){
+  chips.innerHTML='';chip('Todos','#0f766e');Object.keys(COOKS).forEach(n=>chip(n,COOKS[n].c));
+  const list=document.getElementById('list');list.innerHTML='';
+  const items=TASKS.filter(t=>filter==='Todos'||t.w.includes(filter));
+  document.getElementById('cnt').innerHTML=filter==='Todos'
+    ?`Mostrando <b>las ${items.length} tareas</b> del día`
+    :`<b>${filter}</b> tiene <b>${items.length} tareas</b> hoy`;
+  if(!items.length){list.innerHTML='<div class="empty">Sin tareas asignadas.</div>';return;}
+  items.forEach(t=>{
+    const c=filter==='Todos'?COOKS[t.w[0]].c:COOKS[filter].c;
+    const who=t.w.length>1?t.w.join(' · '):t.w[0];
+    const el=document.createElement('div');el.className='task'+(done.has(t.n)?' done':'');
+    el.style.setProperty('--c',c);
+    el.innerHTML=`<div class="chk">✓</div><div class="body">
+      <div class="meta"><span class="time">${t.t}</span><span class="who">👤 ${who}</span></div>
+      <div class="txt">${t.x}</div></div>`;
+    el.onclick=()=>{done.has(t.n)?done.delete(t.n):done.add(t.n);render();};
+    list.appendChild(el);
+  });
+}
+render();
+</script>
+</body>
+</html>
