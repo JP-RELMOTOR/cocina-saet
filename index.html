@@ -957,7 +957,7 @@ function findRecipes(text){
   cats.forEach((cat,ci)=>RECETAS_FULL[cat].forEach((r,i)=>{
     const rw=recWords(r.name);if(!rw.length)return;
     const found=rw.filter(w=>tw.has(w)).length;
-    if(found/rw.length>=0.6 && tw.has(rw[0]) && !seen.has(r.name)){seen.add(r.name);out.push({ci,i,name:r.name});}
+    if(found/rw.length>=0.6 && tw.has(rw[0]) && !(rw.length===1 && REC_GENERIC.has(rw[0])) && !seen.has(r.name)){seen.add(r.name);out.push({ci,i,name:r.name});}
   }));
   return out.slice(0,4);
 }
