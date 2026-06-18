@@ -1057,11 +1057,26 @@ function switchView(v){currentView=v;
 function renderTurnos(){
   const selLabel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:'';
   document.getElementById('turnosList').innerHTML=Object.keys(TURNOS).map(k=>{
-    const today=k===selLabel;
-    return `<div class="trow${today?' today':''}"><div class="td">${today?'🟢 ':'📅 '}${esc(k.replace(/ de 2026$/,''))}</div>
-      <div class="tn">${TURNOS[k].map(n=>`<span class="${BASE_TEAM.includes(n)?'':'rot'}">${esc(n)}</span>`).join('')}</div></div>`;
+    const today=k===selLabel;const edited=!!state.crewOverride[k];const names=state.crewOverride[k]||TURNOS[k];
+    return `<div class="trow${today?' today':''}"><div class="td">${today?'🟢 ':'📅 '}${esc(k.replace(/ de 2026$/,''))}${edited?' <span style="color:#92400e;font-size:11px">✏️ editado</span>':''}</div>
+      <div class="tn">${names.map(n=>`<span class="${BASE_TEAM.includes(n)?'':'rot'}">${esc(n)}</span>`).join('')}</div></div>`;
   }).join('');
 }
+/* ---- editar voluntarios del día (admin) ---- */
+let crewEditList=[];
+function curCrewLabel(){return (state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;}
+function openCrewEdit(){if(!admin)return;const label=curCrewLabel();if(!label)return;
+  crewEditList=[...(state.crewOverride[label]||TURNOS[label]||[])];drawCrewEdit();}
+function drawCrewEdit(){const label=curCrewLabel();
+  const rows=crewEditList.map((n,i)=>`<div class="crow"><input type="text" value="${esc(n)}" onchange="crewEditList[${i}]=this.value"><span class="rm" onclick="crewEditList.splice(${i},1);drawCrewEdit()">🗑</span></div>`).join('');
+  openModal(`<h2>Voluntarios del día</h2><p class="desc">${esc((label||'').replace(/ de 2026$/,''))} · edítalos si hay un reemplazo de último minuto.</p>
+    <div>${rows||'<p style="font-size:13px;color:#94a3b8">Sin voluntarios. Agrega abajo.</p>'}</div>
+    <div class="addrow"><input type="text" id="newVol" placeholder="Agregar voluntario"><button onclick="crewAdd()">Agregar</button></div>
+    <div class="btns" style="margin-top:16px"><button class="btn ghost" onclick="crewReset()">Restaurar</button><button class="btn primary" onclick="crewSave()">Guardar</button></div>`);}
+function crewAdd(){const i=document.getElementById('newVol');if(i&&i.value.trim())crewEditList.push(i.value.trim());drawCrewEdit();}
+function crewSave(){if(!admin)return;const label=curCrewLabel();if(!label)return;
+  state.crewOverride[label]=crewEditList.filter(s=>s&&s.trim()).map(s=>s.trim());save();closeModal();render();toast('Voluntarios actualizados ✅');}
+function crewReset(){if(!admin)return;const label=curCrewLabel();if(label)delete state.crewOverride[label];save();closeModal();render();toast('Restaurado al turno original');}
 function renderRecetas(){
   const data=(typeof RECETAS_FULL!=='undefined')?RECETAS_FULL:{};
   const cats=Object.keys(data);
