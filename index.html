@@ -993,14 +993,18 @@ function openTask(id,secId){
   if(!admin)return;
   const t=id?state.tasks.find(x=>x.id===id):null;
   editId=id;editSec=t?t.sec:secId;editWho=t?[...t.who]:[];
+  renderTaskModal();
+}
+function renderTaskModal(){
+  const t=editId?state.tasks.find(x=>x.id===editId):null;
   openModal(`
-    <h2>${id?'Editar tarea':'Nueva tarea'}</h2>
-    <p class="desc">Escribe la tarea y elige quién la hace.</p>
+    <h2>${editId?'Editar tarea':'Nueva tarea'}</h2>
+    <p class="desc">Escribe la tarea y elige quién la hace (de tu Equipo).</p>
     <div class="fld"><label>Tarea</label><textarea id="tText" rows="2" placeholder="Ej: Lavado de ollas">${t?esc(t.text):''}</textarea></div>
     <div class="fld"><label>Sección</label><div class="secsel" id="secSel"></div></div>
-    <div class="fld"><label>Encargados</label><div class="assign" id="asg"></div></div>
+    <div class="fld"><label>Encargados (toca para asignar)</label><div class="assign" id="asg"></div></div>
     <div class="btns">
-      ${id?'<button class="btn danger" onclick="delTask(editId);closeModal()">🗑</button>':''}
+      ${editId?'<button class="btn danger" onclick="delTask(editId);closeModal()">🗑</button>':''}
       <button class="btn ghost" onclick="closeModal()">Cancelar</button>
       <button class="btn primary" onclick="saveTask()">Guardar</button>
     </div>`);
@@ -1008,14 +1012,16 @@ function openTask(id,secId){
   state.sections.forEach(s=>{const b=document.createElement('div');b.className='ss'+(s.id===editSec?' on':'');
     b.textContent=s.icon+' '+s.name;b.onclick=()=>{editSec=s.id;openTaskRefresh();};sel.appendChild(b);});
   const asg=document.getElementById('asg');
+  if(!state.cooks.length)asg.innerHTML='<p style="font-size:13px;color:#94a3b8">Agrega cocineros en Más → Equipo.</p>';
   state.cooks.forEach(c=>{const b=document.createElement('div');b.className='asg'+(editWho.includes(c.id)?' on':'');
-    b.style.setProperty('--c',c.color);b.innerHTML=`<span class="d"></span>${esc(c.name)}`;
+    b.style.setProperty('--c',c.color);b.innerHTML=`<span class="d"></span>${esc(c.name)}${c.sub?' ↩︎':''}`;
     b.onclick=()=>{editWho.includes(c.id)?editWho=editWho.filter(x=>x!==c.id):editWho.push(c.id);openTaskRefresh();};
     asg.appendChild(b);});
 }
 function openTaskRefresh(){
-  const txt=document.getElementById('tText').value;
-  openTask(editId,editSec);document.getElementById('tText').value=txt;
+  const el=document.getElementById('tText');const txt=el?el.value:'';
+  renderTaskModal();
+  const tt=document.getElementById('tText');if(tt)tt.value=txt;
 }
 function saveTask(){
   if(!admin)return;
