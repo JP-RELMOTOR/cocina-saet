@@ -881,8 +881,11 @@ function render(){
   state.cooks.forEach(c=>chips.appendChild(mkChip(c.id,c.name+(c.sub?' ↩︎':''),c.color)));
   // menu
   const ml=document.getElementById('menuList');ml.innerHTML='';
-  state.menu.forEach(m=>{ml.insertAdjacentHTML('beforeend',
-    `<div class="ml"><span class="tag ${m.cls||'al'}">${esc(m.tag)}</span><p>${esc(m.text||'—')}</p></div>`);});
+  state.menu.forEach(m=>{
+    ml.insertAdjacentHTML('beforeend',`<div class="ml"><span class="tag ${m.cls||'al'}">${esc(m.tag)}</span><p>${esc(m.text||'—')}</p></div>`);
+    const recs=findRecipes(m.text);
+    if(recs.length)ml.insertAdjacentHTML('beforeend',`<div class="reclinks">${recs.map(r=>`<button class="reclinkbtn" onclick="openReceta(${r.ci},${r.i})">📖 ${esc(r.name)}</button>`).join('')}</div>`);
+  });
   // banner del jueves + ingredientes + botones PDF
   const sel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu]:null;
   document.getElementById('thuBanner').innerHTML=sel?`<div class="thu-banner">📅 ${esc(sel.label)} · del menú mensual</div>`:'';
