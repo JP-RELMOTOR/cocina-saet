@@ -619,6 +619,14 @@ function shiftParsed(e){
   return {wd,day:d.getDate(),month:mname,year:d.getFullYear(),
     label:C(wd)+' '+d.getDate()+' de '+mname+' de '+d.getFullYear(),dish:e.dish,ens:e.ens,cant:e.cant};
 }
+/* Turnos del equipo (EER37 · jueves) — quiénes trabajan cada jueves */
+const BASE_TEAM=['Juan Pablo Correa','Mijal de Correa','Gabriel Díaz','Vanessa Díaz'];
+const TURNOS={
+  'Jueves 4 de junio de 2026':['Juan Pablo Correa','Mijal de Correa','Constanza Fridman','Gabriel Díaz','Vanessa Díaz'],
+  'Jueves 11 de junio de 2026':['Juan Pablo Correa','Mijal de Correa','Melissa Gómez','Gabriel Díaz','Vanessa Díaz'],
+  'Jueves 18 de junio de 2026':['Juan Pablo Correa','Mijal de Correa','Evelyn Latín','Gabriel Díaz','Vanessa Díaz'],
+  'Jueves 25 de junio de 2026':['Juan Pablo Correa','Mijal de Correa','Melissa Gómez','Gabriel Díaz','Vanessa Díaz'],
+};
 let state, admin=false, filter='todos', currentView='hoy', menuCat='alm', selOnce=null;
 const KEY='cocina_saet_v4';
 
