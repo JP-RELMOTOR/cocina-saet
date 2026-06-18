@@ -1131,8 +1131,8 @@ function switchView(v){currentView=v;
 function renderTurnos(){
   const selLabel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:'';
   document.getElementById('turnosList').innerHTML=Object.keys(TURNOS).map(k=>{
-    const today=k===selLabel;const edited=!!state.crewOverride[k];const names=state.crewOverride[k]||TURNOS[k];
-    return `<div class="trow${today?' today':''}"><div class="td">${today?'🟢 ':'📅 '}${esc(k.replace(/ de 2026$/,''))}${edited?' <span style="color:#92400e;font-size:11px">✏️ editado</span>':''}</div>
+    const today=k===selLabel;const names=TURNOS[k];
+    return `<div class="trow${today?' today':''}"><div class="td">${today?'🟢 ':'📅 '}${esc(k.replace(/ de 2026$/,''))}</div>
       <div class="tn">${names.map(n=>{const rep=!BASE_TEAM.includes(n);return `<span class="${rep?'rot':''}">${rep?'↩︎ ':''}${esc(n)}</span>`;}).join('')}</div></div>`;
   }).join('');
 }
