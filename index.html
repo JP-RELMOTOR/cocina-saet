@@ -529,6 +529,7 @@ function closeModal(){document.getElementById('overlay').classList.remove('show'
 /* ---- tarea: crear / editar ---- */
 let editId=null,editSec=null,editWho=[];
 function openTask(id,secId){
+  if(!admin)return;
   const t=id?state.tasks.find(x=>x.id===id):null;
   editId=id;editSec=t?t.sec:secId;editWho=t?[...t.who]:[];
   openModal(`
@@ -556,24 +557,26 @@ function openTaskRefresh(){
   openTask(editId,editSec);document.getElementById('tText').value=txt;
 }
 function saveTask(){
+  if(!admin)return;
   const text=document.getElementById('tText').value.trim();
   if(!text){toast('Escribe la tarea');return;}
   if(editId){const t=state.tasks.find(x=>x.id===editId);t.text=text;t.sec=editSec;t.who=[...editWho];}
   else state.tasks.push({id:uid('t'),sec:editSec,text,who:[...editWho],done:false});
   save();closeModal();render();toast('Tarea guardada ✅');
 }
-function delTask(id){if(!confirm('¿Eliminar esta tarea?'))return;state.tasks=state.tasks.filter(t=>t.id!==id);save();render();toast('Tarea eliminada');}
+function delTask(id){if(!admin)return;if(!confirm('¿Eliminar esta tarea?'))return;state.tasks=state.tasks.filter(t=>t.id!==id);save();render();toast('Tarea eliminada');}
 
 /* ---- secciones ---- */
-function addSection(){const n=prompt('Nombre de la nueva sección:','Nueva sección');if(!n)return;
+function addSection(){if(!admin)return;const n=prompt('Nombre de la nueva sección:','Nueva sección');if(!n)return;
   state.sections.push({id:uid('s'),name:n.trim(),icon:'📋'});save();render();}
-function renameSection(id){const s=state.sections.find(x=>x.id===id);const n=prompt('Nombre de la sección:',s.name);if(!n)return;
+function renameSection(id){if(!admin)return;const s=state.sections.find(x=>x.id===id);const n=prompt('Nombre de la sección:',s.name);if(!n)return;
   s.name=n.trim();save();render();}
-function delSection(id){if(state.tasks.some(t=>t.sec===id)){if(!confirm('Esta sección tiene tareas. ¿Eliminar sección y sus tareas?'))return;}
+function delSection(id){if(!admin)return;if(state.tasks.some(t=>t.sec===id)){if(!confirm('Esta sección tiene tareas. ¿Eliminar sección y sus tareas?'))return;}
   state.sections=state.sections.filter(s=>s.id!==id);state.tasks=state.tasks.filter(t=>t.sec!==id);save();render();}
 
 /* ---- menú ---- */
 function openMenu(){
+  if(!admin)return;
   openModal(`<h2>Menú del día</h2><p class="desc">Edita lo que se cocina hoy.</p>
     <div id="menuFlds"></div>
     <div class="btns"><button class="btn ghost" onclick="closeModal()">Cancelar</button>
@@ -582,7 +585,7 @@ function openMenu(){
   state.menu.forEach((m,i)=>{f.insertAdjacentHTML('beforeend',
     `<div class="fld"><label>${esc(m.tag)}</label><input type="text" id="mt${i}" value="${esc(m.text)}"></div>`);});
 }
-function saveMenu(){state.menu.forEach((m,i)=>{m.text=document.getElementById('mt'+i).value;});save();closeModal();render();toast('Menú actualizado');}
+function saveMenu(){if(!admin)return;state.menu.forEach((m,i)=>{m.text=document.getElementById('mt'+i).value;});save();closeModal();render();toast('Menú actualizado');}
 
 /* ---- menú mensual en PDF: detectar jueves ---- */
 async function handlePDF(file){
@@ -635,6 +638,7 @@ function openThuPicker(){
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
 function applyThursday(i){
+  if(!admin)return;
   const t=state.thursdays[i];if(!t)return;state.selThu=i;
   const al=state.menu.find(m=>m.cls==='al');if(al)al.text=t.dish;
   const en=state.menu.find(m=>m.cls==='en');if(en)en.text=t.ens||'';
@@ -652,6 +656,7 @@ function openOncePicker(){
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
 function applyOnce(i){
+  if(!admin)return;
   const o=state.onceDays[i];if(!o)return;state.selOnce=i;
   const on=state.menu.find(m=>m.cls==='on');if(on)on.text=o.menus.join(' · ')+(o.extra?' · '+o.extra:'');
   save();closeModal();render();toast('Once cargada ✅');
@@ -712,9 +717,9 @@ function renderBrk(){
     ||'<p class="about" style="margin:10px 16px">Sin tareas aún.</p>';
 }
 function toggleBrk(id){const t=state.brkTasks.find(x=>x.id===id);if(t){t.done=!t.done;save();renderBrk();}}
-function addBrk(){const n=prompt('Tarea para adelantar el desayuno de mañana:');if(!n)return;state.brkTasks.push({id:uid('b'),text:n.trim(),done:false});save();renderBrk();}
-function delBrk(id){if(!confirm('¿Eliminar esta tarea?'))return;state.brkTasks=state.brkTasks.filter(t=>t.id!==id);save();renderBrk();}
-function editBrkMenu(){const m=state.brkMenu||{base:'',items:[]};
+function addBrk(){if(!admin)return;const n=prompt('Tarea para adelantar el desayuno de mañana:');if(!n)return;state.brkTasks.push({id:uid('b'),text:n.trim(),done:false});save();renderBrk();}
+function delBrk(id){if(!admin)return;if(!confirm('¿Eliminar esta tarea?'))return;state.brkTasks=state.brkTasks.filter(t=>t.id!==id);save();renderBrk();}
+function editBrkMenu(){if(!admin)return;const m=state.brkMenu||{base:'',items:[]};
   const base=prompt('Base del desayuno:',m.base||'');if(base===null)return;
   const items=prompt('Ítems del desayuno (uno por línea):',(m.items||[]).join('\n'));if(items===null)return;
   state.brkMenu={base:base.trim(),items:items.split('\n').map(s=>s.trim()).filter(Boolean)};save();renderBrk();toast('Desayuno actualizado');}
@@ -745,30 +750,34 @@ function shareDay(){
 
 /* ---- equipo ---- */
 function openTeam(){
-  openModal(`<h2>Equipo de cocina</h2><p class="desc">Toca el círculo para cambiar el color. ↩︎ marca quién reemplaza hoy.</p>
+  openModal(`<h2>Equipo de cocina</h2><p class="desc">${admin?'Toca el círculo para cambiar el color. ↩︎ marca quién reemplaza hoy.':'🔒 Solo el administrador puede editar el equipo.'}</p>
     <div id="crewList"></div>
-    <div class="addrow"><input type="text" id="newCook" placeholder="Nombre del nuevo cocinero">
-    <button onclick="addCook()">Agregar</button></div>
+    ${admin?`<div class="addrow"><input type="text" id="newCook" placeholder="Nombre del nuevo cocinero"><button onclick="addCook()">Agregar</button></div>`:''}
     <div class="btns" style="margin-top:18px"><button class="btn primary" onclick="closeModal()">Listo</button></div>`);
   renderCrew();
 }
 function renderCrew(){
   const l=document.getElementById('crewList');l.innerHTML='';
   state.cooks.forEach(c=>{const r=document.createElement('div');r.className='crow';
-    r.innerHTML=`<input type="color" value="${c.color}" onchange="setColor('${c.id}',this.value)">
-      <input type="text" value="${esc(c.name)}" onchange="setName('${c.id}',this.value)">
-      <span class="sub" onclick="toggleSub('${c.id}')">${c.sub?'↩︎ reempl.':'＋ reempl.'}</span>
-      <span class="rm" onclick="delCook('${c.id}')">🗑</span>`;
+    if(admin){
+      r.innerHTML=`<input type="color" value="${c.color}" onchange="setColor('${c.id}',this.value)">
+        <input type="text" value="${esc(c.name)}" onchange="setName('${c.id}',this.value)">
+        <span class="sub" onclick="toggleSub('${c.id}')">${c.sub?'↩︎ reempl.':'＋ reempl.'}</span>
+        <span class="rm" onclick="delCook('${c.id}')">🗑</span>`;
+    }else{
+      r.innerHTML=`<span style="width:28px;height:28px;border-radius:50%;background:${c.color};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0">${initials(c.name)}</span>
+        <span style="flex:1;font-size:14px;font-weight:600;color:#1e293b">${esc(c.name)}${c.sub?' <span style="color:#94a3b8;font-weight:600;font-size:12px">↩︎ reemplazo</span>':''}</span>`;
+    }
     l.appendChild(r);});
 }
-function setColor(id,v){cook(id).color=v;save();renderCrew();render();}
-function setName(id,v){if(v.trim()){cook(id).name=v.trim();save();render();}}
-function toggleSub(id){const c=cook(id);c.sub=!c.sub;save();renderCrew();render();}
-function addCook(){const i=document.getElementById('newCook');const n=i.value.trim();if(!n)return;
+function setColor(id,v){if(!admin)return;cook(id).color=v;save();renderCrew();render();}
+function setName(id,v){if(!admin)return;if(v.trim()){cook(id).name=v.trim();save();render();}}
+function toggleSub(id){if(!admin)return;const c=cook(id);c.sub=!c.sub;save();renderCrew();render();}
+function addCook(){if(!admin)return;const i=document.getElementById('newCook');const n=i.value.trim();if(!n)return;
   const pal=['#2563eb','#db2777','#c2410c','#7c3aed','#0891b2','#ca8a04','#0d9488','#9333ea'];
   state.cooks.push({id:uid('c'),name:n,color:pal[state.cooks.length%pal.length],sub:false});
   i.value='';save();renderCrew();render();toast(n+' agregado');}
-function delCook(id){if(!confirm('¿Quitar a '+cook(id).name+' del equipo?'))return;
+function delCook(id){if(!admin)return;if(!confirm('¿Quitar a '+cook(id).name+' del equipo?'))return;
   state.cooks=state.cooks.filter(c=>c.id!==id);
   state.tasks.forEach(t=>t.who=t.who.filter(w=>w!==id));
   save();renderCrew();render();}
