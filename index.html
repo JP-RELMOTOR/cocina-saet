@@ -1049,19 +1049,15 @@ function renderMenus(){
   const q=(document.getElementById('menuSearch').value||'').toLowerCase();
   let body='';
   if(menuCat==='des'){
-    const m=state.brkMenu||{base:'',items:[]};
-    body=`<div class="mday thu"><div class="md-top"><span class="md-date">Todos los viernes</span><span class="md-badge">FIJO</span></div>
-      <div class="md-dish">🥐 Desayuno del viernes</div><div class="md-ens">☕ ${esc(m.base||'')}</div>
-      ${m.items&&m.items.length?`<ul style="margin:9px 0 0 18px;padding:0;font-size:12.5px;color:#475569;line-height:1.65">${m.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`:''}</div>
-      <p class="about" style="margin:8px 16px">Es fijo para todos los viernes · se adelanta el jueves. Edítalo en la pestaña 🥐 Desayuno.</p>`;
+    body=`<div class="mday"><div class="md-top"><span class="md-date">☕ Base diaria</span></div><div class="md-ens">${esc(DESAYUNO_BASE)}</div></div>`
+      + DESAYUNO_CAL.filter(d=>!q||(d.wd+' '+d.items.join(' ')).toLowerCase().includes(q)).map(d=>{const fri=d.wd==='Viernes';
+        return `<div class="mday${fri?' thu':''}"><div class="md-top"><span class="md-date">${esc(d.wd)}</span>${fri?'<span class="md-badge">SE ADELANTA EL JUEVES</span>':''}</div><ul class="md-ul">${d.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;}).join('');
   } else if(menuCat==='once'){
-    const arr=state.onceDays||[];
-    const f=arr.filter(o=>!q||(o.menus.join(' ')+' '+o.label+' '+(o.cant||'')).toLowerCase().includes(q));
-    body=!arr.length?'<p class="about">Aún no hay onces cargadas.</p>'
-      :!f.length?'<p class="about">Sin resultados</p>'
-      :f.map(o=>`<div class="mday thu"><div class="md-top"><span class="md-date">${esc(o.label.replace(/^\w+\s/,'jueves '))}</span><span class="md-badge">ONCE</span></div>
-        <div class="md-dish">${esc(o.menus.join(' · '))}</div>${o.extra?`<div class="md-ens">⚠️ ${esc(o.extra)}</div>`:''}
-        ${o.cant?`<div class="md-cong">🧾 ${esc(o.cant)}</div>`:''}</div>`).join('');
+    const f=ONCE_CAL.filter(o=>!q||((o.menus.join(' ')+' '+o.dt+' '+o.wd).toLowerCase().includes(q)));
+    body=!f.length?'<p class="about">Sin resultados</p>'
+      :f.map(o=>{const thu=/^juev/i.test(o.wd);
+        return `<div class="mday${thu?' thu':''}"><div class="md-top"><span class="md-date">${esc(o.wd+' '+o.dt)}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
+        <div class="md-dish">${o.menus.map(m=>esc(m)).join(' · ')}</div></div>`;}).join('');
   } else {
     const arr=state.days||[];
     const f=arr.filter(d=>!q||(((d.dish||'')+' '+(d.ens||'')+' '+(d.dt||'')+' '+(d.wd||'')+' '+(d.cong||'')).toLowerCase().includes(q)));
