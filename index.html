@@ -678,6 +678,48 @@ const RECETAS=[
   {cat:'🍲 Sopas y cremas',items:['Crema de zapallo','Consomé','Miso Ramen','Pho']},
   {cat:'🥖 Pan',items:['Pan integral','Pan amasado']},
 ];
+/* Onces por fecha (del sitio · sin desfase, aplica al mismo día) */
+const ONCE_CAL=[
+  {wd:'lunes',dt:'1 jun',menus:['Pan amasado (2 p/p), jamón, queso, tomate, mayonesa','Crema de verduras']},
+  {wd:'martes',dt:'2 jun',menus:['Lomo saltado con arroz y papas fritas']},
+  {wd:'miércoles',dt:'3 jun',menus:['Ensalada de espirales, rúcula, pimentón, aceituna, cebolla','Alitas de pollo (3 p/p)']},
+  {wd:'jueves',dt:'4 jun',menus:['Tacos de vacuno (2 p/p)','Crema de verduras']},
+  {wd:'viernes',dt:'5 jun',menus:['Pasta de ave-morrón, palta, arroz, ensalada pico de gallo, pan','Consomé']},
+  {wd:'sábado',dt:'6 jun',menus:['Miso Ramen']},
+  {wd:'domingo',dt:'7 jun',menus:['Rollitos de canela con frosting','Ensalada tomate, queso, palta, pan','Consomé']},
+  {wd:'lunes',dt:'8 jun',menus:['Pan amasado con jamón, queso, tomate','Crema de verduras']},
+  {wd:'martes',dt:'9 jun',menus:['Ensalada de espirales con rúcula y aceitunas','Pollo crispy (200 g p/p)']},
+  {wd:'miércoles',dt:'10 jun',menus:['Brazo de reina','Pan, quesillo, oliva, tomate, ají verde, lechuga','Crema de zapallo (5 L)']},
+  {wd:'jueves',dt:'11 jun',menus:['Empanadas de pino (90 u)','Consomé']},
+  {wd:'viernes',dt:'12 jun',menus:['Sándwich de atún (palta, lechuga, tomate, queso crema)']},
+  {wd:'sábado',dt:'13 jun',menus:['Shawarma de falafel']},
+  {wd:'domingo',dt:'14 jun',menus:['Ensalada César con pollo','Crema de zapallo']},
+  {wd:'lunes',dt:'15 jun',menus:['Pan amasado con jamón, queso, tomate','Crema de verduras']},
+  {wd:'martes',dt:'16 jun',menus:['Lomo saltado con arroz y papas fritas']},
+  {wd:'miércoles',dt:'17 jun',menus:['Pollo asado con quinoa, ensaladas lechuga/choclo, queque de zanahoria']},
+  {wd:'jueves',dt:'18 jun',menus:['Pie de limón','Pan, quesillo, oliva, tomate, ají verde, lechuga','Crema de zapallo']},
+  {wd:'viernes',dt:'19 jun',menus:['Crepes de espinaca rellenos de pollo, pimentón, cebolla caramelizada']},
+  {wd:'sábado',dt:'20 jun',menus:['Hamburguesas con coleslaw, queso, tocino']},
+  {wd:'domingo',dt:'21 jun',menus:['Rollitos de canela con frosting','Ensalada tomate, queso, palta, pan','Consomé']},
+  {wd:'lunes',dt:'22 jun',menus:['Pan amasado con jamón, queso, tomate','Crema de verduras']},
+  {wd:'martes',dt:'23 jun',menus:['Tacos de vacuno (2 p/p)','Crema de verduras']},
+  {wd:'miércoles',dt:'24 jun',menus:['Brazo de reina','Pan, quesillo, oliva, tomate, ají verde, lechuga','Crema de zapallo']},
+  {wd:'jueves',dt:'25 jun',menus:['Pizza pepperoni / aceituna sevillana']},
+  {wd:'viernes',dt:'26 jun',menus:['Sándwich de atún con palta, lechuga, tomate']},
+  {wd:'sábado',dt:'27 jun',menus:['Pan aliado con jamón/queso','Consomé']},
+  {wd:'domingo',dt:'28 jun',menus:['Graduación 🎓']},
+];
+/* Desayuno fijo por día de la semana (del sitio) */
+const DESAYUNO_BASE='Mantequilla, mermelada, miel, agua caliente, café de grano, té, avena y cereal (sáb/dom sin miel).';
+const DESAYUNO_CAL=[
+  {wd:'Lunes',items:['48 huevos revueltos','20 yogures · 1 leche (3 jarritas) · 20 frutas','Pan integral y blanco (12 y 2 por mesa; 6 y 1 en media)']},
+  {wd:'Martes',items:['2 quesillos (mesa) / 1 (media)','18 láminas de salame (mesa) / 10 (media)','20 yogures · 1 leche · 20 frutas · pan variado']},
+  {wd:'Miércoles',items:['48 huevos revueltos','20 yogures · 1 leche · 20 frutas','Pan integral y blanco']},
+  {wd:'Jueves',items:['12 láminas de jamón (mesa) / 6 (media)','14 paltas (½ por persona)','20 yogures · 1 leche · 20 frutas · pan variado']},
+  {wd:'Viernes',items:['48 huevos revueltos','20 yogures · 1 leche (3 jarritas) · 20 frutas','Pan integral y blanco (igual que lunes y miércoles)']},
+  {wd:'Sábado',items:['42 medialunas (1,5 por persona)','13 paltas (½ por persona)','20 yogures · 1 leche · 20 frutas · pan variado']},
+  {wd:'Domingo',items:['12 láminas de queso + 12 de jamón (mesa) / 6 c/u (media)','20 yogures · 1 leche · 20 frutas · pan variado']},
+];
 let state, admin=false, filter='todos', currentView='hoy', menuCat='alm', selOnce=null;
 const KEY='cocina_saet_v4';
 
