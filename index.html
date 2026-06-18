@@ -808,6 +808,7 @@ function load(){try{const s=localStorage.getItem(KEY);state=s?JSON.parse(s):stru
   if(state.selOnce===undefined)state.selOnce=null;
   if(!state.brkMenu||Array.isArray(state.brkMenu)||typeof state.brkMenu!=='object')state.brkMenu=structuredClone(BRK_MENU);
   if(!Array.isArray(state.brkTasks))state.brkTasks=structuredClone(BRK_TASKS);
+  if(!state.crewOverride||typeof state.crewOverride!=='object'||Array.isArray(state.crewOverride))state.crewOverride={};
   if(!state.menu.some(m=>m.cls==='en')){const i=state.menu.findIndex(m=>m.cls==='al');
     state.menu.splice(i+1,0,{tag:'ENSALADA',cls:'en',text:''});}}
 function saveLocal(){localStorage.setItem(KEY,JSON.stringify(state));}
