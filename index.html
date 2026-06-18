@@ -893,7 +893,7 @@ function render(){
   const crew=selLabel?(state.crewOverride[selLabel]||TURNOS[selLabel]||null):null;
   if(selLabel&&(crew||admin)){
     const list=crew||[];
-    document.getElementById('todayCrew').innerHTML=`<div class="tcrew"><h4>👥 Trabajan · ${esc(selLabel.replace(/ de 2026$/,''))}${admin?`<span class="crewEdit" onclick="openCrewEdit()">✏️ editar</span>`:''}</h4><div class="tchips">${list.length?list.map(n=>`<span>${esc(n)}</span>`).join(''):'<span style="opacity:.85">Sin asignar — toca editar</span>'}</div></div>`;
+    document.getElementById('todayCrew').innerHTML=`<div class="tcrew"><h4>👥 Trabajan · ${esc(selLabel.replace(/ de 2026$/,''))}${admin?`<span class="crewEdit" onclick="openCrewEdit()">✏️ editar</span>`:''}</h4><div class="tchips">${list.length?list.map(n=>{const rep=!BASE_TEAM.includes(n);return `<span class="${rep?'rep':''}">${rep?'↩︎ ':''}${esc(n)}</span>`;}).join(''):'<span style="opacity:.85">Sin asignar — toca editar</span>'}</div></div>`;
   }else document.getElementById('todayCrew').innerHTML='';
   // turnos
   const tc=document.getElementById('turnos');tc.innerHTML='';
