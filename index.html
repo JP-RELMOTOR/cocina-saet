@@ -961,7 +961,23 @@ function switchView(v){currentView=v;
   document.getElementById('chips').style.display=(v==='hoy')?'':'none';
   if(v==='menus')renderMenus();
   if(v==='desayuno')renderBrk();
+  if(v==='turnos')renderTurnos();
+  if(v==='recetas')renderRecetas();
   try{window.scrollTo(0,0);}catch(e){}
+}
+function renderTurnos(){
+  const selLabel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:'';
+  document.getElementById('turnosList').innerHTML=Object.keys(TURNOS).map(k=>{
+    const today=k===selLabel;
+    return `<div class="trow${today?' today':''}"><div class="td">${today?'🟢 ':'📅 '}${esc(k.replace(/ de 2026$/,''))}</div>
+      <div class="tn">${TURNOS[k].map(n=>`<span class="${BASE_TEAM.includes(n)?'':'rot'}">${esc(n)}</span>`).join('')}</div></div>`;
+  }).join('');
+}
+function renderRecetas(){
+  const url='https://sites.google.com/view/residencia-saet/cocina/recetas/introducción';
+  document.getElementById('recetasList').innerHTML=
+    `<a class="reclink" href="${url}" target="_blank" rel="noopener">📖 Abrir recetario completo en el sitio →</a>`
+    + RECETAS.map(r=>`<details class="pauta"><summary>${esc(r.cat)} <span class="reccount">${r.items.length}</span></summary><div class="pbody"><div class="reclist">${r.items.map(i=>`<span>${esc(i)}</span>`).join('')}</div></div></details>`).join('');
 }
 
 /* ---- vista Menús (calendario completo) ---- */
