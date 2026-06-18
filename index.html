@@ -947,6 +947,7 @@ function updProgress(){
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 /* coincidencia menú → receta */
 const REC_STOP=new Set(['de','con','al','la','el','y','o','a','en','del','los','las','su','para']);
+const REC_GENERIC=new Set(['vacuno','polo','cerdo','pavo','carne','pescado','ave','jurel','posta','arroz','papas','choclo']);
 function recNorm(s){return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/gn/g,'n').replace(/([a-z])\1+/g,'$1');}
 function recWords(s){return recNorm(s).split(/[^a-z0-9]+/).filter(w=>w.length>=4&&!REC_STOP.has(w));}
 function findRecipes(text){
