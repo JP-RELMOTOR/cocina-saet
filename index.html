@@ -16,7 +16,7 @@
   :root{--brand:#15803d;--brand2:#22a355;--ink:#0f172a;--mut:#64748b;--line:#e6eaef;--bg:#eef2f6;--card:#fff;}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg);color:var(--ink);min-height:100vh;}
-  .wrap{max-width:480px;margin:0 auto;background:var(--bg);min-height:100vh;padding-bottom:90px;}
+  .wrap{max-width:480px;margin:0 auto;background:var(--bg);min-height:100vh;padding-bottom:104px;}
 
   /* Header */
   .bar{background:#fff;padding:16px 18px 14px;position:sticky;top:0;z-index:20;border-bottom:1px solid var(--line);
@@ -162,9 +162,11 @@
   .view.active{display:block;}
   .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;
     border-top:1px solid var(--line);display:flex;z-index:30;box-shadow:0 -4px 16px rgba(15,23,42,.06);padding-bottom:env(safe-area-inset-bottom);}
-  .bnav button{flex:1;background:none;border:none;padding:9px 0 7px;display:flex;flex-direction:column;align-items:center;gap:2px;
-    font-size:11px;font-weight:700;color:#94a3b8;cursor:pointer;}
-  .bnav button .ni{font-size:20px;opacity:.55;transition:.15s;}
+  .bnav button{flex:1;background:none;border:none;padding:13px 0 12px;display:flex;flex-direction:column;align-items:center;gap:4px;
+    font-size:12.5px;font-weight:700;color:#94a3b8;cursor:pointer;}
+  .bnav button .ni{font-size:27px;line-height:1;opacity:.55;transition:.15s;}
+  .bnav button.active{position:relative;}
+  .bnav button.active::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:36px;height:3px;border-radius:3px;background:var(--brand);}
   .bnav button.active{color:var(--brand);}
   .bnav button.active .ni{opacity:1;}
   .vhead{padding:18px 16px 4px;}
@@ -242,7 +244,6 @@
 
   <div id="turnos"></div>
   <button class="addsec hidden" id="addSecBtn" onclick="addSection()">＋ Agregar sección</button>
-  <button class="addsec hidden" id="pinBtn" onclick="changePin()" style="border-style:solid;color:var(--mut);margin-top:10px">🔑 Cambiar clave de administrador</button>
   </div>
 
   <!-- ===================== MENÚS ===================== -->
@@ -275,7 +276,6 @@
       <button class="moreBtn" onclick="openTeam()"><span class="mi">👥</span><span class="mt">Equipo</span><span class="ms">Cocineros y colores</span></button>
       <button class="moreBtn" onclick="openShopping()"><span class="mi">🧾</span><span class="mt">Lista de compras</span><span class="ms">Del menú del jueves</span></button>
       <button class="moreBtn adminonly hidden" onclick="document.getElementById('pdfInput').click()"><span class="mi">📄</span><span class="mt">Cargar menú del mes</span><span class="ms">PDF mensual</span></button>
-      <button class="moreBtn adminonly hidden" onclick="changePin()"><span class="mi">🔑</span><span class="mt">Cambiar clave</span><span class="ms">Solo administrador</span></button>
       <button class="moreBtn" onclick="shareDay()"><span class="mi">📤</span><span class="mt">Compartir</span><span class="ms">Enviar cronograma</span></button>
       <button class="moreBtn" onclick="switchView('menus')"><span class="mi">📅</span><span class="mt">Ver menús</span><span class="ms">Calendario del mes</span></button>
     </div>
@@ -479,7 +479,6 @@ function render(){
     tc.appendChild(blk);
   });
   document.getElementById('addSecBtn').classList.toggle('hidden',!admin);
-  document.getElementById('pinBtn').classList.toggle('hidden',!admin);
   document.getElementById('menuEdit').classList.toggle('hidden',!admin);
   document.querySelectorAll('.adminonly').forEach(b=>b.classList.toggle('hidden',!admin));
   if(currentView==='menus')renderMenus();
@@ -510,23 +509,17 @@ function updProgress(){
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 /* ---------- acciones ---------- */
+const ADMIN_PIN='270216';
 function toggleAdmin(){
   if(!admin){
-    if(!state.adminPin){
-      const np=prompt('Crea tu clave de administrador (solo tú la sabrás):');
-      if(!np)return;state.adminPin=np;save();toast('Clave creada 🔑');
-    }else{
-      const p=prompt('Ingresa la clave de administrador:');
-      if(p===null)return;
-      if(p!==state.adminPin){toast('Clave incorrecta 🚫');return;}
-    }
+    const p=prompt('Ingresa la clave de administrador:');
+    if(p===null)return;
+    if(p!==ADMIN_PIN){toast('Clave incorrecta 🚫');return;}
     admin=true;
   }else admin=false;
   const b=document.getElementById('adminBtn');
   b.classList.toggle('on',admin);b.innerHTML=admin?'👑 Admin':'🔒 Ver';
   toast(admin?'Modo administrador activado':'Modo lectura');render();}
-function changePin(){const a=prompt('Clave actual:');if(a!==state.adminPin){toast('Clave incorrecta 🚫');return;}
-  const p=prompt('Nueva clave de administrador:');if(!p)return;state.adminPin=p;save();toast('Clave actualizada 🔑');}
 function toggleDone(id){const t=state.tasks.find(x=>x.id===id);t.done=!t.done;save();render();}
 
 /* ---- modal genérico ---- */
