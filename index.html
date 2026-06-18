@@ -296,6 +296,8 @@
 <div class="upd-banner" id="updateBanner"><span>✨ Hay una versión nueva de la app</span><button onclick="applyUpdate()">Actualizar</button></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}
 </script>
@@ -429,6 +431,57 @@ const SEED_ONCE=[
 ];
 let state, admin=false, filter='todos', currentView='hoy', menuCat='alm', selOnce=null;
 const KEY='cocina_saet_v3';
+
+/* ===================== SINCRONIZACIÓN EN LA NUBE (Firebase) =====================
+   👉 PEGA AQUÍ la config de tu proyecto Firebase (Realtime Database).
+   Mientras diga "PEGAR_AQUI", la app funciona solo en este dispositivo. */
+const FIREBASE_CONFIG = {
+  apiKey: "PEGAR_AQUI",
+  authDomain: "PEGAR_AQUI",
+  databaseURL: "PEGAR_AQUI",
+  projectId: "PEGAR_AQUI",
+  appId: "PEGAR_AQUI"
+};
+let fbRef=null, fbReady=false, applyingRemote=false;
+const STRUCT_KEYS=['title','sub','menu','cooks','sections','thursdays','onceDays','brkMenu','selThu','selOnce','days'];
+function cloudConfigured(){return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.indexOf('PEGAR')!==0);}
+function docFromState(){const d={};STRUCT_KEYS.forEach(k=>{if(state[k]!==undefined)d[k]=state[k];});
+  d.tasks=state.tasks.map(t=>({id:t.id,sec:t.sec,text:t.text,who:t.who}));
+  d.brkTasks=(state.brkTasks||[]).map(t=>({id:t.id,text:t.text}));
+  return d;}
+function applyDoc(doc){STRUCT_KEYS.forEach(k=>{if(doc[k]!==undefined)state[k]=doc[k];});
+  if(doc.tasks)state.tasks=doc.tasks.map(t=>({id:t.id,sec:t.sec,text:t.text,who:t.who||[],done:false}));
+  if(doc.brkTasks)state.brkTasks=doc.brkTasks.map(t=>({id:t.id,text:t.text,done:false}));}
+function applyDone(dm,bm){dm=dm||{};bm=bm||{};
+  state.tasks.forEach(t=>t.done=!!dm[t.id]);
+  (state.brkTasks||[]).forEach(t=>t.done=!!bm[t.id]);}
+function cloudInit(){
+  if(!cloudConfigured())return;
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    fbRef=firebase.database().ref('cocina');
+    fbReady=true;
+    fbRef.on('value',function(snap){
+      const v=snap.val();
+      if(!v){cloudPushAll();return;}
+      applyingRemote=true;
+      if(v.doc)applyDoc(v.doc);
+      applyDone(v.done,v.brkDone);
+      applyingRemote=false;
+      saveLocal();render();
+      if(currentView==='desayuno')renderBrk();
+      if(currentView==='menus')renderMenus();
+    });
+    toast('☁️ Conectado en la nube');
+  }catch(e){console.warn('cloud',e);}
+}
+function cloudPushDoc(){if(fbReady&&!applyingRemote)fbRef.child('doc').set(docFromState());}
+function cloudPushAll(){if(!fbReady)return;const done={},bd={};
+  state.tasks.forEach(t=>{if(t.done)done[t.id]=true;});
+  (state.brkTasks||[]).forEach(t=>{if(t.done)bd[t.id]=true;});
+  fbRef.set({doc:docFromState(),done:done,brkDone:bd});}
+function cloudDone(id,val){if(fbReady&&!applyingRemote)fbRef.child('done/'+id).set(val?true:null);}
+function cloudBrkDone(id,val){if(fbReady&&!applyingRemote)fbRef.child('brkDone/'+id).set(val?true:null);}
 function load(){try{const s=localStorage.getItem(KEY);state=s?JSON.parse(s):structuredClone(DEFAULT);}catch(e){state=structuredClone(DEFAULT);}
   if(!Array.isArray(state.thursdays))state.thursdays=structuredClone(DEFAULT.thursdays);
   if(state.selThu===undefined)state.selThu=null;
@@ -439,7 +492,8 @@ function load(){try{const s=localStorage.getItem(KEY);state=s?JSON.parse(s):stru
   if(!Array.isArray(state.brkTasks))state.brkTasks=structuredClone(BRK_TASKS);
   if(!state.menu.some(m=>m.cls==='en')){const i=state.menu.findIndex(m=>m.cls==='al');
     state.menu.splice(i+1,0,{tag:'ENSALADA',cls:'en',text:''});}}
-function save(){localStorage.setItem(KEY,JSON.stringify(state));}
+function saveLocal(){localStorage.setItem(KEY,JSON.stringify(state));}
+function save(){saveLocal();cloudPushDoc();}
 function uid(p){return p+Math.random().toString(36).slice(2,8);}
 function cook(id){return state.cooks.find(c=>c.id===id);}
 function initials(n){const p=n.trim().split(/\s+/);return (p.length>=2?(p[0][0]+p[1][0]):n.slice(0,2)).toUpperCase();}
@@ -520,7 +574,7 @@ function toggleAdmin(){
   const b=document.getElementById('adminBtn');
   b.classList.toggle('on',admin);b.innerHTML=admin?'👑 Admin':'🔒 Ver';
   toast(admin?'Modo administrador activado':'Modo lectura');render();}
-function toggleDone(id){const t=state.tasks.find(x=>x.id===id);t.done=!t.done;save();render();}
+function toggleDone(id){const t=state.tasks.find(x=>x.id===id);t.done=!t.done;saveLocal();cloudDone(id,t.done);render();}
 
 /* ---- modal genérico ---- */
 function openModal(html){document.getElementById('sheet').innerHTML=html;document.getElementById('overlay').classList.add('show');}
@@ -716,7 +770,7 @@ function renderBrk(){
   l.innerHTML=(state.brkTasks||[]).map(t=>`<div class="brk${t.done?' done':''}"><div class="chk" onclick="toggleBrk('${t.id}')">✓</div><div class="bt">${esc(t.text)}</div>${admin?`<div class="x" onclick="delBrk('${t.id}')">🗑</div>`:''}</div>`).join('')
     ||'<p class="about" style="margin:10px 16px">Sin tareas aún.</p>';
 }
-function toggleBrk(id){const t=state.brkTasks.find(x=>x.id===id);if(t){t.done=!t.done;save();renderBrk();}}
+function toggleBrk(id){const t=state.brkTasks.find(x=>x.id===id);if(t){t.done=!t.done;saveLocal();cloudBrkDone(id,t.done);renderBrk();}}
 function addBrk(){if(!admin)return;const n=prompt('Tarea para adelantar el desayuno de mañana:');if(!n)return;state.brkTasks.push({id:uid('b'),text:n.trim(),done:false});save();renderBrk();}
 function delBrk(id){if(!admin)return;if(!confirm('¿Eliminar esta tarea?'))return;state.brkTasks=state.brkTasks.filter(t=>t.id!==id);save();renderBrk();}
 function editBrkMenu(){if(!admin)return;const m=state.brkMenu||{base:'',items:[]};
@@ -786,7 +840,7 @@ function delCook(id){if(!admin)return;if(!confirm('¿Quitar a '+cook(id).name+' 
 let tmo;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
   clearTimeout(tmo);tmo=setTimeout(()=>t.classList.remove('show'),1800);}
 
-load();render();
+load();render();cloudInit();
 </script>
 
 <script>
