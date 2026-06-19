@@ -993,6 +993,14 @@ function render(){
     const enc=(state.encargado||{})[selLabel]||'';
     document.getElementById('todayCrew').innerHTML=`<div class="tcrew"><h4>👥 Trabajan · ${esc(selLabel.replace(/ de 2026$/,''))}${admin?`<span class="crewEdit" onclick="openCrewEdit()">✏️ editar</span>`:''}</h4><div class="tchips">${list.length?list.map(n=>{const rep=isRep(n),boss=(n===enc);return `<span class="${rep?'rep':''}${boss?' boss':''}">${boss?'⭐ ':''}${rep?'↩︎ ':''}${esc(n)}</span>`;}).join(''):'<span style="opacity:.85">Sin marcar — toca editar</span>'}</div>${enc?`<div class="encline">⭐ Encargado del turno: <b>${esc(enc)}</b></div>`:''}</div>`;
   }else document.getElementById('todayCrew').innerHTML='';
+  // nota del día
+  const noteEl=document.getElementById('dayNote');
+  if(selLabel){
+    const note=(state.dayNote||{})[selLabel]||'';
+    if(note||admin){
+      noteEl.innerHTML=`<div class="dnote${note?'':' empty'}"><div class="dn-h">📝 Nota del día${admin?`<span class="dn-edit" onclick="openDayNote()">${note?'editar':'agregar'}</span>`:''}</div>${note?`<p>${esc(note)}</p>`:'<p class="dn-ph">Sin notas. Toca «agregar» para dejar un recordatorio (ej. faltó cilantro, horno falló).</p>'}</div>`;
+    }else noteEl.innerHTML='';
+  }else noteEl.innerHTML='';
   // turnos
   const tc=document.getElementById('turnos');tc.innerHTML='';
   state.sections.forEach(sec=>{
