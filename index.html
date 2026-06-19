@@ -1340,7 +1340,7 @@ function openReceta(ci,i){
 
 /* ---- vista Menús (calendario completo) ---- */
 function renderMenus(){
-  const cats=[['alm','🍽️ Almuerzos'],['once','🫖 Once'],['des','🥐 Desayuno']];
+  const cats=[['des','🥐 Desayuno'],['alm','🍽️ Almuerzo'],['once','🫖 Once']];
   const toggle=`<div class="mtoggle">${cats.map(c=>`<button class="${menuCat===c[0]?'on':''}" onclick="menuCat='${c[0]}';renderMenus()">${c[1]}</button>`).join('')}</div>`;
   const q=(document.getElementById('menuSearch').value||'').toLowerCase();
   let body='';
