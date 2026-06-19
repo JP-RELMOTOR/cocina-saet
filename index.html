@@ -1472,7 +1472,6 @@ function renderBrk(){
   document.getElementById('brkMenu').innerHTML=`<div class="ml"><span class="tag" style="background:#fef3c7;color:#92400e">VIERNES</span><p><b>Base:</b> ${esc(m.base||'')}</p></div>`
     +(m.items&&m.items.length?`<ul style="margin:9px 0 0 18px;padding:0;font-size:13px;color:#334155;line-height:1.7">${m.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`:'');
   document.getElementById('brkEdit').classList.toggle('hidden',!admin);
-  document.getElementById('brkPdfRow').classList.add('hidden');
   document.getElementById('addBrkBtn').classList.toggle('hidden',!admin);
   const l=document.getElementById('brkList');
   l.innerHTML=(state.brkTasks||[]).map(t=>`<div class="brk${t.done?' done':''}"><div class="chk" onclick="toggleBrk('${t.id}')">✓</div><div class="bt">${esc(t.text)}</div>${admin?`<div class="x" onclick="delBrk('${t.id}')">🗑</div>`:''}</div>`).join('')
