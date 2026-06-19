@@ -1179,17 +1179,34 @@ function onceDetail(m){
   }
   return (d.menus.length||d.extra||d.cant)?d:null;
 }
+/* convierte un texto de cantidades en lista <ul> legible */
+function cantToList(str){
+  if(!str)return '';
+  const items=str.split(/\.\s+(?=[A-ZÁÉÍÓÚ0-9])/).map(s=>s.replace(/\.\s*$/,'').trim()).filter(Boolean);
+  return `<div class="od-sec"><h4>📋 Cantidades (50 porciones)</h4><ul class="od-cant">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
+}
 function openOnceDetail(){
   const on=state.menu.find(m=>m.cls==='on');const d=onceDetail(on);
   if(!d){toast('Aún no hay detalle de la once');return;}
   const menus=d.menus.length?`<ul class="od-ul">${d.menus.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="desc">Sin menú cargado.</p>';
   const extra=d.extra?`<div class="od-warn">⚠️ Para el día siguiente: ${esc(d.extra)}</div>`:'';
-  let cant='';
-  if(d.cant){
-    const items=d.cant.split(/\.\s+(?=[A-ZÁÉÍÓÚ0-9])/).map(s=>s.replace(/\.\s*$/,'').trim()).filter(Boolean);
-    cant=`<div class="od-sec"><h4>📋 Cantidades (50 porciones)</h4><ul class="od-cant">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
-  }
-  openModal(`<h2>🫖 Detalle de la once</h2>${menus}${extra}${cant}
+  openModal(`<h2>🫖 Detalle de la once</h2>${menus}${extra}${cantToList(d.cant)}
+    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
+}
+/* detalle del almuerzo: {dish,cant} si hay cantidades, o null */
+function almDetail(m){
+  if(!m||m.cls!=='al')return null;
+  let cant=m.cant||'';
+  if(!cant&&state.selThu!=null&&state.thursdays&&state.thursdays[state.selThu])cant=state.thursdays[state.selThu].cant||'';
+  return cant?{dish:m.text||'',cant:cant}:null;
+}
+function openAlmDetail(){
+  const al=state.menu.find(m=>m.cls==='al');const d=almDetail(al);
+  if(!d){toast('Aún no hay detalle del almuerzo');return;}
+  const en=state.menu.find(m=>m.cls==='en');
+  const dish=`<ul class="od-ul"><li>${esc(d.dish||'—')}</li></ul>`;
+  const ens=en&&en.text?`<div class="od-ens">🥗 <b>Ensalada:</b> ${esc(en.text)}</div>`:'';
+  openModal(`<h2>🍽️ Detalle del almuerzo</h2>${dish}${ens}${cantToList(d.cant)}
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
 function tardeSection(){return state.sections.find(s=>/tarde/i.test(s.name))||state.sections[state.sections.length-1];}
