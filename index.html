@@ -1279,11 +1279,9 @@ function almDetail(m){
 function openAlmDetail(){
   const al=state.menu.find(m=>m.cls==='al');const d=almDetail(al);
   if(!d){toast('Aún no hay detalle del almuerzo');return;}
-  const en=state.menu.find(m=>m.cls==='en');
   const sp=splitCant(d.cant);
   const dish=`<ul class="od-ul"><li>${esc(d.dish||'—')}</li></ul>`;
-  const ens=en&&en.text?`<div class="od-ens">🥗 <b>Ensalada:</b> ${esc(en.text)} <span style="opacity:.75">(toca ENSALADA para sus insumos)</span></div>`:'';
-  openModal(`<h2>🍽️ Detalle del almuerzo</h2>${dish}${ens}${cantToList(sp.alm,'📋 Insumo principal (50 porciones)')}
+  openModal(`<h2>🍽️ Detalle del almuerzo</h2>${dish}${cantToList(sp.alm,'📋 Insumo principal (50 porciones)')}
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
 /* insumos de ensalada (vienen dentro del cant del almuerzo) */
