@@ -1476,6 +1476,7 @@ const FIXED_TASKS=[
   {id:'fx_ollas',sec:'inter',text:'🫧 Lavado de ollas (budineras, cocina, etc.)'},
   {id:'fx_mesa',sec:'inter',text:'🍴 Preparar mesa para almorzar (plato, cubierto, calentar la comida, etc.)'},
   // tarde
+  {id:'fx_comedoronce',sec:'tarde',text:'🍽️ Preparar comedor (once)'},
   {id:'fx_limpmesas',sec:'tarde',text:'🧼 Limpieza de mesas del comedor (y el piso si es necesario)'},
 ];
 function morningSection(){return state.sections.find(s=>/ma(ñ|n)ana/i.test(s.name))||state.sections.find(s=>/almuerzo|ma(ñ|n)/i.test(s.name))||state.sections[0];}
