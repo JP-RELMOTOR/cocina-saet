@@ -1011,10 +1011,11 @@ function mkTask(t){
   const main=cook(t.who[0]);const c=main?main.color:'#94a3b8';
   const pills=t.who.map(id=>{const k=cook(id);if(!k)return'';
     return `<span class="pill ${k.sub?'sub':''}" style="--pc:${k.color}"><span class="dot">${initials(k.name)}</span>${esc(k.name)}</span>`;}).join('');
-  const el=document.createElement('div');el.className='task'+(t.done?' done':'');el.style.setProperty('--c',c);
+  const el=document.createElement('div');el.className='task'+(t.done?' done':'')+(t.fixed?' fixed':'');el.style.setProperty('--c',c);
+  const badge=t.fixed?'<span class="fxbadge">rutina</span>':'';
   el.innerHTML=`<div class="chk" onclick="toggleDone('${t.id}')">✓</div>
-    <div class="body"><div class="txt">${esc(t.text)}</div><div class="who">${pills||'<span class="pill">Sin asignar</span>'}</div></div>
-    ${admin?`<div class="edit"><button class="iconbtn" onclick="openTask('${t.id}')">✏️</button><button class="iconbtn del" onclick="delTask('${t.id}')">🗑</button></div>`:''}`;
+    <div class="body"><div class="txt">${esc(t.text)}${badge}</div><div class="who">${pills||'<span class="pill">Sin asignar</span>'}</div></div>
+    ${admin?`<div class="edit"><button class="iconbtn" onclick="openTask('${t.id}')">✏️</button>${t.fixed?'':`<button class="iconbtn del" onclick="delTask('${t.id}')">🗑</button>`}</div>`:''}`;
   return el;
 }
 function updProgress(){
