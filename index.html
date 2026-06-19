@@ -1144,9 +1144,38 @@ function openOncePicker(){
 function applyOnce(i){
   if(!admin)return;
   const o=state.onceDays[i];if(!o)return;state.selOnce=i;
-  const on=state.menu.find(m=>m.cls==='on');if(on)on.text=o.menus.join(' · ');
+  const on=state.menu.find(m=>m.cls==='on');
+  if(on){on.text=o.menus.join(' · ');on.menus=(o.menus||[]).slice();on.extra=o.extra||'';on.cant=o.cant||'';}
   const added=addOnceExtraTask(o);
   save();closeModal();render();toast(added?'Once cargada · tarea agregada a Tarde ✅':'Once cargada ✅');
+}
+/* detalle de la once: devuelve {menus,extra,cant} si el item tiene info, o null */
+function onceDetail(m){
+  if(!m||m.cls!=='on')return null;
+  let d={menus:[],extra:'',cant:''};
+  if(Array.isArray(m.menus)&&m.menus.length)d.menus=m.menus;
+  else if(m.text)d.menus=m.text.split('·').map(s=>s.trim()).filter(Boolean);
+  d.extra=m.extra||'';d.cant=m.cant||'';
+  // respaldo: si el item no trae detalle, usar la once seleccionada
+  if(!d.extra&&!d.cant&&state.selOnce!=null&&state.onceDays&&state.onceDays[state.selOnce]){
+    const o=state.onceDays[state.selOnce];
+    if(!d.menus.length)d.menus=o.menus||[];
+    d.extra=o.extra||'';d.cant=o.cant||'';
+  }
+  return (d.menus.length||d.extra||d.cant)?d:null;
+}
+function openOnceDetail(){
+  const on=state.menu.find(m=>m.cls==='on');const d=onceDetail(on);
+  if(!d){toast('Aún no hay detalle de la once');return;}
+  const menus=d.menus.length?`<ul class="od-ul">${d.menus.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="desc">Sin menú cargado.</p>';
+  const extra=d.extra?`<div class="od-warn">⚠️ Para el día siguiente: ${esc(d.extra)}</div>`:'';
+  let cant='';
+  if(d.cant){
+    const items=d.cant.split(/\.\s+(?=[A-ZÁÉÍÓÚ0-9])/).map(s=>s.replace(/\.\s*$/,'').trim()).filter(Boolean);
+    cant=`<div class="od-sec"><h4>📋 Cantidades (50 porciones)</h4><ul class="od-cant">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
+  }
+  openModal(`<h2>🫖 Detalle de la once</h2>${menus}${extra}${cant}
+    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
 function tardeSection(){return state.sections.find(s=>/tarde/i.test(s.name))||state.sections[state.sections.length-1];}
 function addOnceExtraTask(o){
