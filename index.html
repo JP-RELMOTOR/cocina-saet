@@ -1352,9 +1352,17 @@ function weeklyReset(){
 }
 /* === tareas fijas de cada jueves (siempre presentes en la sección de la mañana) === */
 const FIXED_TASKS=[
-  {id:'fx_herv',text:'🫖 Hervidores: aplicar sucedáneo de limón'},
-  {id:'fx_mant',text:'🧈 Lavar mantequilleras, mermeladeros y mieleros, y rellenar'},
-  {id:'fx_desay',text:'🍳 Preparar desayuno del día siguiente'},
+  // mañana
+  {id:'fx_comedor',sec:'morning',text:'🪑 Preparar comedor'},
+  {id:'fx_almuerzo',sec:'morning',text:'🍲 Preparar almuerzo'},
+  {id:'fx_ensalada',sec:'morning',text:'🥗 Preparar ensalada'},
+  {id:'fx_herv',sec:'morning',text:'🫖 Hervidores: aplicar sucedáneo de limón'},
+  {id:'fx_mant',sec:'morning',text:'🧈 Lavar mantequilleras, mermeladeros y mieleros, y rellenar'},
+  {id:'fx_desay',sec:'morning',text:'🍳 Preparar desayuno del día siguiente'},
+  // intermedio
+  {id:'fx_loza',sec:'inter',text:'🧽 Lavado de loza (platos, vasos, cubiertos, etc.)'},
+  {id:'fx_ollas',sec:'inter',text:'🫧 Lavado de ollas (budineras, cocina, etc.)'},
+  {id:'fx_mesa',sec:'inter',text:'🍴 Preparar mesa para almorzar (plato, cubierto, calentar la comida, etc.)'},
 ];
 function morningSection(){return state.sections.find(s=>/ma(ñ|n)ana/i.test(s.name))||state.sections.find(s=>/almuerzo|ma(ñ|n)/i.test(s.name))||state.sections[0];}
 function ensureFixedTasks(){
