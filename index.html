@@ -1322,6 +1322,19 @@ function openDayMenu(dt){
   openModal(`<h2 style="text-transform:capitalize">${esc((d.wd||'')+' '+(d.dt||''))}</h2>${body}
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
+/* detalle de la once para un día del calendario de onces */
+function openOnceMenu(dt){
+  const o=ONCE_CAL.find(x=>String(x.dt)===String(dt));
+  if(!o){toast('Sin detalle');return;}
+  const od=(state.onceDays||[]).find(x=>x.dt===o.dt);
+  const menus=(od&&od.menus&&od.menus.length)?od.menus:(o.menus||[]);
+  let body=menus.length?`<ul class="od-ul">${menus.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="desc">Sin menú.</p>';
+  if(od&&od.extra)body+=`<div class="od-warn">⚠️ Para el día siguiente: ${esc(od.extra)}</div>`;
+  if(od&&od.cant)body+=cantToList(od.cant,'📋 Cantidades (50 porciones)');
+  else body+=`<p class="desc" style="margin-top:12px">ℹ️ Las cantidades por insumo están cargadas para los jueves con once disponible.</p>`;
+  openModal(`<h2 style="text-transform:capitalize">🫖 ${esc(o.wd+' '+o.dt)}</h2>${body}
+    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
+}
 function tardeSection(){return state.sections.find(s=>/tarde/i.test(s.name))||state.sections[state.sections.length-1];}
 function addOnceExtraTask(o){
   if(!o||!o.extra)return false;
