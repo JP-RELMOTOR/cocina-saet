@@ -931,18 +931,15 @@ function render(){
   // menu
   const ml=document.getElementById('menuList');ml.innerHTML='';
   state.menu.forEach(m=>{
+    const cls=m.cls||'al';
     const onceD=onceDetail(m), almD=almDetail(m), ensD=ensDetail(m);
-    if(onceD){
-      ml.insertAdjacentHTML('beforeend',`<div class="ml tapon" onclick="openOnceDetail()"><span class="tag on tap">${esc(m.tag)} ▾</span><p>${esc(m.text||'—')}<span class="seedet">👉 Toca para ver el detalle de la once</span></p></div>`);
-    }else if(almD){
-      ml.insertAdjacentHTML('beforeend',`<div class="ml tapon" onclick="openAlmDetail()"><span class="tag al tap">${esc(m.tag)} ▾</span><p>${esc(m.text||'—')}<span class="seedet" style="color:#b45309">👉 Toca para ver cantidades y detalle</span></p></div>`);
-    }else if(ensD){
-      ml.insertAdjacentHTML('beforeend',`<div class="ml tapon" onclick="openEnsDetail()"><span class="tag en tap">${esc(m.tag)} ▾</span><p>${esc(m.text||'—')}<span class="seedet" style="color:#15803d">👉 Toca para ver los insumos de ensalada</span></p></div>`);
-    }else{
-      ml.insertAdjacentHTML('beforeend',`<div class="ml"><span class="tag ${m.cls||'al'}">${esc(m.tag)}</span><p>${esc(m.text||'—')}</p></div>`);
-    }
+    const action=onceD?'openOnceDetail()':almD?'openAlmDetail()':ensD?'openEnsDetail()':'';
     const recs=findRecipes(m.text);
-    if(recs.length)ml.insertAdjacentHTML('beforeend',`<div class="reclinks">${recs.map(r=>`<button class="reclinkbtn" onclick="openReceta(${r.ci},${r.i})">📖 ${esc(r.name)}</button>`).join('')}</div>`);
+    const recHtml=recs.length?`<div class="reclinks">${recs.map(r=>`<button class="reclinkbtn" onclick="event.stopPropagation();openReceta(${r.ci},${r.i})">📖 ${esc(r.name)}</button>`).join('')}</div>`:'';
+    const head=action
+      ? `<div class="mb-head" onclick="${action}"><span class="tag ${cls} tap">${esc(m.tag)}</span><p>${esc(m.text||'—')}</p><span class="mb-x">ⓘ</span></div>`
+      : `<div class="mb-head"><span class="tag ${cls}">${esc(m.tag)}</span><p>${esc(m.text||'—')}</p></div>`;
+    ml.insertAdjacentHTML('beforeend',`<div class="mblock ${cls}">${head}${recHtml}</div>`);
   });
   // banner del jueves + ingredientes + botones PDF
   const sel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu]:null;
