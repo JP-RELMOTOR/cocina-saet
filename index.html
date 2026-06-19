@@ -1495,7 +1495,18 @@ function crewSave(){if(!admin)return;const label=curCrewLabel();if(!label)return
   if(!state.encargado||typeof state.encargado!=='object')state.encargado={};
   if(crewBoss&&crewPresent.has(crewBoss))state.encargado[label]=crewBoss;else delete state.encargado[label];
   save();closeModal();render();toast('Equipo del día actualizado ✅');}
-function crewReset(){if(!admin)return;const label=curCrewLabel();if(label)delete state.crewOverride[label];save();closeModal();render();toast('Restaurado al equipo base');}
+function crewReset(){if(!admin)return;const label=curCrewLabel();if(label)delete state.crewOverride[label];if(state.encargado)delete state.encargado[label];save();closeModal();render();toast('Restaurado al equipo base');}
+function openDayNote(){if(!admin)return;const label=curCrewLabel();if(!label)return;
+  const cur=(state.dayNote||{})[label]||'';
+  openModal(`<h2>📝 Nota del día</h2><p class="desc">${esc(label.replace(/ de 2026$/,''))} · queda guardada y se comparte con el equipo.</p>
+    <textarea id="dnInput" class="dn-ta" placeholder="Ej.: faltó cilantro, el horno calienta de más, sobró puré para la once…">${esc(cur)}</textarea>
+    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="saveDayNote()">Guardar</button></div>`);
+  setTimeout(()=>{const t=document.getElementById('dnInput');if(t)t.focus();},50);}
+function saveDayNote(){if(!admin)return;const label=curCrewLabel();if(!label)return;
+  if(!state.dayNote||typeof state.dayNote!=='object')state.dayNote={};
+  const v=(document.getElementById('dnInput').value||'').trim();
+  if(v)state.dayNote[label]=v;else delete state.dayNote[label];
+  save();closeModal();render();toast('Nota guardada ✅');}
 function renderRecetas(){
   const data=(typeof RECETAS_FULL!=='undefined')?RECETAS_FULL:{};
   const cats=Object.keys(data);
