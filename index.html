@@ -153,9 +153,16 @@
   .pill.sub{border-style:dashed;}
   .task .edit{display:flex;flex-direction:column;gap:7px;margin-left:6px;}
   .tasklist{min-height:6px;}
-  .task.sortable-chosen{box-shadow:0 16px 34px rgba(15,23,42,.26);transform:scale(1.025);opacity:.99;}
-  .task.sortable-ghost{opacity:.28;}
-  .task.sortable-drag{opacity:.96;}
+  .task .draghandle{cursor:grab;font-size:19px;color:#c2cad6;line-height:1;display:flex;align-items:center;justify-content:center;width:30px;height:26px;touch-action:none;user-select:none;-webkit-user-select:none;}
+  .task .draghandle:active{cursor:grabbing;color:var(--brand);}
+  body.dark .task .draghandle{color:#4b5563;}
+  /* hueco donde caerá la tarea */
+  .task.sortable-ghost{opacity:1;background:repeating-linear-gradient(45deg,#eef4f0,#eef4f0 8px,#e3ece6 8px,#e3ece6 16px);border:1.5px dashed var(--brand);box-shadow:none;}
+  .task.sortable-ghost>*{visibility:hidden;}
+  body.dark .task.sortable-ghost{background:repeating-linear-gradient(45deg,#1c2530,#1c2530 8px,#222c39 8px,#222c39 16px);}
+  /* copia que sigue al dedo (levantada) */
+  .task.sortable-drag{box-shadow:0 20px 44px rgba(15,23,42,.40)!important;opacity:.98;border-color:var(--brand);}
+  .task.sortable-chosen{cursor:grabbing;}
   .draghint{text-align:center;color:#94a3b8;font-size:11.5px;margin:2px 16px 0;}
   .iconbtn{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px;
     display:flex;align-items:center;justify-content:center;}
