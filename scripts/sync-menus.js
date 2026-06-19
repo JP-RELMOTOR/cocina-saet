@@ -82,6 +82,12 @@ async function main(){
     process.exit(1);
   }
 
+  if(process.env.DRY_RUN){
+    console.log('— DRY RUN — no escribo en Firebase. Resultado del parseo:');
+    console.log(JSON.stringify(parsed,null,1));
+    return;
+  }
+
   // comparar con lo que ya está en la nube para no escribir de más
   let current = null;
   try{
