@@ -1458,15 +1458,25 @@ function drawCrewEdit(){const label=curCrewLabel();
     return `<div class="vol${on?' on':''}" onclick="crewToggle('${jsq(c.name)}')"><span class="vdot" style="background:${c.color}"></span><span class="vn">${esc(c.name)}${c.sub?' ↩︎':''}</span><b>${on?'✓':'+'}</b></div>`;}).join('');
   const tn=new Set(state.cooks.map(c=>c.name));
   const extra=[...crewPresent].filter(n=>!tn.has(n)).map(n=>`<div class="vol on" onclick="crewToggle('${jsq(n)}')"><span class="vdot" style="background:#64748b"></span><span class="vn">↩︎ ${esc(n)}</span><b>✓</b></div>`).join('');
+  // selector de encargado entre los presentes
+  const present=[...crewPresent];
+  if(crewBoss&&!crewPresent.has(crewBoss))crewBoss='';
+  const bossChips=present.length?present.map(n=>`<div class="bosschip${crewBoss===n?' on':''}" onclick="crewSetBoss('${jsq(n)}')">${crewBoss===n?'⭐ ':''}${esc(n)}</div>`).join(''):'<span class="desc">Marca primero quiénes vienen.</span>';
   openModal(`<h2>¿Quiénes trabajan hoy?</h2><p class="desc">${esc((label||'').replace(/ de 2026$/,''))} · marca de tu equipo quiénes vienen. ↩︎ = reemplazo.</p>
     <div class="volgrid">${team}${extra}</div>
     <div class="addrow"><input type="text" id="newVol" placeholder="Agregar reemplazo externo"><button onclick="crewAddExt()">Agregar</button></div>
+    <h4 class="bosshead">⭐ Encargado del turno</h4>
+    <div class="bossgrid">${bossChips}</div>
     <div class="btns" style="margin-top:16px"><button class="btn ghost" onclick="crewReset()">Restaurar</button><button class="btn primary" onclick="crewSave()">Guardar</button></div>`);}
-function crewToggle(name){if(crewPresent.has(name))crewPresent.delete(name);else crewPresent.add(name);drawCrewEdit();}
+function crewToggle(name){if(crewPresent.has(name))crewPresent.delete(name);else crewPresent.add(name);if(crewBoss===name&&!crewPresent.has(name))crewBoss='';drawCrewEdit();}
 function crewAddExt(){const i=document.getElementById('newVol');if(i&&i.value.trim()){crewPresent.add(i.value.trim());}drawCrewEdit();}
+function crewSetBoss(name){crewBoss=(crewBoss===name)?'':name;drawCrewEdit();}
 function crewSave(){if(!admin)return;const label=curCrewLabel();if(!label)return;
   const ordered=state.cooks.map(c=>c.name).filter(n=>crewPresent.has(n)).concat([...crewPresent].filter(n=>!state.cooks.some(c=>c.name===n)));
-  state.crewOverride[label]=ordered;save();closeModal();render();toast('Equipo del día actualizado ✅');}
+  state.crewOverride[label]=ordered;
+  if(!state.encargado||typeof state.encargado!=='object')state.encargado={};
+  if(crewBoss&&crewPresent.has(crewBoss))state.encargado[label]=crewBoss;else delete state.encargado[label];
+  save();closeModal();render();toast('Equipo del día actualizado ✅');}
 function crewReset(){if(!admin)return;const label=curCrewLabel();if(label)delete state.crewOverride[label];save();closeModal();render();toast('Restaurado al equipo base');}
 function renderRecetas(){
   const data=(typeof RECETAS_FULL!=='undefined')?RECETAS_FULL:{};
