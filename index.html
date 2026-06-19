@@ -1141,7 +1141,7 @@ function openThuPicker(){
 function applyThursday(i){
   if(!admin)return;
   const t=state.thursdays[i];if(!t)return;state.selThu=i;
-  const al=state.menu.find(m=>m.cls==='al');if(al)al.text=t.dish;
+  const al=state.menu.find(m=>m.cls==='al');if(al){al.text=t.dish;al.cant=t.cant||'';}
   const en=state.menu.find(m=>m.cls==='en');if(en)en.text=t.ens||'';
   save();closeModal();render();toast('Almuerzo cargado ✅');
 }
