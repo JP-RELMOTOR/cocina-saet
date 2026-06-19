@@ -922,9 +922,11 @@ function render(){
   // menu
   const ml=document.getElementById('menuList');ml.innerHTML='';
   state.menu.forEach(m=>{
-    const det=onceDetail(m);
-    if(det){
+    const onceD=onceDetail(m), almD=almDetail(m);
+    if(onceD){
       ml.insertAdjacentHTML('beforeend',`<div class="ml tapon" onclick="openOnceDetail()"><span class="tag on tap">${esc(m.tag)} ▾</span><p>${esc(m.text||'—')}<span class="seedet">👉 Toca para ver el detalle de la once</span></p></div>`);
+    }else if(almD){
+      ml.insertAdjacentHTML('beforeend',`<div class="ml tapon" onclick="openAlmDetail()"><span class="tag al tap">${esc(m.tag)} ▾</span><p>${esc(m.text||'—')}<span class="seedet" style="color:#b45309">👉 Toca para ver cantidades y detalle</span></p></div>`);
     }else{
       ml.insertAdjacentHTML('beforeend',`<div class="ml"><span class="tag ${m.cls||'al'}">${esc(m.tag)}</span><p>${esc(m.text||'—')}</p></div>`);
     }
