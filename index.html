@@ -761,7 +761,6 @@ const SEED_ONCE=[
 ];
 /* === DESFASE: el equipo cocina al día siguiente de lo que aporta la congregación.
    cook(día) = congregación(día anterior). Por eso corremos cada menú +1 día. === */
-const MONTHS_ES={enero:0,febrero:1,marzo:2,abril:3,mayo:4,junio:5,julio:6,agosto:7,septiembre:8,setiembre:8,octubre:9,noviembre:10,diciembre:11};
 const MON_SHORT=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const WD_ES=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 function shiftCalEntry(e){
@@ -771,14 +770,6 @@ function shiftCalEntry(e){
   if(idx<0)return e;
   const d=new Date(2026,idx,day+1);
   return {wd:WD_ES[d.getDay()],dt:d.getDate()+' '+MON_SHORT[d.getMonth()],dish:e.dish,ens:e.ens,cong:e.cong};
-}
-function shiftParsed(e){
-  const idx=MONTHS_ES[e.month]; if(idx==null)return e;
-  const d=new Date(e.year,idx,e.day+1);
-  const wd=WD_ES[d.getDay()];
-  const mname=Object.keys(MONTHS_ES).find(k=>MONTHS_ES[k]===d.getMonth())||e.month;
-  return {wd,day:d.getDate(),month:mname,year:d.getFullYear(),
-    label:C(wd)+' '+d.getDate()+' de '+mname+' de '+d.getFullYear(),dish:e.dish,ens:e.ens,cant:e.cant};
 }
 /* Turnos del equipo (EER37 · jueves) — quiénes trabajan cada jueves */
 const BASE_TEAM=['Juan Pablo Correa','Mijal de Correa','Gabriel Díaz','Vanessa Díaz'];
