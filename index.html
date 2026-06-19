@@ -1342,7 +1342,8 @@ function openOnceDetail(){
   if(!d){toast('Aún no hay detalle de la once');return;}
   const menus=d.menus.length?`<ul class="od-ul">${d.menus.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="desc">Sin menú cargado.</p>';
   const extra=d.extra?`<div class="od-warn">⚠️ Para el día siguiente: ${esc(d.extra)}</div>`:'';
-  openModal(`<h2>🫖 Detalle de la once</h2>${menus}${extra}${cantToList(d.cant)}
+  const reuse=`<div class="od-reuse">♻️ La once reutiliza los sobrantes del almuerzo.</div>`;
+  openModal(`<h2>🫖 Detalle de la once</h2>${menus}${extra}${cantToList(d.cant)}${reuse}
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
 /* detalle del almuerzo: {dish,cant} si hay cantidades, o null */
