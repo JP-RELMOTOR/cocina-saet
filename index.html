@@ -932,6 +932,7 @@ function cloudInit(){
         const lbl=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
         if(lbl)loadDay(lbl);
       }
+      checkMenusUpdated();
       let ch=migrate();
       if(ensureFixedTasks())ch=true;
       if(autoSelectThursday())ch=true;
