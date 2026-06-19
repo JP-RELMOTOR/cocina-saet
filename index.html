@@ -300,6 +300,11 @@
   .pauta summary::after{content:"▾";color:#94a3b8;font-size:12px;}
   .pauta[open] summary::after{content:"▴";}
   .pauta .pbody{padding:0 16px 15px;font-size:13.5px;line-height:1.6;color:#334155;}
+  .temptbl{width:100%;border-collapse:collapse;margin-top:2px;}
+  .temptbl td{padding:11px 13px;border:1px solid var(--line);font-size:14px;font-weight:600;}
+  .temptbl td:last-child{text-align:right;color:var(--brand);font-size:17px;font-weight:800;white-space:nowrap;width:90px;}
+  body.dark .temptbl td{color:var(--ink);}
+  body.dark .temptbl td:last-child{color:#34d27f;}
   .pauta .pbody ul{margin:0 0 0 18px;padding:0;}
   .pauta .pbody li{margin-bottom:5px;}
   .pauta .pbody p{margin-bottom:9px;}
