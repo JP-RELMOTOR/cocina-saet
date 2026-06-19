@@ -906,7 +906,12 @@ function render(){
   // menu
   const ml=document.getElementById('menuList');ml.innerHTML='';
   state.menu.forEach(m=>{
-    ml.insertAdjacentHTML('beforeend',`<div class="ml"><span class="tag ${m.cls||'al'}">${esc(m.tag)}</span><p>${esc(m.text||'—')}</p></div>`);
+    const det=onceDetail(m);
+    if(det){
+      ml.insertAdjacentHTML('beforeend',`<div class="ml tapon" onclick="openOnceDetail()"><span class="tag on tap">${esc(m.tag)} ▾</span><p>${esc(m.text||'—')}<span class="seedet">👉 Toca para ver el detalle de la once</span></p></div>`);
+    }else{
+      ml.insertAdjacentHTML('beforeend',`<div class="ml"><span class="tag ${m.cls||'al'}">${esc(m.tag)}</span><p>${esc(m.text||'—')}</p></div>`);
+    }
     const recs=findRecipes(m.text);
     if(recs.length)ml.insertAdjacentHTML('beforeend',`<div class="reclinks">${recs.map(r=>`<button class="reclinkbtn" onclick="openReceta(${r.ci},${r.i})">📖 ${esc(r.name)}</button>`).join('')}</div>`);
   });
