@@ -936,7 +936,9 @@ function cloudInit(){
     toast('☁️ Conectado en la nube');
   }catch(e){console.warn('cloud',e);}
 }
-function cloudPushDoc(){if(fbReady&&!applyingRemote)fbRef.child('doc').set(docFromState());}
+/* update (no set): fusiona los campos de la app SIN borrar onceDays/thursdays,
+   que son propiedad del robot de sincronización. */
+function cloudPushDoc(){if(fbReady&&!applyingRemote)fbRef.child('doc').update(docFromState());}
 function cloudPushAll(){if(!fbReady)return;const done={},bd={};
   state.tasks.forEach(t=>{if(t.done)done[t.id]=true;});
   (state.brkTasks||[]).forEach(t=>{if(t.done)bd[t.id]=true;});
