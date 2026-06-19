@@ -1155,7 +1155,7 @@ let crewPresent=new Set();
 function jsq(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 function curCrewLabel(){return (state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;}
 function defaultCrew(){return state.cooks.filter(c=>!c.sub).map(c=>c.name);}
-function isRep(name){const c=state.cooks.find(x=>x.name===name);return c?!!c.sub:true;}
+function isRep(name){const c=state.cooks.find(x=>x.name===name);return !!(c&&c.sub);}
 function openCrewEdit(){if(!admin)return;const label=curCrewLabel();if(!label)return;
   crewPresent=new Set(state.crewOverride[label]||defaultCrew());drawCrewEdit();}
 function drawCrewEdit(){const label=curCrewLabel();
