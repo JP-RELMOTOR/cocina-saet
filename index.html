@@ -875,6 +875,15 @@ function migrate(){
     }
     state.migV=3;changed=true;
   }
+  if(!(state.migV>=4)){
+    // suma las onces de junio que faltan (jueves 4 y 11) y ordena por fecha
+    if(Array.isArray(state.onceDays)){
+      SEED_ONCE.forEach(o=>{if(!state.onceDays.some(x=>x.label===o.label))state.onceDays.push(structuredClone(o));});
+      const dkey=o=>{const m=String(o.dt||'').match(/(\d+)\s+([a-zñ]+)/i);return m?(MON_SHORT.indexOf(m[2].slice(0,3).toLowerCase())*100+(+m[1])):999;};
+      state.onceDays.sort((a,b)=>dkey(a)-dkey(b));
+    }
+    state.migV=4;changed=true;
+  }
   return changed;
 }
 function cloudConfigured(){return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.indexOf('PEGAR')!==0);}
