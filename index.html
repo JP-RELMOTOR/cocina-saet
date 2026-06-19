@@ -1330,6 +1330,17 @@ function saveTask(){
   save();closeModal();render();toast('Tarea guardada ✅');
 }
 function delTask(id){if(!admin)return;if(!confirm('¿Eliminar esta tarea?'))return;state.tasks=state.tasks.filter(t=>t.id!==id);save();render();toast('Tarea eliminada');}
+/* mover tarea arriba/abajo DENTRO de su sección (solo admin) */
+function moveTask(id,dir){
+  if(!admin)return;
+  const i=state.tasks.findIndex(t=>t.id===id);if(i<0)return;
+  const sec=state.tasks[i].sec;
+  let j=i+dir;
+  while(j>=0&&j<state.tasks.length&&state.tasks[j].sec!==sec)j+=dir;
+  if(j<0||j>=state.tasks.length)return; // no hay vecina en la sección
+  const tmp=state.tasks[i];state.tasks[i]=state.tasks[j];state.tasks[j]=tmp;
+  save();render();
+}
 
 /* ---- secciones ---- */
 function addSection(){if(!admin)return;const n=prompt('Nombre de la nueva sección:','Nueva sección');if(!n)return;
