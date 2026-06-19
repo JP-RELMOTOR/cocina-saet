@@ -1422,12 +1422,14 @@ function openOnceMenu(dt){
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
 function tardeSection(){return state.sections.find(s=>/tarde/i.test(s.name))||state.sections[state.sections.length-1];}
-function addOnceExtraTask(o){
-  if(!o||!o.extra)return false;
-  const sec=tardeSection();if(!sec)return false;
-  if(state.tasks.some(t=>t.sec===sec.id && t.text===o.extra))return false;
-  state.tasks.push({id:uid('t'),sec:sec.id,text:o.extra,who:[],done:false});
-  return true;
+/* tarea de descongelar (de la once) auto-gestionada: refleja SOLO el día cargado.
+   id estable 'fx_onceextra' + limpieza de descongelados sueltos de semanas previas. */
+function syncOnceExtraTask(o){
+  const had=state.tasks.some(t=>t.id==='fx_onceextra' || (/^descongel/i.test(t.text||'') && (!t.who||!t.who.length)));
+  state.tasks=state.tasks.filter(t=>!(t.id==='fx_onceextra' || (/^descongel/i.test(t.text||'') && (!t.who||!t.who.length))));
+  const want = o && o.extra ? o.extra : null;
+  if(want){const sec=tardeSection();if(sec)state.tasks.push({id:'fx_onceextra',sec:sec.id,text:want,who:[],done:false});}
+  return had || !!want;
 }
 
 /* ---- navegación entre vistas ---- */
