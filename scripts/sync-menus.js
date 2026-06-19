@@ -1,23 +1,26 @@
 /* ============================================================================
-   Cocina SAET · Sincronización automática de ONCES desde el sitio web
+   Cocina SAET · Sincronización automática de MENÚS desde el sitio web
    ----------------------------------------------------------------------------
-   Lee la página pública de onces de Residencia SAET, extrae los menús de los
-   JUEVES (menús, descongelar, cantidades) y los escribe en Firebase Realtime
-   Database (cocina/doc/onceDays). La app los lee en vivo → se actualiza sola.
+   Lee las páginas públicas de Residencia SAET y actualiza Firebase Realtime
+   Database con los menús de los JUEVES (los días que cocina el equipo):
+     • ONCES     → cocina/doc/onceDays   (menús, descongelar, cantidades)
+     • ALMUERZOS → cocina/doc/thursdays  (plato, ensalada, insumos)
+   La app lee Firebase en vivo → se actualiza sola, sin intervención manual.
 
    Se ejecuta solo (GitHub Actions, ver .github/workflows/sync-menus.yml).
-   Seguridad: NO escribe si el parseo no pasa los chequeos de sanidad, así un
-   cambio en la web nunca borra los datos buenos.
+   Seguridad: cada sección se valida por separado; si el parseo no pasa los
+   chequeos de sanidad, NO se escribe esa parte (un cambio en la web nunca
+   borra los datos buenos). Probar sin escribir: DRY_RUN=1 node scripts/sync-menus.js
 ============================================================================ */
 
 const ONCE_URL = 'https://sites.google.com/view/residencia-saet/cocina/once-cena/men%C3%BA-onces';
+const ALM_URL  = 'https://sites.google.com/view/residencia-saet/cocina/almuerzo/men%C3%BA-almuerzo';
 const DB = 'https://cocina-saet-default-rtdb.firebaseio.com';
-const ONCE_PATH = '/cocina/doc/onceDays.json';
 
 const MON = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const SHORT = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
-function clean(s){return String(s||'').replace(/\s+/g,' ').replace(/\s+([.,;:])/g,'$1').trim();}
+function clean(s){return String(s||'').replace(/\s+/g,' ').replace(/\s+([.,;:])/g,'$1').replace(/^[\s|.\-]+/,'').replace(/[\s.]+$/,'').trim();}
 
 function htmlToText(html){
   html = html.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ');
@@ -28,17 +31,27 @@ function htmlToText(html){
     .replace(/\s+/g,' ');
 }
 
+// localiza los encabezados de día ("Jueves, 4 de junio de 2026") y devuelve sus posiciones
+function dayHeads(t){
+  const re = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo),?\s+(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+2026/gi;
+  let m, heads = [];
+  while(m = re.exec(t)) heads.push({i:m.index, end:re.lastIndex, wd:m[1].toLowerCase(), day:+m[2], mon:m[3].toLowerCase()});
+  return heads;
+}
+function byDate(a,b){
+  const pa=a.label.match(/(\d+) de (\w+)/), pb=b.label.match(/(\d+) de (\w+)/);
+  return (MON.indexOf(pa[2])*100+ +pa[1]) - (MON.indexOf(pb[2])*100+ +pb[1]);
+}
+
+/* ---------------- ONCES ---------------- */
 function parseOnce(html){
   const t = htmlToText(html);
-  const dayHdr = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo),?\s+(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+2026/gi;
-  let m, heads = [];
-  while(m = dayHdr.exec(t)) heads.push({i:m.index, end:dayHdr.lastIndex, wd:m[1].toLowerCase(), day:+m[2], mon:m[3].toLowerCase()});
+  const heads = dayHeads(t);
   const out = [];
   for(let k=0;k<heads.length;k++){
     const h = heads[k];
     if(!/^juev/.test(h.wd)) continue;
     const body = t.slice(h.end, k+1<heads.length ? heads[k+1].i : t.length);
-    // menús numerados "Menú N: ..."
     let menus = [];
     const mr = /Men[uú]\s*(\d+)\s*:\s*([^]*?)(?=Men[uú]\s*\d+\s*:|Descongelar|Cantidades|$)/gi;
     let mm;
@@ -49,68 +62,102 @@ function parseOnce(html){
     }
     let extra = '';
     const ex = body.match(/Descongelar([^]*?)(?=Cantidades|$)/i);
-    if(ex) extra = 'Descongelar ' + clean(ex[1]).replace(/^\s+/,'').replace(/\.$/,'');
+    if(ex) extra = 'Descongelar ' + clean(ex[1]).replace(/\.$/,'');
     let cant = '';
     const cz = body.match(/Cantidades\s*:?\s*([^]*)$/i);
     if(cz) cant = clean(cz[1]);
     const idx = MON.indexOf(h.mon);
     out.push({label:'Jueves '+h.day+' de '+h.mon+' de 2026', dt:h.day+' '+SHORT[idx], wd:'jueves', menus, extra, cant});
   }
-  // ordenar por fecha
-  out.sort((a,b)=>{
-    const pa=a.label.match(/(\d+) de (\w+)/), pb=b.label.match(/(\d+) de (\w+)/);
-    return (MON.indexOf(pa[2])*100+ +pa[1]) - (MON.indexOf(pb[2])*100+ +pb[1]);
-  });
+  out.sort(byDate);
   return out;
 }
+function saneOnce(list){
+  return Array.isArray(list) && list.length >= 2 && list.every(o => o.label && o.dt && Array.isArray(o.menus) && o.menus.length >= 1);
+}
 
-function sane(list){
-  if(!Array.isArray(list) || list.length < 2) return false;
-  return list.every(o => o.label && o.dt && Array.isArray(o.menus) && o.menus.length >= 1);
+/* ---------------- ALMUERZOS ---------------- */
+function parseAlm(html){
+  const t = htmlToText(html);
+  const heads = dayHeads(t);
+  const out = [];
+  for(let k=0;k<heads.length;k++){
+    const h = heads[k];
+    if(!/^juev/.test(h.wd)) continue;
+    const body = t.slice(h.end, k+1<heads.length ? heads[k+1].i : t.length);
+    let dish='', ens='', cant='';
+    if(/Men[uú]\s+principal\s*:/i.test(body)){
+      // formato A: Menú principal / Ensaladas / Insumo principal / Insumo ensaladas
+      const d  = body.match(/Men[uú]\s+principal\s*:\s*([^]*?)\.\s*Ensaladas\s*:/i);
+      const e  = body.match(/Ensaladas\s*:\s*([^]*?)\.\s*Insumo\s+principal\s*:/i);
+      const ip = body.match(/Insumo\s+principal\s*:\s*([^]*?)\.\s*Insumo\s+ensaladas\s*:/i);
+      const ie = body.match(/Insumo\s+ensaladas\s*:\s*([^]*?)(?:\.|$)/i);
+      dish = clean(d && d[1]); ens = clean(e && e[1]);
+      const almC = clean(ip && ip[1]), ensC = clean(ie && ie[1]);
+      cant = almC + (ensC ? '. Ensaladas: ' + ensC : '');
+    } else if(/\bEns\.?\s/i.test(body)){
+      // formato B: <plato>. Ens. <ensalada> <cantidades… Ensaladas: …>
+      const d = body.match(/^([^]*?)\.\s*Ens\.?\s+/i);
+      dish = clean(d && d[1]).replace(/\.\s+/g,' · ');
+      const after = body.slice(d ? d[0].length : 0);
+      const sp = after.match(/^([^]*?)\s+(\d[^]*)$/);
+      if(sp){ ens = clean(sp[1]); cant = clean(sp[2]); }
+      else { ens = clean(after); cant = ''; }
+    }
+    out.push({label:'Jueves '+h.day+' de '+h.mon+' de 2026', dish, ens, cant});
+  }
+  out.sort(byDate);
+  return out;
+}
+function saneAlm(list){
+  return Array.isArray(list) && list.length >= 8 && list.every(o => o.label && o.dish && o.cant);
+}
+
+/* ---------------- escritura ---------------- */
+async function fetchText(url){
+  const res = await fetch(url, {headers:{'User-Agent':'Mozilla/5.0 (compatible; CocinaSAET-sync/1.0)'}});
+  if(!res.ok) throw new Error('HTTP '+res.status+' al leer '+url);
+  return res.text();
+}
+async function syncSection(name, path, data){
+  let current = null;
+  try{ const c = await fetch(DB+path); if(c.ok) current = await c.json(); }catch(e){}
+  if(current && JSON.stringify(current) === JSON.stringify(data)){
+    console.log(`✓ ${name}: la nube ya está al día.`);
+    return;
+  }
+  if(process.env.DRY_RUN){
+    console.log(`— DRY RUN — ${name}: escribiría ${data.length} jueves.`);
+    return;
+  }
+  const put = await fetch(DB+path, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  if(!put.ok){ const b = await put.text().catch(()=> ''); throw new Error(`Firebase rechazó ${name}: HTTP ${put.status} ${b}`); }
+  console.log(`✅ ${name}: ${data.length} jueves actualizados en la nube.`);
 }
 
 async function main(){
-  console.log('▶ Leyendo onces desde el sitio web…');
-  const res = await fetch(ONCE_URL, {headers:{'User-Agent':'Mozilla/5.0 (compatible; CocinaSAET-sync/1.0)'}});
-  if(!res.ok) throw new Error('No pude leer el sitio: HTTP '+res.status);
-  const html = await res.text();
-  const parsed = parseOnce(html);
-  console.log(`  Encontré ${parsed.length} jueves: ${parsed.map(o=>o.dt).join(', ')}`);
+  let failed = false;
 
-  if(!sane(parsed)){
-    console.error('✋ El parseo no pasó los chequeos de sanidad. NO escribo nada (datos a salvo).');
-    process.exit(1);
-  }
-
-  if(process.env.DRY_RUN){
-    console.log('— DRY RUN — no escribo en Firebase. Resultado del parseo:');
-    console.log(JSON.stringify(parsed,null,1));
-    return;
-  }
-
-  // comparar con lo que ya está en la nube para no escribir de más
-  let current = null;
+  // ONCES
   try{
-    const c = await fetch(DB + ONCE_PATH);
-    if(c.ok) current = await c.json();
-  }catch(e){ /* si falla la lectura, igual intentamos escribir */ }
+    console.log('▶ Onces…');
+    const once = parseOnce(await fetchText(ONCE_URL));
+    console.log(`  ${once.length} jueves: ${once.map(o=>o.dt).join(', ')}`);
+    if(!saneOnce(once)){ console.error('✋ Onces: parseo inválido, NO escribo (datos a salvo).'); failed = true; }
+    else await syncSection('Onces', '/cocina/doc/onceDays.json', once);
+  }catch(e){ console.error('❌ Onces:', e.message); failed = true; }
 
-  if(current && JSON.stringify(current) === JSON.stringify(parsed)){
-    console.log('✓ La nube ya está al día. Nada que actualizar.');
-    return;
-  }
+  // ALMUERZOS
+  try{
+    console.log('▶ Almuerzos…');
+    const alm = parseAlm(await fetchText(ALM_URL));
+    console.log(`  ${alm.length} jueves: ${alm.map(o=>o.label.replace('Jueves ','').replace(' de 2026','')).join(' · ')}`);
+    if(!saneAlm(alm)){ console.error('✋ Almuerzos: parseo inválido, NO escribo (datos a salvo).'); failed = true; }
+    else await syncSection('Almuerzos', '/cocina/doc/thursdays.json', alm);
+  }catch(e){ console.error('❌ Almuerzos:', e.message); failed = true; }
 
-  console.log('☁ Escribiendo onces actualizadas en Firebase…');
-  const put = await fetch(DB + ONCE_PATH, {
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(parsed)
-  });
-  if(!put.ok){
-    const body = await put.text().catch(()=> '');
-    throw new Error('Firebase rechazó la escritura: HTTP '+put.status+' '+body);
-  }
-  console.log('✅ Listo. La app mostrará las onces nuevas automáticamente.');
+  if(failed) process.exit(1);
+  console.log('🌿 Sincronización completa.');
 }
 
-main().catch(e=>{ console.error('❌ Error:', e.message); process.exit(1); });
+main().catch(e=>{ console.error('❌ Error general:', e.message); process.exit(1); });
