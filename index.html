@@ -914,8 +914,14 @@ function cloudInit(){
       const v=snap.val();
       if(!v){cloudPushAll();return;}
       applyingRemote=true;
+      const beforeMenus=JSON.stringify([state.thursdays,state.onceDays]);
       if(v.doc)applyDoc(v.doc);
       applyDone(v.done,v.brkDone);
+      // si el robot actualizó los menús, refrescar el día cargado con los datos nuevos
+      if(JSON.stringify([state.thursdays,state.onceDays])!==beforeMenus){
+        const lbl=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
+        if(lbl)loadDay(lbl);
+      }
       let ch=migrate();
       if(ensureFixedTasks())ch=true;
       if(autoSelectThursday())ch=true;
