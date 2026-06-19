@@ -973,6 +973,15 @@ function migrate(){
     }
     state.migV=4;changed=true;
   }
+  if(!(state.migV>=5)){
+    // cafetera y bandejas pasan de rutina de la mañana al checklist del desayuno
+    if(Array.isArray(state.brkTasks)){
+      [{id:'b6',text:'☕ Dejar cafetera lista (250 g café, máx. 40 tazas, junto a la amasadora)'},
+       {id:'b7',text:'🥐 Dejar insumos del desayuno en bandejas exclusivas en el refrigerador'}]
+        .forEach(bt=>{if(!state.brkTasks.some(t=>t.id===bt.id))state.brkTasks.push({id:bt.id,text:bt.text,done:false});});
+    }
+    state.migV=5;changed=true;
+  }
   return changed;
 }
 function cloudConfigured(){return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.indexOf('PEGAR')!==0);}
