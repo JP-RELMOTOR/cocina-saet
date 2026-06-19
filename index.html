@@ -1262,8 +1262,8 @@ function render(){
     tc.appendChild(blk);
     // arrastrar para reordenar (tipo Apple): mantener presionado y soltar — solo admin, sin filtro
     if(admin&&filter==='todos'&&window.Sortable){
-      Sortable.create(listEl,{draggable:'.task',filter:'.chk,.edit',preventOnFilter:false,
-        delay:450,delayOnTouchOnly:true,touchStartThreshold:6,animation:170,
+      Sortable.create(listEl,{handle:'.draghandle',draggable:'.task',
+        forceFallback:true,fallbackOnBody:true,fallbackTolerance:4,animation:180,
         ghostClass:'sortable-ghost',chosenClass:'sortable-chosen',dragClass:'sortable-drag',
         onEnd:function(){applyTaskOrder(sec.id,listEl);}});
     }
