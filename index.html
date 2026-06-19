@@ -1237,23 +1237,6 @@ function ensureFixedTasks(){
 }
 
 /* ---- once (menús de la tarde) ---- */
-function openOncePicker(){
-  if(!state.onceDays.length){toast('No hay onces cargadas');return;}
-  const rows=state.onceDays.map((o,i)=>`<div class="thu-row${state.selOnce===i?' on':''}" onclick="applyOnce(${i})">
-    <div class="thu-d">🫖 ${esc(o.label.replace(/^\w+\s/,''))}</div>
-    <div class="thu-m">${esc(o.menus.join(' · '))}${o.extra?'<br><span style="color:#b45309">⚠️ '+esc(o.extra)+'</span>':''}</div></div>`).join('');
-  openModal(`<h2>Once del jueves</h2><p class="desc">Elige la once para cargarla al menú del día.</p>
-    <div class="thu-list">${rows}</div>
-    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
-}
-function applyOnce(i){
-  if(!admin)return;
-  const o=state.onceDays[i];if(!o)return;state.selOnce=i;
-  const on=state.menu.find(m=>m.cls==='on');
-  if(on){on.text=o.menus.join(' · ');on.menus=(o.menus||[]).slice();on.extra=o.extra||'';on.cant=o.cant||'';}
-  const added=addOnceExtraTask(o);
-  save();closeModal();render();toast(added?'Once cargada · tarea agregada a Tarde ✅':'Once cargada ✅');
-}
 /* detalle de la once: devuelve {menus,extra,cant} si el item tiene info, o null */
 function onceDetail(m){
   if(!m||m.cls!=='on')return null;
