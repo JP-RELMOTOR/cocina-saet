@@ -1190,11 +1190,18 @@ function onceDetail(m){
   }
   return (d.menus.length||d.extra||d.cant)?d:null;
 }
+/* separa las cantidades en parte de almuerzo y parte de ensaladas */
+function splitCant(cant){
+  if(!cant)return {alm:'',ens:''};
+  const parts=cant.split(/\bensaladas?\s*:/i);
+  if(parts.length>=2)return {alm:parts[0].replace(/[.\s]+$/,'').trim(),ens:parts.slice(1).join(' ').trim()};
+  return {alm:cant.trim(),ens:''};
+}
 /* convierte un texto de cantidades en lista <ul> legible */
-function cantToList(str){
+function cantToList(str,heading){
   if(!str)return '';
   const items=str.split(/\.\s+(?=[A-ZÁÉÍÓÚ0-9])/).map(s=>s.replace(/\.\s*$/,'').trim()).filter(Boolean);
-  return `<div class="od-sec"><h4>📋 Cantidades (50 porciones)</h4><ul class="od-cant">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
+  return `<div class="od-sec"><h4>${heading||'📋 Cantidades (50 porciones)'}</h4><ul class="od-cant">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
 }
 function openOnceDetail(){
   const on=state.menu.find(m=>m.cls==='on');const d=onceDetail(on);
