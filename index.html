@@ -833,7 +833,8 @@ function docFromState(){const d={};STRUCT_KEYS.forEach(k=>{if(state[k]!==undefin
   return d;}
 function applyDoc(doc){STRUCT_KEYS.forEach(k=>{if(doc[k]!==undefined)state[k]=doc[k];});
   if(doc.tasks)state.tasks=doc.tasks.map(t=>({id:t.id,sec:t.sec,text:t.text,who:t.who||[],done:false}));
-  if(doc.brkTasks)state.brkTasks=doc.brkTasks.map(t=>({id:t.id,text:t.text,done:false}));}
+  if(doc.brkTasks)state.brkTasks=doc.brkTasks.map(t=>({id:t.id,text:t.text,done:false}));
+  if(!state.crewOverride||typeof state.crewOverride!=='object'||Array.isArray(state.crewOverride))state.crewOverride={};}
 function applyDone(dm,bm){dm=dm||{};bm=bm||{};
   state.tasks.forEach(t=>t.done=!!dm[t.id]);
   (state.brkTasks||[]).forEach(t=>t.done=!!bm[t.id]);}
