@@ -1424,11 +1424,9 @@ function renderMenus(){
     const f=ONCE_CAL.filter(o=>!q||((o.menus.join(' ')+' '+o.dt+' '+o.wd).toLowerCase().includes(q)));
     body=!f.length?'<p class="about">Sin resultados</p>'
       :f.map(o=>{const thu=/^juev/i.test(o.wd);
-        const od=thu?(state.onceDays||[]).find(x=>x.dt===o.dt):null;
-        const extra=od&&od.extra?`<div class="md-warn">⚠️ Para el día siguiente: ${esc(od.extra)}</div>`:'';
-        const cant=od&&od.cant?`<div class="md-cant">📋 ${esc(od.cant)}</div>`:'';
-        return `<div class="mday${thu?' thu':''}"><div class="md-top"><span class="md-date">${esc(o.wd+' '+o.dt)}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
-        <div class="md-dish">${o.menus.map(m=>esc(m)).join(' · ')}</div>${extra}${cant}</div>`;}).join('');
+        const tap=thu?` tap" onclick="openOnceMenu('${esc(o.dt)}')`:'';
+        return `<div class="mday${thu?' thu':''}${tap}"><div class="md-top"><span class="md-date">${esc(o.wd+' '+o.dt)}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
+        <div class="md-dish">${o.menus.map(m=>esc(m)).join(' · ')}${thu?' <span class="md-x">ⓘ</span>':''}</div></div>`;}).join('');
   } else {
     const arr=state.days||[];
     const f=arr.filter(d=>!q||(((d.dish||'')+' '+(d.ens||'')+' '+(d.dt||'')+' '+(d.wd||'')+' '+(d.cong||'')).toLowerCase().includes(q)));
