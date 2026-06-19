@@ -1360,11 +1360,15 @@ function renderMenus(){
   } else {
     const arr=state.days||[];
     const f=arr.filter(d=>!q||(((d.dish||'')+' '+(d.ens||'')+' '+(d.dt||'')+' '+(d.wd||'')+' '+(d.cong||'')).toLowerCase().includes(q)));
-    body=!arr.length?'<p class="about">Carga el PDF del mes.</p>'
+    body=!arr.length?'<p class="about">Sin almuerzos cargados.</p>'
       :!f.length?'<p class="about">Sin resultados</p>'
       :f.map(d=>{const thu=/^juev/i.test(d.wd||'');
-        return `<div class="mday${thu?' thu':''}"><div class="md-top"><span class="md-date">${esc((d.wd||'')+' '+(d.dt||''))}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
-        <div class="md-dish">${esc(d.dish||'')}</div>${d.ens?`<div class="md-ens">🥗 ${esc(d.ens)}</div>`:''}${d.cong?`<div class="md-cong">📍 aporta: ${esc(d.cong)}</div>`:''}</div>`;}).join('');
+        const td=thu?thuByDt(d.dt):null;
+        const dish=td?td.dish:(d.dish||'');
+        const ens=td?td.ens:(d.ens||'');
+        const open=td?` tap" onclick="openThuDetail('${esc(td.label)}')`:'';
+        return `<div class="mday${thu?' thu':''}${open}"><div class="md-top"><span class="md-date">${esc((d.wd||'')+' '+(d.dt||''))}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
+        <div class="md-dish">${esc(dish)}${td?' ▾':''}</div>${ens?`<div class="md-ens">🥗 ${esc(ens)}</div>`:''}${td?'<div class="md-tap">👉 Toca para ver insumos (almuerzo y ensalada)</div>':(d.cong?`<div class="md-cong">📍 aporta: ${esc(d.cong)}</div>`:'')}</div>`;}).join('');
   }
   document.getElementById('menusList').innerHTML=toggle+body;
 }
