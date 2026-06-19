@@ -1222,9 +1222,29 @@ function openAlmDetail(){
   const al=state.menu.find(m=>m.cls==='al');const d=almDetail(al);
   if(!d){toast('Aún no hay detalle del almuerzo');return;}
   const en=state.menu.find(m=>m.cls==='en');
+  const sp=splitCant(d.cant);
   const dish=`<ul class="od-ul"><li>${esc(d.dish||'—')}</li></ul>`;
-  const ens=en&&en.text?`<div class="od-ens">🥗 <b>Ensalada:</b> ${esc(en.text)}</div>`:'';
-  openModal(`<h2>🍽️ Detalle del almuerzo</h2>${dish}${ens}${cantToList(d.cant)}
+  const ens=en&&en.text?`<div class="od-ens">🥗 <b>Ensalada:</b> ${esc(en.text)} <span style="opacity:.75">(toca ENSALADA para sus insumos)</span></div>`:'';
+  openModal(`<h2>🍽️ Detalle del almuerzo</h2>${dish}${ens}${cantToList(sp.alm,'📋 Insumo principal (50 porciones)')}
+    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
+}
+/* insumos de ensalada (vienen dentro del cant del almuerzo) */
+function ensCantStr(){
+  const al=state.menu.find(m=>m.cls==='al');
+  let cant=al&&al.cant?al.cant:'';
+  if(!cant&&state.selThu!=null&&state.thursdays&&state.thursdays[state.selThu])cant=state.thursdays[state.selThu].cant||'';
+  return splitCant(cant).ens;
+}
+function ensDetail(m){
+  if(!m||m.cls!=='en')return null;
+  const ec=ensCantStr();
+  return ec?{ens:m.text||'',cant:ec}:null;
+}
+function openEnsDetail(){
+  const en=state.menu.find(m=>m.cls==='en');const d=ensDetail(en);
+  if(!d){toast('Aún no hay insumos de ensalada');return;}
+  const names=d.ens?`<ul class="od-ul"><li>${esc(d.ens)}</li></ul>`:'';
+  openModal(`<h2>🥗 Insumos de ensalada</h2>${names}${cantToList(d.cant,'🥗 Insumo ensaladas (50 porciones)')}
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
 function tardeSection(){return state.sections.find(s=>/tarde/i.test(s.name))||state.sections[state.sections.length-1];}
