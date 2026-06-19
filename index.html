@@ -1218,15 +1218,12 @@ function applyOnce(i){
 /* detalle de la once: devuelve {menus,extra,cant} si el item tiene info, o null */
 function onceDetail(m){
   if(!m||m.cls!=='on')return null;
-  let d={menus:[],extra:'',cant:''};
-  if(Array.isArray(m.menus)&&m.menus.length)d.menus=m.menus;
-  else if(m.text)d.menus=m.text.split('·').map(s=>s.trim()).filter(Boolean);
-  d.extra=m.extra||'';d.cant=m.cant||'';
-  // respaldo: si el item no trae detalle, usar la once seleccionada
-  if(!d.extra&&!d.cant&&state.selOnce!=null&&state.onceDays&&state.onceDays[state.selOnce]){
+  let d={menus:[],extra:m.extra||'',cant:m.cant||''};
+  if(Array.isArray(m.menus)&&m.menus.length)d.menus=m.menus.slice();
+  // respaldo: si el item no trae detalle estructurado, usar la once seleccionada
+  if(!d.extra&&!d.cant&&!d.menus.length&&state.selOnce!=null&&state.onceDays&&state.onceDays[state.selOnce]){
     const o=state.onceDays[state.selOnce];
-    if(!d.menus.length)d.menus=o.menus||[];
-    d.extra=o.extra||'';d.cant=o.cant||'';
+    d.menus=(o.menus||[]).slice();d.extra=o.extra||'';d.cant=o.cant||'';
   }
   return (d.menus.length||d.extra||d.cant)?d:null;
 }
