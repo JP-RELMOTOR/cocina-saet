@@ -1154,63 +1154,6 @@ function openMenu(){
 }
 function saveMenu(){if(!admin)return;state.menu.forEach((m,i)=>{m.text=document.getElementById('mt'+i).value;});save();closeModal();render();toast('Menú actualizado');}
 
-/* ---- menú mensual en PDF: detectar jueves ---- */
-async function handlePDF(file){
-  if(!file)return;
-  if(!window.pdfjsLib){toast('Necesitas conexión a internet para leer el PDF');return;}
-  toast('Leyendo el PDF… ⏳');
-  try{
-    const buf=await file.arrayBuffer();
-    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
-    let text='';
-    for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const tc=await pg.getTextContent();text+=' '+tc.items.map(x=>x.str).join(' ');}
-    const all=parseCalendar(text).map(shiftParsed);
-    const thu=all.filter(d=>/^juev/i.test(d.wd));
-    if(!thu.length){toast('No encontré jueves en ese PDF 🤔');return;}
-    state.thursdays=thu;state.selThu=null;
-    state.days=all.map(d=>({wd:d.wd,dt:d.day+' '+d.month.slice(0,3),dish:d.dish,ens:d.ens}));
-    save();render();
-    toast(thu.length+' jueves encontrados ✅');openThuPicker();
-  }catch(e){console.error(e);toast('No pude leer el PDF 😕');}
-}
-function parseCalendar(text){
-  text=text.replace(/\s+/g,' ');
-  const re=/(lunes|martes|mi[eé]rcoles|jueves|viernes|s[áa]bado|domingo)\s*,\s*(\d{1,2})\s+de\s+([a-záéíóúñ]+)\s+de\s+(\d{4})/gi;
-  let m,ms=[];
-  while(m=re.exec(text)){ms.push({wd:m[1].toLowerCase(),day:+m[2],month:m[3].toLowerCase(),year:+m[4],idx:m.index,end:re.lastIndex});}
-  const out=[];
-  for(let i=0;i<ms.length;i++){
-    const c=ms[i],n=ms[i+1];
-    let after=text.slice(c.end, n?n.idx:text.length).trim();
-    if(n)after=after.replace(/\.?\s+(CONGREGACI[ÓO]N\s+FECHA[\s\S]*$|[A-ZÁÉÍÓÚ][^.]*)$/,'.').trim();
-    const dpos=after.search(/\d/);
-    let menu=(dpos>=0?after.slice(0,dpos):after).replace(/\s+/g,' ').trim();
-    let cant=(dpos>=0?after.slice(dpos):'').replace(/\s+/g,' ').trim();
-    let dish=menu,ens='';
-    const ei=menu.search(/Ens\.?/i);
-    if(ei>=0){dish=menu.slice(0,ei).replace(/[.\s]+$/,'').trim();ens=menu.slice(ei).replace(/^Ens\.?\s*/i,'').replace(/[.\s]+$/,'').trim();}
-    const label=C(c.wd)+' '+c.day+' de '+c.month+' de '+c.year;
-    out.push({wd:c.wd,day:c.day,month:c.month,year:c.year,label,dish,ens,cant});
-  }
-  return out;
-}
-function C(s){return s.charAt(0).toUpperCase()+s.slice(1);}
-function openThuPicker(){
-  if(!state.thursdays.length){toast('Primero carga el PDF del mes');return;}
-  const rows=state.thursdays.map((t,i)=>`<div class="thu-row${state.selThu===i?' on':''}" onclick="applyThursday(${i})">
-    <div class="thu-d">📅 ${esc(t.label.replace(/^\w+\s/,''))}</div>
-    <div class="thu-m">${esc(t.dish)}${t.ens?' · <b>Ens.</b> '+esc(t.ens):''}</div></div>`).join('');
-  openModal(`<h2>Jueves del mes</h2><p class="desc">Elige el jueves para cargar su almuerzo y ensalada. La once la editas aparte.</p>
-    <div class="thu-list">${rows}</div>
-    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
-}
-function applyThursday(i){
-  if(!admin)return;
-  const t=state.thursdays[i];if(!t)return;state.selThu=i;
-  const al=state.menu.find(m=>m.cls==='al');if(al){al.text=t.dish;al.cant=t.cant||'';}
-  const en=state.menu.find(m=>m.cls==='en');if(en)en.text=t.ens||'';
-  save();closeModal();render();toast('Almuerzo cargado ✅');
-}
 /* ---- picker único por fecha: carga almuerzo + ensalada + once del mismo jueves ---- */
 function openDayPicker(){
   if(!admin)return;
