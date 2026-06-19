@@ -1252,10 +1252,19 @@ function render(){
     blk.innerHTML=`<div class="th"><span class="ic">${sec.icon}</span><span class="nm">${esc(sec.name)}</span>
       <span class="ct">${vis.length}</span><span class="sp"></span>
       ${admin?`<span class="rename" onclick="renameSection('${sec.id}')">✏️</span><span class="rename del" style="color:#dc2626" onclick="delSection('${sec.id}')">🗑</span>`:''}</div>`;
-    vis.forEach(t=>blk.appendChild(mkTask(t)));
+    const listEl=document.createElement('div');listEl.className='tasklist';listEl.dataset.sec=sec.id;
+    vis.forEach(t=>listEl.appendChild(mkTask(t)));
+    blk.appendChild(listEl);
     if(admin){const a=document.createElement('button');a.className='addtask';a.textContent='＋ Agregar tarea';
       a.onclick=()=>openTask(null,sec.id);blk.appendChild(a);}
     tc.appendChild(blk);
+    // arrastrar para reordenar (tipo Apple): mantener presionado y soltar — solo admin, sin filtro
+    if(admin&&filter==='todos'&&window.Sortable){
+      Sortable.create(listEl,{draggable:'.task',filter:'.chk,.edit',preventOnFilter:false,
+        delay:450,delayOnTouchOnly:true,touchStartThreshold:6,animation:170,
+        ghostClass:'sortable-ghost',chosenClass:'sortable-chosen',dragClass:'sortable-drag',
+        onEnd:function(){applyTaskOrder(sec.id,listEl);}});
+    }
   });
   document.getElementById('addSecBtn').classList.toggle('hidden',!admin);
   document.getElementById('menuEdit').classList.toggle('hidden',!admin);
