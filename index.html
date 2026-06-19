@@ -842,12 +842,20 @@ function migrate(){
   let changed=false;
   if(state.migV!==2&&!(state.migV>2)){state.crewOverride={};state.migV=2;changed=true;}
   if(!(state.migV>=3)){
+    const norm=s=>String(s||'').toLowerCase().replace(/men[uú]\s*\d+:?/g,'').replace(/[^a-záéíóúñ]/g,'');
     const on=state.menu&&state.menu.find(m=>m.cls==='on');
     if(on&&!on.cant){
-      const norm=s=>String(s||'').toLowerCase().replace(/men[uú]\s*\d+:?/g,'').replace(/[^a-záéíóúñ]/g,'');
       const od=(state.onceDays||[]).find(o=>norm((o.menus||[]).join(' '))===norm(on.text))
             || (state.onceDays||[]).find(o=>norm(on.text).indexOf(norm((o.menus||[])[0]||'∅∅∅'))>=0);
       if(od){on.menus=(od.menus||[]).slice();on.extra=od.extra||'';on.cant=od.cant||'';}
+    }
+    const al=state.menu&&state.menu.find(m=>m.cls==='al');
+    if(al&&!al.cant){
+      let th=null;
+      if(state.selThu!=null&&state.thursdays&&state.thursdays[state.selThu])th=state.thursdays[state.selThu];
+      if(!th)th=(state.thursdays||[]).find(t=>norm(t.dish)===norm(al.text))
+             ||(state.thursdays||[]).find(t=>norm(al.text).indexOf(norm(t.dish||'∅∅∅'))>=0);
+      if(th)al.cant=th.cant||'';
     }
     state.migV=3;changed=true;
   }
