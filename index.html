@@ -1208,6 +1208,22 @@ function autoSelectThursday(){
   }
   return false;
 }
+/* === reinicio automático cada jueves: el jueves se parte con todo sin marcar === */
+function todayThursdayLabel(){
+  const n=new Date();const today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  if(today.getDay()!==4)return null; // 4 = jueves
+  const t=(state.thursdays||[]).find(x=>{const d=parseLabelDate(x.label);return d&&d.getTime()===today.getTime();});
+  return t?t.label:null;
+}
+let resetClearedCloud=false;
+function weeklyReset(){
+  const lbl=todayThursdayLabel();
+  if(!lbl||state.lastResetThu===lbl)return false;
+  (state.tasks||[]).forEach(t=>t.done=false);
+  (state.brkTasks||[]).forEach(t=>t.done=false);
+  state.lastResetThu=lbl;resetClearedCloud=true;
+  return true;
+}
 /* === tareas fijas de cada jueves (siempre presentes en la sección de la mañana) === */
 const FIXED_TASKS=[
   {id:'fx_herv',text:'🫖 Hervidores: aplicar sucedáneo de limón'},
