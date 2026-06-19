@@ -825,7 +825,9 @@ const FIREBASE_CONFIG = {
   appId: "1:136880524689:web:a6472a4776abaa4b675e30"
 };
 let fbRef=null, fbReady=false, applyingRemote=false;
-const STRUCT_KEYS=['title','sub','menu','cooks','sections','thursdays','onceDays','brkMenu','selThu','selOnce','days','crewOverride'];
+const STRUCT_KEYS=['title','sub','menu','cooks','sections','thursdays','onceDays','brkMenu','selThu','selOnce','days','crewOverride','migV'];
+/* limpieza única de datos viejos de asistencia (nombres que no calzan con el Equipo) */
+function migrate(){if(state.migV!==2){state.crewOverride={};state.migV=2;return true;}return false;}
 function cloudConfigured(){return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.indexOf('PEGAR')!==0);}
 function docFromState(){const d={};STRUCT_KEYS.forEach(k=>{if(state[k]!==undefined)d[k]=state[k];});
   d.tasks=state.tasks.map(t=>({id:t.id,sec:t.sec,text:t.text,who:t.who}));
