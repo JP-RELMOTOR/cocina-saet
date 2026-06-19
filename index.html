@@ -910,9 +910,11 @@ function cloudInit(){
       applyingRemote=true;
       if(v.doc)applyDoc(v.doc);
       applyDone(v.done,v.brkDone);
-      const mig=migrate();
+      let ch=migrate();
+      if(ensureFixedTasks())ch=true;
+      if(autoSelectThursday())ch=true;
       applyingRemote=false;
-      saveLocal();if(mig)cloudPushDoc();render();
+      saveLocal();if(ch)cloudPushDoc();render();
       if(currentView==='desayuno')renderBrk();
       if(currentView==='menus')renderMenus();
     });
