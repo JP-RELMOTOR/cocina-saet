@@ -30,6 +30,42 @@
   .adminbtn{border:1.5px solid var(--line);background:#fff;color:var(--mut);font-weight:700;font-size:12.5px;
     padding:8px 12px;border-radius:11px;cursor:pointer;display:flex;align-items:center;gap:5px;}
   .adminbtn.on{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .themebtn{border:1.5px solid var(--line);background:#fff;font-size:16px;line-height:1;width:38px;height:36px;border-radius:11px;cursor:pointer;flex-shrink:0;}
+
+  /* ===================== MODO OSCURO ===================== */
+  body.dark{--ink:#e6ebf2;--mut:#94a3b8;--line:#2b3543;--bg:#0e131a;--card:#19212c;}
+  body.dark{background:#0e131a;}
+  body.dark .bar,body.dark .menu,body.dark .ov,body.dark .moreBtn,body.dark .mday,body.dark .pauta,
+  body.dark .trow,body.dark .tut,body.dark .mtg,body.dark .bnav,body.dark .brk,body.dark .sheet,
+  body.dark .ss,body.dark .task,body.dark .turno,body.dark .quicklinks button,body.dark .ingr{
+    background:#19212c;border-color:#2b3543;}
+  body.dark .themebtn,body.dark .adminbtn,body.dark .iconbtn,body.dark .addtask,body.dark .mtoggle button,
+  body.dark .vol,body.dark .bosschip,body.dark input,body.dark textarea,body.dark .search{
+    background:#222c39;border-color:#33404f;color:var(--ink);}
+  body.dark .bar .ttl h1,body.dark h2,body.dark h3,body.dark h4,body.dark .task .txt,body.dark .ml p,
+  body.dark .mb-head p,body.dark .md-dish,body.dark .pauta .pbody,body.dark .od-ul li,body.dark .od-cant li,
+  body.dark .dnote p,body.dark .brk .bt,body.dark .tut .tt,body.dark .trow .td{color:var(--ink);}
+  body.dark .ingr .ibody,body.dark .pauta .pbody{background:#222c39;color:#c7d0db;}
+  /* bloques tintados del menú del día */
+  body.dark .mblock.al{background:#241f12;border-color:#4a3d1d;}
+  body.dark .mblock.en{background:#10241a;border-color:#1d4a34;}
+  body.dark .mblock.on{background:#1d1830;border-color:#3a2f5e;}
+  body.dark .mblock .mb-head p{color:#e6ebf2;}
+  /* detalle (modales) */
+  body.dark .od-ens{background:#10241a;border-color:#1d4a34;color:#7ee0a8;}
+  body.dark .od-warn{background:#2a2410;border-color:#5a4a1d;color:#f0c674;}
+  body.dark .od-reuse{background:#222c39;border-color:#3a4656;color:#aab4c2;}
+  body.dark .od-sec h4{color:#b9a6f0;}
+  body.dark .dnote{background:#241f12;border-color:#4a3d1d;}
+  body.dark .dnote .dn-ph{color:#8b95a3;}
+  body.dark .reclinkbtn{background:#10241a;border-color:#1d4a34;color:#6ee7a0;}
+  body.dark .fxbadge{background:#2a2342;color:#c4b5fd;}
+  body.dark .task.fixed{background:#1c1830;}
+  body.dark .md-x,body.dark .mb-x{color:#5b6776;}
+  body.dark .chip{background:#222c39;}
+  body.dark .pill{background:#222c39;}
+  body.dark .modal,body.dark .modal-inner{background:#19212c;}
+  body.dark .od-cant li,body.dark .desc,body.dark .about,body.dark .md-cong,body.dark .md-ens{color:#aab4c2;}
 
   /* Chips filter */
   .chips{display:flex;gap:7px;overflow-x:auto;margin-top:13px;padding-bottom:2px;}
