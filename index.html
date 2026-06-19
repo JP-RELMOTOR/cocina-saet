@@ -1330,10 +1330,6 @@ function weeklyReset(){
 const FIXED_TASKS=[
   {id:'fx_herv',text:'🫖 Hervidores: aplicar sucedáneo de limón'},
   {id:'fx_mant',text:'🧈 Lavar mantequilleras, mermeladeros y mieleros, y rellenar'},
-  {id:'fx_cmesa',text:'🍽️ Rellenar centros de mesa'},
-  {id:'fx_cond',text:'🧂 Rellenar salero, orégano, ají de color y ajo (cocina 2)'},
-  {id:'fx_cafe',text:'☕ Dejar cafetera para el desayuno (250 g café, máx. 40 tazas, junto a la amasadora)'},
-  {id:'fx_band',text:'🥐 Dejar insumos del desayuno en bandejas exclusivas en el refrigerador'},
   {id:'fx_desay',text:'🍳 Preparar desayuno del día siguiente'},
 ];
 function morningSection(){return state.sections.find(s=>/ma(ñ|n)ana/i.test(s.name))||state.sections.find(s=>/almuerzo|ma(ñ|n)/i.test(s.name))||state.sections[0];}
