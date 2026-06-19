@@ -1572,6 +1572,29 @@ load();render();cloudInit();
 <script>
 /* ===== PWA: registro del service worker + banner de actualización en vivo ===== */
 var swWaiting=null;
+/* aviso flotante: solo cuando el robot cargó/modificó los menús (vs lo último visto en este equipo) */
+let menuUpdTimer=null;
+function checkMenusUpdated(){
+  const cur=JSON.stringify([state.thursdays,state.onceDays]);
+  let seen=null;try{seen=localStorage.getItem('cocina_menus_seen');}catch(e){}
+  if(seen===null){try{localStorage.setItem('cocina_menus_seen',cur);}catch(e){}return;}
+  if(seen===cur)return;
+  // ¿qué cambió?
+  let prev=null;try{prev=JSON.parse(seen);}catch(e){}
+  const thuCh=!prev||JSON.stringify(prev[0])!==JSON.stringify(state.thursdays);
+  const onceCh=!prev||JSON.stringify(prev[1])!==JSON.stringify(state.onceDays);
+  try{localStorage.setItem('cocina_menus_seen',cur);}catch(e){}
+  const what=thuCh&&onceCh?'el almuerzo y la once':thuCh?'el almuerzo':'la once';
+  showMenuUpd('Se actualizó '+what);
+}
+function showMenuUpd(msg){
+  const el=document.getElementById('menuUpd');if(!el)return;
+  const tx=document.getElementById('menuUpdTxt');if(tx)tx.textContent=msg;
+  el.classList.add('show');
+  if(menuUpdTimer)clearTimeout(menuUpdTimer);
+  menuUpdTimer=setTimeout(dismissMenuUpd,9000);
+}
+function dismissMenuUpd(){const el=document.getElementById('menuUpd');if(el)el.classList.remove('show');if(menuUpdTimer){clearTimeout(menuUpdTimer);menuUpdTimer=null;}}
 function showUpdate(){var b=document.getElementById('updateBanner');if(b)b.classList.add('show');}
 function applyUpdate(){if(swWaiting)swWaiting.postMessage({type:'SKIP_WAITING'});var b=document.getElementById('updateBanner');if(b)b.classList.remove('show');}
 if('serviceWorker' in navigator){
