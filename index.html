@@ -1159,6 +1159,43 @@ function applyThursday(i){
   const en=state.menu.find(m=>m.cls==='en');if(en)en.text=t.ens||'';
   save();closeModal();render();toast('Almuerzo cargado ✅');
 }
+/* ---- picker único por fecha: carga almuerzo + ensalada + once del mismo jueves ---- */
+function openDayPicker(){
+  if(!admin)return;
+  const ths=state.thursdays||[];
+  if(!ths.length){toast('No hay jueves cargados');return;}
+  const rows=ths.map(t=>{
+    const o=(state.onceDays||[]).find(x=>x.label===t.label);
+    const sel=(state.selThu!=null&&state.thursdays[state.selThu]&&state.thursdays[state.selThu].label===t.label);
+    return `<div class="thu-row${sel?' on':''}" onclick="applyDay('${esc(t.label)}')">
+      <div class="thu-d">📅 ${esc(t.label.replace(/^\w+\s/,''))}</div>
+      <div class="thu-m">🍽️ ${esc(t.dish)}${t.ens?' · 🥗 '+esc(t.ens):''}<br>${o?'🫖 '+esc(o.menus.join(' · ')):'<span style="opacity:.55">🫖 once por definir</span>'}</div></div>`;
+  }).join('');
+  openModal(`<h2>Elegir fecha</h2><p class="desc">Elige el jueves. Se carga el <b>almuerzo, la ensalada y la once</b> de esa misma fecha juntos.</p>
+    <div class="thu-list">${rows}</div>
+    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
+}
+function applyDay(label){
+  if(!admin)return;
+  const ti=(state.thursdays||[]).findIndex(t=>t.label===label);
+  if(ti<0)return;
+  const t=state.thursdays[ti];state.selThu=ti;
+  const al=state.menu.find(m=>m.cls==='al');if(al){al.text=t.dish;al.cant=t.cant||'';}
+  const en=state.menu.find(m=>m.cls==='en');if(en)en.text=t.ens||'';
+  const on=state.menu.find(m=>m.cls==='on');
+  const oi=(state.onceDays||[]).findIndex(x=>x.label===label);
+  let added=false;
+  if(oi>=0){
+    const o=state.onceDays[oi];state.selOnce=oi;
+    if(on){on.text=o.menus.join(' · ');on.menus=(o.menus||[]).slice();on.extra=o.extra||'';on.cant=o.cant||'';}
+    added=addOnceExtraTask(o);
+  }else{
+    state.selOnce=null;
+    if(on){on.text='Por definir';on.menus=[];on.extra='';on.cant='';}
+  }
+  save();closeModal();render();
+  toast(added?'Día cargado · tarea agregada a Tarde ✅':'Día cargado ✅');
+}
 
 /* ---- once (menús de la tarde) ---- */
 function openOncePicker(){
