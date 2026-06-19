@@ -1230,15 +1230,15 @@ function loadDay(label){
   const en=state.menu.find(m=>m.cls==='en');if(en)en.text=t.ens||'';
   const on=state.menu.find(m=>m.cls==='on');
   const oi=(state.onceDays||[]).findIndex(x=>x.label===label);
-  let added=false;
+  let o=null;
   if(oi>=0){
-    const o=state.onceDays[oi];state.selOnce=oi;
+    o=state.onceDays[oi];state.selOnce=oi;
     if(on){on.text=o.menus.join(' · ');on.menus=(o.menus||[]).slice();on.extra=o.extra||'';on.cant=o.cant||'';}
-    added=addOnceExtraTask(o);
   }else{
     state.selOnce=null;
     if(on){on.text='Por definir';on.menus=[];on.extra='';on.cant='';}
   }
+  const added=syncOnceExtraTask(o);
   return {ok:true,added};
 }
 function applyDay(label){
