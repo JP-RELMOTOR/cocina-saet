@@ -301,6 +301,13 @@
   body.dark .eq-h{color:var(--ink);}
   body.dark .eqimgs img{background:#222c39;}
   body.dark .eq-note{background:#10241a;border-color:#1d4a34;color:#7ee0a8;}
+  /* visor de fotos a pantalla completa con zoom */
+  .lightbox{position:fixed;inset:0;background:rgba(8,10,14,.95);z-index:200;display:none;overflow:auto;-webkit-overflow-scrolling:touch;}
+  .lightbox.show{display:block;}
+  .lightbox img{display:block;margin:56px auto 48px;max-width:100%;height:auto;cursor:zoom-in;border-radius:6px;}
+  .lightbox img.zoomed{max-width:none;width:auto;margin:56px 0 48px;cursor:zoom-out;border-radius:0;}
+  .lb-close{position:fixed;top:12px;right:12px;z-index:210;background:rgba(255,255,255,.18);color:#fff;border:none;width:42px;height:42px;border-radius:50%;font-size:18px;font-weight:800;cursor:pointer;}
+  .lb-hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:210;color:#fff;font-size:11.5px;opacity:.85;background:rgba(0,0,0,.45);padding:7px 13px;border-radius:20px;white-space:nowrap;}
   .imgph{display:none;align-items:center;justify-content:center;height:130px;border:2px dashed #cbd5e1;border-radius:12px;color:#94a3b8;font-size:13px;font-weight:700;background:#f8fafc;text-align:center;padding:0 14px;}
   /* pautas */
   .pauta{margin:12px 14px 0;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(15,23,42,.045);}
