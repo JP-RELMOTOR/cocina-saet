@@ -1446,13 +1446,13 @@ function renderTurnos(){
   }).join('');
 }
 /* ---- marcar quiénes trabajan el día (admin), desde el Equipo ---- */
-let crewPresent=new Set();
+let crewPresent=new Set();let crewBoss='';
 function jsq(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 function curCrewLabel(){return (state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;}
 function defaultCrew(){return state.cooks.filter(c=>!c.sub).map(c=>c.name);}
 function isRep(name){const c=state.cooks.find(x=>x.name===name);return !!(c&&c.sub);}
 function openCrewEdit(){if(!admin)return;const label=curCrewLabel();if(!label)return;
-  crewPresent=new Set(state.crewOverride[label]||defaultCrew());drawCrewEdit();}
+  crewPresent=new Set(state.crewOverride[label]||defaultCrew());crewBoss=(state.encargado||{})[label]||'';drawCrewEdit();}
 function drawCrewEdit(){const label=curCrewLabel();
   const team=state.cooks.map(c=>{const on=crewPresent.has(c.name);
     return `<div class="vol${on?' on':''}" onclick="crewToggle('${jsq(c.name)}')"><span class="vdot" style="background:${c.color}"></span><span class="vn">${esc(c.name)}${c.sub?' ↩︎':''}</span><b>${on?'✓':'+'}</b></div>`;}).join('');
