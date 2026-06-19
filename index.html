@@ -1308,17 +1308,6 @@ function openEnsDetail(){
 /* ---- detalle por jueves para el menú del mes ---- */
 function thuKey(label){const m=String(label).match(/(\d+)\s+de\s+([a-záéíóú]+)/i);return m?(m[1]+' '+m[2].slice(0,3).toLowerCase()):'';}
 function thuByDt(dt){const k=String(dt||'').toLowerCase().trim();return (state.thursdays||[]).find(t=>thuKey(t.label)===k);}
-function openThuDetail(label){
-  const t=(state.thursdays||[]).find(x=>x.label===label);
-  if(!t){toast('Sin detalle');return;}
-  const sp=splitCant(t.cant||'');
-  const body=`<ul class="od-ul"><li>🍽️ ${esc(t.dish||'—')}</li></ul>`
-    +(t.ens?`<div class="od-ens">🥗 <b>Ensalada:</b> ${esc(t.ens)}</div>`:'')
-    +cantToList(sp.alm,'📋 Insumo principal (50 porciones)')
-    +(sp.ens?cantToList(sp.ens,'🥗 Insumo ensaladas (50 porciones)'):'');
-  openModal(`<h2>${esc(label.replace(/ de 2026$/,''))}</h2>${body}
-    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
-}
 /* detalle de cualquier día del calendario de almuerzos */
 function openDayMenu(dt){
   const d=(state.days||[]).find(x=>String(x.dt)===String(dt));
