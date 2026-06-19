@@ -1485,31 +1485,6 @@ function editBrkMenu(){if(!admin)return;const m=state.brkMenu||{base:'',items:[]
   const base=prompt('Base del desayuno:',m.base||'');if(base===null)return;
   const items=prompt('Ítems del desayuno (uno por línea):',(m.items||[]).join('\n'));if(items===null)return;
   state.brkMenu={base:base.trim(),items:items.split('\n').map(s=>s.trim()).filter(Boolean)};save();renderBrk();toast('Desayuno actualizado');}
-function handleBrkPDF(){toast('El desayuno es fijo · edítalo con ✏️');}
-
-/* ---- lista de compras ---- */
-function openShopping(){
-  const sel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu]:null;
-  if(!sel||!sel.cant){openModal(`<h2>🧾 Lista de ingredientes</h2><p class="desc">Primero elige un jueves en la pestaña Hoy (botón 📅 Almuerzo).</p><div class="btns"><button class="btn primary" onclick="closeModal()">Entendido</button></div>`);return;}
-  const items=sel.cant.replace(/Ensaladas:/gi,', ').split(/[.,]/).map(s=>s.trim()).filter(s=>s.length>2);
-  const lis=items.map(i=>`<label style="display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px"><input type="checkbox" style="width:20px;height:20px;margin-top:1px"><span>${esc(i)}</span></label>`).join('');
-  openModal(`<h2>🧾 Lista de ingredientes</h2><p class="desc">${esc(sel.label)} · ${esc(sel.dish)} · 50 porciones</p><div>${lis}</div><div class="btns" style="margin-top:14px"><button class="btn primary" onclick="closeModal()">Listo</button></div>`);
-}
-
-/* ---- compartir cronograma ---- */
-function shareDay(){
-  let txt='🍀 CRONOGRAMA · COCINA SAET\n';
-  const sel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu]:null;
-  if(sel)txt+='📅 '+sel.label+'\n';
-  state.menu.forEach(m=>{if(m.text)txt+='• '+m.tag+': '+m.text+'\n';});
-  txt+='\n';
-  state.sections.forEach(s=>{txt+='— '+s.name.toUpperCase()+' —\n';
-    state.tasks.filter(t=>t.sec===s.id).forEach(t=>{const who=t.who.map(id=>{const c=cook(id);return c?c.name:'';}).filter(Boolean).join(', ');txt+='• '+t.text+(who?' ('+who+')':'')+'\n';});txt+='\n';});
-  if(navigator.share){navigator.share({title:'Cocina SAET',text:txt}).catch(()=>{});}
-  else if(navigator.clipboard){navigator.clipboard.writeText(txt);toast('Cronograma copiado 📋');}
-  else toast('No se pudo compartir');
-}
-
 /* ---- equipo ---- */
 function openTeam(){
   openModal(`<h2>Equipo de cocina</h2><p class="desc">${admin?'Toca el círculo para cambiar el color. ↩︎ marca quién reemplaza hoy.':'🔒 Solo el administrador puede editar el equipo.'}</p>
