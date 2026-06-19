@@ -982,6 +982,19 @@ function migrate(){
     }
     state.migV=5;changed=true;
   }
+  if(!(state.migV>=6)){
+    // pan del desayuno: mostrar el total directo (2½ mesas) en vez de la regla por mesa
+    if(Array.isArray(state.brkTasks)){
+      const b5=state.brkTasks.find(t=>t.id==='b5');
+      if(b5)b5.text='Pan: 30 rebanadas integral + 5 pan blanco (2½ mesas)';
+    }
+    if(state.brkMenu&&Array.isArray(state.brkMenu.items)){
+      state.brkMenu.items=state.brkMenu.items.filter(x=>!/pan (integral|blanco)|media mesa/i.test(x));
+      if(!state.brkMenu.items.some(x=>/30 rebanadas/.test(x)))
+        state.brkMenu.items.push('🍞 30 rebanadas de pan integral (2½ mesas)','🍞 5 unidades de pan blanco (2½ mesas)');
+    }
+    state.migV=6;changed=true;
+  }
   return changed;
 }
 function cloudConfigured(){return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.indexOf('PEGAR')!==0);}
