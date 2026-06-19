@@ -1096,6 +1096,18 @@ function migrate(){
     }
     state.migV=6;changed=true;
   }
+  if(!(state.migV>=7)){
+    // fijar el orden por defecto de las rutinas de la mañana
+    const order=['fx_almuerzo','fx_ensalada','fx_mant','fx_herv','fx_desay','fx_comedor'];
+    if(Array.isArray(state.tasks)){
+      const found=order.map(id=>state.tasks.find(t=>t.id===id)).filter(Boolean);
+      if(found.length){
+        state.tasks=state.tasks.filter(t=>!order.includes(t.id));
+        state.tasks.unshift(...found);
+      }
+    }
+    state.migV=7;changed=true;
+  }
   return changed;
 }
 function cloudConfigured(){return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.indexOf('PEGAR')!==0);}
