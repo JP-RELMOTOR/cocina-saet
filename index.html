@@ -1752,6 +1752,8 @@ let tmo;function toast(m){const t=document.getElementById('toast');t.textContent
   clearTimeout(tmo);tmo=setTimeout(()=>t.classList.remove('show'),1800);}
 
 function imgFail(el){el.style.display='none';if(el.nextElementSibling)el.nextElementSibling.style.display='flex';}
+function zoomImg(src){openModal(`<img src="${src}" style="width:100%;height:auto;border-radius:12px;display:block">
+  <div class="btns" style="margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);}
 function applyTheme(){var d=false;try{d=localStorage.getItem('cocina_theme')==='dark';}catch(e){}
   document.body.classList.toggle('dark',d);
   var b=document.getElementById('themeBtn');if(b)b.textContent=d?'☀️':'🌙';}
