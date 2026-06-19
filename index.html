@@ -1424,9 +1424,8 @@ function renderMenus(){
         const td=thu?thuByDt(d.dt):null;
         const dish=td?td.dish:(d.dish||'');
         const ens=td?td.ens:(d.ens||'');
-        const open=td?` tap" onclick="openThuDetail('${esc(td.label)}')`:'';
-        return `<div class="mday${thu?' thu':''}${open}"><div class="md-top"><span class="md-date">${esc((d.wd||'')+' '+(d.dt||''))}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
-        <div class="md-dish">${esc(dish)}${td?' ▾':''}</div>${ens?`<div class="md-ens">🥗 ${esc(ens)}</div>`:''}${td?'<div class="md-tap">👉 Toca para ver insumos (almuerzo y ensalada)</div>':(d.cong?`<div class="md-cong">📍 aporta: ${esc(d.cong)}</div>`:'')}</div>`;}).join('');
+        return `<div class="mday tap${thu?' thu':''}" onclick="openDayMenu('${esc(d.dt)}')"><div class="md-top"><span class="md-date">${esc((d.wd||'')+' '+(d.dt||''))}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
+        <div class="md-dish">${esc(dish)} <span class="md-x">ⓘ</span></div>${ens?`<div class="md-ens">🥗 ${esc(ens)}</div>`:''}${d.cong?`<div class="md-cong">📍 aporta: ${esc(d.cong)}</div>`:''}</div>`;}).join('');
   }
   document.getElementById('menusList').innerHTML=toggle+body;
 }
