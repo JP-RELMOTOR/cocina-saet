@@ -913,8 +913,11 @@ function cloudInit(){
       let ch=migrate();
       if(ensureFixedTasks())ch=true;
       if(autoSelectThursday())ch=true;
+      const reset=weeklyReset();if(reset)ch=true;
       applyingRemote=false;
-      saveLocal();if(ch)cloudPushDoc();render();
+      saveLocal();
+      if(reset&&fbReady){fbRef.child('done').set(null);fbRef.child('brkDone').set(null);}
+      if(ch)cloudPushDoc();render();
       if(currentView==='desayuno')renderBrk();
       if(currentView==='menus')renderMenus();
     });
