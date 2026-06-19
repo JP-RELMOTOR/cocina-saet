@@ -1130,8 +1130,17 @@ function openOncePicker(){
 function applyOnce(i){
   if(!admin)return;
   const o=state.onceDays[i];if(!o)return;state.selOnce=i;
-  const on=state.menu.find(m=>m.cls==='on');if(on)on.text=o.menus.join(' · ')+(o.extra?' · '+o.extra:'');
-  save();closeModal();render();toast('Once cargada ✅');
+  const on=state.menu.find(m=>m.cls==='on');if(on)on.text=o.menus.join(' · ');
+  const added=addOnceExtraTask(o);
+  save();closeModal();render();toast(added?'Once cargada · tarea agregada a Tarde ✅':'Once cargada ✅');
+}
+function tardeSection(){return state.sections.find(s=>/tarde/i.test(s.name))||state.sections[state.sections.length-1];}
+function addOnceExtraTask(o){
+  if(!o||!o.extra)return false;
+  const sec=tardeSection();if(!sec)return false;
+  if(state.tasks.some(t=>t.sec===sec.id && t.text===o.extra))return false;
+  state.tasks.push({id:uid('t'),sec:sec.id,text:o.extra,who:[],done:false});
+  return true;
 }
 
 /* ---- navegación entre vistas ---- */
