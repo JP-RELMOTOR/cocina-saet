@@ -1474,8 +1474,8 @@ function ensureFixedTasks(){
     if(!t){
       state.tasks.unshift({id:ft.id,sec:sec.id,text:ft.text,who:[],done:false,fixed:true});
       changed=true;
-    }else if(t.sec!==sec.id||!t.fixed){
-      t.sec=sec.id;t.fixed=true;changed=true;
+    }else if(t.sec!==sec.id||!t.fixed||t.text!==ft.text){
+      t.sec=sec.id;t.fixed=true;t.text=ft.text;changed=true;
     }
   });
   return changed;
