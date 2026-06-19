@@ -1337,6 +1337,11 @@ function ensureFixedTasks(){
   const sec=morningSection();if(!sec)return false;
   if(!Array.isArray(state.tasks))state.tasks=[];
   let changed=false;
+  // quitar rutinas fijas que ya no existen en FIXED_TASKS (p. ej. movidas a otra sección)
+  const validIds=new Set(FIXED_TASKS.map(f=>f.id).concat(['fx_onceextra']));
+  const n0=state.tasks.length;
+  state.tasks=state.tasks.filter(t=>!(/^fx_/.test(t.id||'') && !validIds.has(t.id)));
+  if(state.tasks.length!==n0)changed=true;
   // insertar al principio en orden, solo si faltan (por id estable)
   FIXED_TASKS.slice().reverse().forEach(ft=>{
     if(!state.tasks.some(t=>t.id===ft.id)){
