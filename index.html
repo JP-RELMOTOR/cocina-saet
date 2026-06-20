@@ -1386,17 +1386,22 @@ function saveTask(){
   save();closeModal();render();toast('Tarea guardada ✅');
 }
 function delTask(id){if(!admin)return;if(!confirm('¿Eliminar esta tarea?'))return;state.tasks=state.tasks.filter(t=>t.id!==id);save();render();toast('Tarea eliminada');}
-/* aplicar el nuevo orden tras arrastrar (solo reordena dentro de la sección) */
-function applyTaskOrder(secId,listEl){
+/* tras arrastrar: reconstruye el orden Y la sección de cada tarea según dónde quedó */
+function syncTasksFromDOM(){
   if(!admin)return;
-  const ids=[...listEl.querySelectorAll('.task')].map(el=>el.dataset.id).filter(Boolean);
   const byId={};state.tasks.forEach(t=>byId[t.id]=t);
-  let k=0;
-  state.tasks=state.tasks.map(t=>{
-    if(t.sec===secId&&k<ids.length)return byId[ids[k++]]||t;
-    return t;
+  const out=[],seen=new Set();
+  document.querySelectorAll('#turnos .tasklist').forEach(list=>{
+    const secId=list.dataset.sec;
+    list.querySelectorAll('.task').forEach(el=>{
+      const t=byId[el.dataset.id];
+      if(t&&!seen.has(t.id)){t.sec=secId;out.push(t);seen.add(t.id);}
+    });
   });
+  state.tasks.forEach(t=>{if(!seen.has(t.id))out.push(t);}); // conservar las no visibles
+  state.tasks=out;
   save();
+  setTimeout(render,0); // refresca contadores de cada sección
 }
 
 /* ---- secciones ---- */
