@@ -1721,23 +1721,24 @@ function currentOnce(){
 }
 function syncOnceExtraTask(o){
   let changed=false;
+  // asegura que una tarea derivada exista o no, SIN perder su asignación (who) ni su check
+  const ensure=(id,should,secFn,text)=>{
+    const t=state.tasks.find(x=>x.id===id);
+    if(should){
+      if(!t){const sec=secFn();if(sec){state.tasks.push({id,sec:sec.id,text,who:[],done:false});changed=true;}}
+      else if(t.text!==text){t.text=text;changed=true;} // actualiza el texto; conserva who/sección
+    }else if(t){state.tasks=state.tasks.filter(x=>x.id!==id);changed=true;}
+  };
+  // limpieza de descongelados sueltos antiguos (sin id, sin asignar)
+  const legacy=state.tasks.filter(t=>t.id!=='fx_onceextra'&&/^descongel/i.test(t.text||'')&&(!t.who||!t.who.length));
+  if(legacy.length){state.tasks=state.tasks.filter(t=>!legacy.includes(t));changed=true;}
   // 1) descongelar (de la once) → Tarde
-  const isExtra=t=>t.id==='fx_onceextra' || (/^descongel/i.test(t.text||'') && (!t.who||!t.who.length));
-  const hadD=state.tasks.some(isExtra);
-  state.tasks=state.tasks.filter(t=>!isExtra(t));
-  const wantD=o&&o.extra?o.extra:null;
-  if(wantD){const sec=tardeSection();if(sec)state.tasks.push({id:'fx_onceextra',sec:sec.id,text:wantD,who:[],done:false});}
-  if(hadD||wantD)changed=true;
-  // 2) pizza → masa en Mañana y armar en Tarde (solo si la once es pizza)
+  const wantD=o&&o.extra?o.extra:'';
+  ensure('fx_onceextra', !!wantD, tardeSection, wantD);
+  // 2) pizza → masa en Mañana y armar en Tarde
   const isPizza=!!(o&&/pizza/i.test((o.menus||[]).join(' ')+' '+(o.extra||'')));
-  const hadP=state.tasks.some(t=>t.id==='fx_pizzamasa'||t.id==='fx_pizzaarmar');
-  state.tasks=state.tasks.filter(t=>t.id!=='fx_pizzamasa'&&t.id!=='fx_pizzaarmar');
-  if(isPizza){
-    const ms=morningSection(),ts=tardeSection();
-    if(ms)state.tasks.push({id:'fx_pizzamasa',sec:ms.id,text:'🍕 Preparar masa para la pizza',who:[],done:false});
-    if(ts)state.tasks.push({id:'fx_pizzaarmar',sec:ts.id,text:'🍕 Armar pizza',who:[],done:false});
-  }
-  if(hadP||isPizza)changed=true;
+  ensure('fx_pizzamasa', isPizza, morningSection, '🍕 Preparar masa para la pizza');
+  ensure('fx_pizzaarmar', isPizza, tardeSection, '🍕 Armar pizza');
   return changed;
 }
 
