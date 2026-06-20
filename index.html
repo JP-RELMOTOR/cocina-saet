@@ -1716,11 +1716,25 @@ function tardeSection(){return state.sections.find(s=>/tarde/i.test(s.name))||st
 /* tarea de descongelar (de la once) auto-gestionada: refleja SOLO el día cargado.
    id estable 'fx_onceextra' + limpieza de descongelados sueltos de semanas previas. */
 function syncOnceExtraTask(o){
-  const had=state.tasks.some(t=>t.id==='fx_onceextra' || (/^descongel/i.test(t.text||'') && (!t.who||!t.who.length)));
-  state.tasks=state.tasks.filter(t=>!(t.id==='fx_onceextra' || (/^descongel/i.test(t.text||'') && (!t.who||!t.who.length))));
-  const want = o && o.extra ? o.extra : null;
-  if(want){const sec=tardeSection();if(sec)state.tasks.push({id:'fx_onceextra',sec:sec.id,text:want,who:[],done:false});}
-  return had || !!want;
+  let changed=false;
+  // 1) descongelar (de la once) → Tarde
+  const isExtra=t=>t.id==='fx_onceextra' || (/^descongel/i.test(t.text||'') && (!t.who||!t.who.length));
+  const hadD=state.tasks.some(isExtra);
+  state.tasks=state.tasks.filter(t=>!isExtra(t));
+  const wantD=o&&o.extra?o.extra:null;
+  if(wantD){const sec=tardeSection();if(sec)state.tasks.push({id:'fx_onceextra',sec:sec.id,text:wantD,who:[],done:false});}
+  if(hadD||wantD)changed=true;
+  // 2) pizza → masa en Mañana y armar en Tarde (solo si la once es pizza)
+  const isPizza=!!(o&&/pizza/i.test((o.menus||[]).join(' ')+' '+(o.extra||'')));
+  const hadP=state.tasks.some(t=>t.id==='fx_pizzamasa'||t.id==='fx_pizzaarmar');
+  state.tasks=state.tasks.filter(t=>t.id!=='fx_pizzamasa'&&t.id!=='fx_pizzaarmar');
+  if(isPizza){
+    const ms=morningSection(),ts=tardeSection();
+    if(ms)state.tasks.push({id:'fx_pizzamasa',sec:ms.id,text:'🍕 Preparar masa para la pizza',who:[],done:false});
+    if(ts)state.tasks.push({id:'fx_pizzaarmar',sec:ts.id,text:'🍕 Armar pizza',who:[],done:false});
+  }
+  if(hadP||isPizza)changed=true;
+  return changed;
 }
 
 /* ---- navegación entre vistas ---- */
