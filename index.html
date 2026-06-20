@@ -1309,7 +1309,7 @@ function mkTask(t){
   const badge=t.fixed?'<span class="fxbadge">rutina</span>':'';
   el.innerHTML=`<div class="chk" onclick="toggleDone('${t.id}')">✓</div>
     <div class="body"><div class="txt">${esc(t.text)}${badge}</div><div class="who">${pills||'<span class="pill">Sin asignar</span>'}</div></div>
-    ${admin?`<div class="edit"><span class="draghandle" title="Arrastrar para reordenar">⠿</span><button class="iconbtn" onclick="openTask('${t.id}')">✏️</button>${(t.fixed||t.id==='fx_onceextra')?'':`<button class="iconbtn del" onclick="delTask('${t.id}')">🗑</button>`}</div>`:''}`;
+    ${admin?`<div class="edit"><span class="draghandle" title="Arrastrar para reordenar">⠿</span><button class="iconbtn" onclick="openTask('${t.id}')">✏️</button>${/^fx_/.test(t.id||'')?'':`<button class="iconbtn del" onclick="delTask('${t.id}')">🗑</button>`}</div>`:''}`;
   return el;
 }
 function updProgress(){
