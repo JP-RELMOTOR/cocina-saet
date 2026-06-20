@@ -1170,6 +1170,7 @@ function cloudInit(){
       if(ensureFixedTasks())ch=true;
       if(autoSelectThursday())ch=true;
       const reset=weeklyReset();if(reset)ch=true;
+      if(syncEncargadoTask())ch=true;
       applyingRemote=false;
       saveLocal();
       if(reset&&fbReady){fbRef.child('done').set(null);fbRef.child('brkDone').set(null);}
