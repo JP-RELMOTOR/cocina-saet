@@ -1572,6 +1572,18 @@ function ensureFixedTasks(){
   });
   return changed;
 }
+/* la tarea de revisar ingredientes se asigna sola al encargado (⭐) del día; sin encargado queda libre */
+function syncEncargadoTask(){
+  const t=(state.tasks||[]).find(x=>x.id==='fx_revingredientes');
+  if(!t)return false;
+  const label=curCrewLabel();
+  const enc=label?((state.encargado||{})[label]||''):'';
+  if(!enc)return false; // sin estrella: queda libre para asignar a mano
+  const c=state.cooks.find(x=>x.name===enc);
+  const want=c?[c.id]:[];
+  if(JSON.stringify(t.who||[])!==JSON.stringify(want)){t.who=want;return true;}
+  return false;
+}
 
 /* ---- once (menús de la tarde) ---- */
 /* detalle de la once: devuelve {menus,extra,cant} si el item tiene info, o null */
