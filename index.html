@@ -1916,6 +1916,7 @@ function applyTheme(){var d=false;try{d=localStorage.getItem('cocina_theme')==='
 function toggleTheme(){var d=!document.body.classList.contains('dark');
   try{localStorage.setItem('cocina_theme',d?'dark':'light');}catch(e){}applyTheme();}
 applyTheme();
+setInterval(function(){try{renderDelivery();}catch(e){}},60000); // refresca la cuenta regresiva cada minuto
 load();render();cloudInit();
 </script>
 
