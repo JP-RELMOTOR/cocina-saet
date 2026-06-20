@@ -1270,10 +1270,10 @@ function render(){
     tc.appendChild(blk);
     // arrastrar para reordenar (tipo Apple): mantener presionado y soltar — solo admin, sin filtro
     if(admin&&filter==='todos'&&window.Sortable){
-      Sortable.create(listEl,{handle:'.draghandle',draggable:'.task',
+      Sortable.create(listEl,{handle:'.draghandle',draggable:'.task',group:'cocina-tasks',
         forceFallback:true,fallbackOnBody:true,fallbackTolerance:4,animation:180,
         ghostClass:'sortable-ghost',chosenClass:'sortable-chosen',dragClass:'sortable-drag',
-        onEnd:function(){applyTaskOrder(sec.id,listEl);}});
+        onEnd:function(){syncTasksFromDOM();}});
     }
   });
   document.getElementById('addSecBtn').classList.toggle('hidden',!admin);
