@@ -1714,6 +1714,10 @@ function openOnceMenu(dt){
 function tardeSection(){return state.sections.find(s=>/tarde/i.test(s.name))||state.sections[state.sections.length-1];}
 /* tarea de descongelar (de la once) auto-gestionada: refleja SOLO el día cargado.
    id estable 'fx_onceextra' + limpieza de descongelados sueltos de semanas previas. */
+function currentOnce(){
+  const label=(state.selThu!=null&&state.thursdays&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
+  return label?((state.onceDays||[]).find(x=>x.label===label)||null):null;
+}
 function syncOnceExtraTask(o){
   let changed=false;
   // 1) descongelar (de la once) → Tarde
