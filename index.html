@@ -1178,6 +1178,7 @@ function cloudInit(){
       if(autoSelectThursday())ch=true;
       const reset=weeklyReset();if(reset)ch=true;
       if(syncEncargadoTask())ch=true;
+      if(syncOnceExtraTask(currentOnce()))ch=true;
       applyingRemote=false;
       saveLocal();
       if(reset&&fbReady){fbRef.child('done').set(null);fbRef.child('brkDone').set(null);}
