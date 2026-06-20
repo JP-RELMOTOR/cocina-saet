@@ -1319,6 +1319,22 @@ function updProgress(){
   document.getElementById('ringc').style.strokeDashoffset=150.8*(1-p);
   document.getElementById('ringn').textContent=Math.round(p*100)+'%';
   document.getElementById('ovtxt').textContent=`${dn} de ${all.length} tareas listas`;
+  renderDelivery();
+}
+/* widget de entrega: la cocina se entrega a las 17:00 los jueves */
+function renderDelivery(){
+  const el=document.getElementById('ovDelivery');if(!el)return;
+  const now=new Date(),dow=now.getDay();
+  let ic='⏰ Entrega',sub='';
+  if(dow===4){ // jueves
+    const mins=17*60-(now.getHours()*60+now.getMinutes());
+    if(mins>0){const h=Math.floor(mins/60),m=mins%60;sub=h>0?`faltan ${h} h ${m} m`:`faltan ${m} min`;}
+    else sub='✅ entregada';
+  }else{
+    let d=(4-dow+7)%7;if(d===0)d=7;
+    ic='📅 Próx. jueves';sub=d===1?'mañana':`en ${d} días`;
+  }
+  el.innerHTML=`<div class="od-ic">${ic}</div><div class="od-time">17:00</div><div class="od-sub">${esc(sub)}</div>`;
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 /* coincidencia menú → receta */
