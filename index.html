@@ -1750,6 +1750,7 @@ function crewSave(){if(!admin)return;const label=curCrewLabel();if(!label)return
   state.crewOverride[label]=ordered;
   if(!state.encargado||typeof state.encargado!=='object')state.encargado={};
   if(crewBoss&&crewPresent.has(crewBoss))state.encargado[label]=crewBoss;else delete state.encargado[label];
+  syncEncargadoTask();
   save();closeModal();render();toast('Equipo del día actualizado ✅');}
 function crewReset(){if(!admin)return;const label=curCrewLabel();if(label)delete state.crewOverride[label];if(state.encargado)delete state.encargado[label];save();closeModal();render();toast('Restaurado al equipo base');}
 function openDayNote(){if(!admin)return;const label=curCrewLabel();if(!label)return;
