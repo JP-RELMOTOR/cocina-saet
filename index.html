@@ -1851,10 +1851,11 @@ function renderMenus(scrollHere){
         return `<div ${here?'id="menuHere" ':''}class="mday${fri?' thu':''}"><div class="md-top"><span class="md-date">${esc(d.wd)}</span>${fri?'<span class="md-badge">SE ADELANTA EL JUEVES</span>':''}</div><ul class="md-ul">${d.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;}).join('');
   } else if(menuCat==='once'){
     const f=ONCE_CAL.filter(o=>!q||((o.menus.join(' ')+' '+o.dt+' '+o.wd).toLowerCase().includes(q)));
+    let hereDt=null;for(const o of f){const dd=_dtDate(o.dt);if(dd&&dd.getTime()>=_today.getTime()){hereDt=o.dt;break;}}
     body=!f.length?'<p class="about">Sin resultados</p>'
       :f.map(o=>{const thu=/^juev/i.test(o.wd);
         const tap=thu?` tap" onclick="openOnceMenu('${esc(o.dt)}')`:'';
-        return `<div class="mday${thu?' thu':''}${tap}"><div class="md-top"><span class="md-date">${esc(o.wd+' '+o.dt)}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
+        return `<div ${o.dt===hereDt?'id="menuHere" ':''}class="mday${thu?' thu':''}${tap}"><div class="md-top"><span class="md-date">${esc(o.wd+' '+o.dt)}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
         <div class="md-dish">${o.menus.map(m=>esc(m)).join(' · ')}${thu?' <span class="md-x">ⓘ</span>':''}</div></div>`;}).join('');
   } else {
     const arr=state.days||[];
