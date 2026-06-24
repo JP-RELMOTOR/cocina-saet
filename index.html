@@ -1847,8 +1847,8 @@ function renderMenus(scrollHere){
   let body='';
   if(menuCat==='des'){
     body=`<div class="mday"><div class="md-top"><span class="md-date">☕ Base diaria</span></div><div class="md-ens">${esc(DESAYUNO_BASE)}</div></div>`
-      + DESAYUNO_CAL.filter(d=>!q||(d.wd+' '+d.items.join(' ')).toLowerCase().includes(q)).map(d=>{const fri=d.wd==='Viernes';
-        return `<div class="mday${fri?' thu':''}"><div class="md-top"><span class="md-date">${esc(d.wd)}</span>${fri?'<span class="md-badge">SE ADELANTA EL JUEVES</span>':''}</div><ul class="md-ul">${d.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;}).join('');
+      + DESAYUNO_CAL.filter(d=>!q||(d.wd+' '+d.items.join(' ')).toLowerCase().includes(q)).map(d=>{const fri=d.wd==='Viernes';const here=d.wd===_todayWd;
+        return `<div ${here?'id="menuHere" ':''}class="mday${fri?' thu':''}"><div class="md-top"><span class="md-date">${esc(d.wd)}</span>${fri?'<span class="md-badge">SE ADELANTA EL JUEVES</span>':''}</div><ul class="md-ul">${d.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;}).join('');
   } else if(menuCat==='once'){
     const f=ONCE_CAL.filter(o=>!q||((o.menus.join(' ')+' '+o.dt+' '+o.wd).toLowerCase().includes(q)));
     body=!f.length?'<p class="about">Sin resultados</p>'
