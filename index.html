@@ -989,6 +989,11 @@ function shiftCalEntry(e){
   const d=new Date(2026,idx,day+1);
   return {wd:WD_ES[d.getDay()],dt:d.getDate()+' '+MON_SHORT[d.getMonth()],dish:e.dish,ens:e.ens,cong:e.cong};
 }
+/* Respaldo de "aporta: <congregación>" por fecha. El sitio web dejó de publicar
+   la congregación desde EER 38 (julio+), así que el robot trae esos días con
+   cong vacío. La rellenamos desde el calendario semilla (mismo desfase +1). */
+const CONG_BY_DT=(()=>{const m={};SEED_DAYS_JUN.concat(SEED_DAYS.map(shiftCalEntry)).forEach(d=>{if(d.cong&&d.dt&&!m[d.dt])m[d.dt]=d.cong;});return m;})();
+function fillCong(days){if(Array.isArray(days))days.forEach(d=>{if(d&&!d.cong&&CONG_BY_DT[d.dt])d.cong=CONG_BY_DT[d.dt];});return days;}
 /* Turnos del equipo (EER37 · jueves) — quiénes trabajan cada jueves */
 const BASE_TEAM=['Juan Pablo Correa','Mijal de Correa','Gabriel Díaz','Vanessa Díaz','Melissa Gómez'];
 const TURNOS={
