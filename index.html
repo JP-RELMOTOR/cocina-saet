@@ -1216,6 +1216,7 @@ function load(){try{const s=localStorage.getItem(KEY);state=s?JSON.parse(s):stru
   if(!Array.isArray(state.thursdays))state.thursdays=structuredClone(DEFAULT.thursdays);
   if(state.selThu===undefined)state.selThu=null;
   if(!Array.isArray(state.days))state.days=SEED_DAYS_JUN.concat(SEED_DAYS.map(shiftCalEntry));
+  fillCong(state.days);
   if(!Array.isArray(state.onceDays))state.onceDays=structuredClone(SEED_ONCE);
   if(state.selOnce===undefined)state.selOnce=null;
   if(!state.brkMenu||Array.isArray(state.brkMenu)||typeof state.brkMenu!=='object')state.brkMenu=structuredClone(BRK_MENU);
