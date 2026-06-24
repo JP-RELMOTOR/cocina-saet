@@ -1950,25 +1950,43 @@ load();render();cloudInit();
 var swWaiting=null;
 /* aviso flotante: solo cuando el robot cargó/modificó los menús (vs lo último visto en este equipo) */
 let menuUpdTimer=null;
+function shortDate(s){
+  s=String(s||'');
+  let m=s.match(/(\d+)\s+de\s+([a-záéíóú]+)/i)||s.match(/(\d+)\s+([a-záéíóú]+)/i);
+  return m?(m[1]+' '+m[2].slice(0,3)):s;
+}
 function checkMenusUpdated(){
-  const cur=JSON.stringify([state.thursdays,state.onceDays]);
+  const cur=JSON.stringify([state.thursdays,state.onceDays,state.brkMenu]);
   let seen=null;try{seen=localStorage.getItem('cocina_menus_seen');}catch(e){}
   if(seen===null){try{localStorage.setItem('cocina_menus_seen',cur);}catch(e){}return;}
   if(seen===cur)return;
-  // ¿qué cambió?
   let prev=null;try{prev=JSON.parse(seen);}catch(e){}
-  const thuCh=!prev||JSON.stringify(prev[0])!==JSON.stringify(state.thursdays);
-  const onceCh=!prev||JSON.stringify(prev[1])!==JSON.stringify(state.onceDays);
   try{localStorage.setItem('cocina_menus_seen',cur);}catch(e){}
-  const what=thuCh&&onceCh?'el almuerzo y la once':thuCh?'el almuerzo':'la once';
-  showMenuUpd('Se actualizó '+what);
+  if(!prev||prev.length<3)return; // formato viejo: solo fija la base, sin avisar
+  const thuCh=JSON.stringify(prev[0])!==JSON.stringify(state.thursdays);
+  const onceCh=JSON.stringify(prev[1])!==JSON.stringify(state.onceDays);
+  const desCh=JSON.stringify(prev[2])!==JSON.stringify(state.brkMenu);
+  const parts=[];
+  if(thuCh)parts.push('🍽️ almuerzo');
+  if(onceCh)parts.push('🫖 once');
+  if(desCh)parts.push('🥐 desayuno');
+  if(!parts.length)return;
+  // fechas con menú nuevo o modificado
+  const dates=new Set();
+  const collect=(pArr,cArr,keyFn,dtFn)=>{const pm={};(pArr||[]).forEach(x=>pm[keyFn(x)]=JSON.stringify(x));(cArr||[]).forEach(x=>{if(pm[keyFn(x)]!==JSON.stringify(x))dates.add(shortDate(dtFn(x)));});};
+  if(thuCh)collect(prev[0],state.thursdays,t=>t.label,t=>t.label);
+  if(onceCh)collect(prev[1],state.onceDays,o=>o.label||o.dt,o=>o.dt||o.label);
+  const dl=[...dates].filter(Boolean);
+  const sub=dl.length?('Fechas: '+dl.slice(0,4).join(' · ')+(dl.length>4?'…':'')):'Datos del sitio oficial';
+  showMenuUpd('Se actualizó: '+parts.join(' · '),sub);
 }
-function showMenuUpd(msg){
+function showMenuUpd(msg,sub){
   const el=document.getElementById('menuUpd');if(!el)return;
   const tx=document.getElementById('menuUpdTxt');if(tx)tx.textContent=msg;
+  const sb=document.getElementById('menuUpdSub');if(sb)sb.textContent=sub||'Datos del sitio oficial';
   el.classList.add('show');
   if(menuUpdTimer)clearTimeout(menuUpdTimer);
-  menuUpdTimer=setTimeout(dismissMenuUpd,9000);
+  menuUpdTimer=setTimeout(dismissMenuUpd,11000);
 }
 function dismissMenuUpd(){const el=document.getElementById('menuUpd');if(el)el.classList.remove('show');if(menuUpdTimer){clearTimeout(menuUpdTimer);menuUpdTimer=null;}}
 function showUpdate(){var b=document.getElementById('updateBanner');if(b)b.classList.add('show');}
