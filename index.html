@@ -1073,7 +1073,7 @@ let fbRef=null, fbReady=false, applyingRemote=false;
 /* onceDays y thursdays NO van aquí: son propiedad del robot de sincronización
    (scripts/sync-menus.js). La app SOLO los lee (ver applyDoc), nunca los escribe,
    para que un push de un cliente no pise lo que actualizó la web. */
-const STRUCT_KEYS=['title','sub','menu','cooks','sections','brkMenu','selThu','selOnce','days','crewOverride','encargado','dayNote','lastResetThu','migV'];
+const STRUCT_KEYS=['title','sub','menu','cooks','sections','brkMenu','selThu','selOnce','crewOverride','encargado','dayNote','lastResetThu','migV'];
 /* limpieza única de datos viejos de asistencia (nombres que no calzan con el Equipo) */
 function migrate(){
   let changed=false;
