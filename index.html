@@ -1164,11 +1164,17 @@ function cloudInit(){
       const v=snap.val();
       if(!v){cloudPushAll();return;}
       applyingRemote=true;
+      const prevLabel=(state.selThu!=null&&state.thursdays&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
       const beforeMenus=JSON.stringify([state.thursdays,state.onceDays]);
       if(v.doc)applyDoc(v.doc);
       applyDone(v.done,v.brkDone);
       // si el robot actualizó los menús, refrescar el día cargado con los datos nuevos
       if(JSON.stringify([state.thursdays,state.onceDays])!==beforeMenus){
+        // el robot puede correr la lista (se cae el jueves que ya pasó) → re-ubicar el día por FECHA, no por posición
+        if(prevLabel&&Array.isArray(state.thursdays)){
+          const ni=state.thursdays.findIndex(t=>t.label===prevLabel);
+          if(ni>=0)state.selThu=ni;
+        }
         const lbl=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
         if(lbl)loadDay(lbl);
       }
