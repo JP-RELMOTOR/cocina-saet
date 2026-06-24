@@ -1191,12 +1191,13 @@ function cloudInit(){
       let ch=migrate();
       if(ensureFixedTasks())ch=true;
       if(autoSelectThursday())ch=true;
+      const closed=closeOutWeek();if(closed)ch=true;
       const reset=weeklyReset();if(reset)ch=true;
       if(syncEncargadoTask())ch=true;
       if(syncOnceExtraTask(currentOnce()))ch=true;
       applyingRemote=false;
       saveLocal();
-      if(reset&&fbReady){fbRef.child('done').set(null);fbRef.child('brkDone').set(null);}
+      if((reset||closed)&&fbReady){fbRef.child('done').set(null);fbRef.child('brkDone').set(null);}
       if(ch)cloudPushDoc();render();
       if(currentView==='desayuno')renderBrk();
       if(currentView==='menus')renderMenus();
