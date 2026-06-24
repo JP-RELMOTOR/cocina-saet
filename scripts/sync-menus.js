@@ -113,6 +113,41 @@ function saneAlm(list){
   return Array.isArray(list) && list.length >= 8 && list.every(o => o.label && o.dish && o.cant);
 }
 
+/* ---------------- CALENDARIO COMPLETO (todos los días) ---------------- */
+function parseDays(html){
+  const t = htmlToText(html);
+  const heads = dayHeads(t);
+  const out = [];
+  for(let k=0;k<heads.length;k++){
+    const h = heads[k];
+    const body = t.slice(h.end, k+1<heads.length ? heads[k+1].i : t.length);
+    let dish='', ens='', cong='';
+    if(/Men[uú]\s+principal\s*:/i.test(body)){
+      // formato A: [cong] Menú principal: dish. Ensaladas: ens. Insumo…
+      const cm = body.match(/^[\s|]*([^]*?)\s*Men[uú]\s+principal\s*:/i);
+      if(cm) cong = clean(cm[1]);
+      const d = body.match(/Men[uú]\s+principal\s*:\s*([^]*?)\.\s*Ensaladas\s*:/i);
+      const e = body.match(/Ensaladas\s*:\s*([^]*?)\.\s*Insumo\s+principal\s*:/i);
+      dish = clean(d && d[1]); ens = clean(e && e[1]);
+    } else if(/\bEns\.?\s/i.test(body)){
+      // formato B: dish. Ens. ens cant…
+      const d = body.match(/^([^]*?)\.\s*Ens\.?\s+/i);
+      dish = clean(d && d[1]).replace(/\.\s+/g,' · ');
+      const after = body.slice(d ? d[0].length : 0);
+      const sp = after.match(/^([^]*?)\s+(\d[^]*)$/);
+      ens = clean(sp ? sp[1] : after);
+    }
+    if(!dish) continue;
+    out.push({wd:h.wd, dt:h.day+' '+SHORT[MON.indexOf(h.mon)], dish, ens, cong});
+  }
+  const key=dt=>{const m=String(dt).match(/(\d+)\s+(\w+)/);return m?(SHORT.indexOf(m[2].slice(0,3))*100+(+m[1])):999;};
+  out.sort((a,b)=>key(a.dt)-key(b.dt));
+  return out;
+}
+function saneDays(list){
+  return Array.isArray(list) && list.length >= 20 && list.every(d => d.dt && d.dish);
+}
+
 /* ---------------- escritura ---------------- */
 async function fetchText(url){
   const res = await fetch(url, {headers:{'User-Agent':'Mozilla/5.0 (compatible; CocinaSAET-sync/1.0)'}});
