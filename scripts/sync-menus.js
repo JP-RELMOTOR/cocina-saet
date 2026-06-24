@@ -182,14 +182,20 @@ async function main(){
     else await syncSection('Onces', '/cocina/doc/onceDays.json', once);
   }catch(e){ console.error('❌ Onces:', e.message); failed = true; }
 
-  // ALMUERZOS
+  // ALMUERZOS (jueves con cantidades) + CALENDARIO COMPLETO (todos los días)
   try{
     console.log('▶ Almuerzos…');
-    const alm = parseAlm(await fetchText(ALM_URL));
+    const almHtml = await fetchText(ALM_URL);
+    const alm = parseAlm(almHtml);
     console.log(`  ${alm.length} jueves: ${alm.map(o=>o.label.replace('Jueves ','').replace(' de 2026','')).join(' · ')}`);
     if(!saneAlm(alm)){ console.error('✋ Almuerzos: parseo inválido, NO escribo (datos a salvo).'); failed = true; }
     else await syncSection('Almuerzos', '/cocina/doc/thursdays.json', alm);
-  }catch(e){ console.error('❌ Almuerzos:', e.message); failed = true; }
+
+    const days = parseDays(almHtml);
+    console.log(`  Calendario: ${days.length} días (${days[0]&&days[0].dt} → ${days.length&&days[days.length-1].dt})`);
+    if(!saneDays(days)){ console.error('✋ Calendario: parseo inválido, NO escribo (datos a salvo).'); failed = true; }
+    else await syncSection('Calendario', '/cocina/doc/days.json', days);
+  }catch(e){ console.error('❌ Almuerzos/Calendario:', e.message); failed = true; }
 
   if(failed) process.exit(1);
   console.log('🌿 Sincronización completa.');
