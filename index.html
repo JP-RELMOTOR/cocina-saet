@@ -1150,6 +1150,7 @@ function applyDoc(doc){STRUCT_KEYS.forEach(k=>{if(doc[k]!==undefined)state[k]=do
   // menús sincronizados por el robot (solo lectura desde la app)
   if(Array.isArray(doc.onceDays))state.onceDays=doc.onceDays;
   if(Array.isArray(doc.thursdays))state.thursdays=doc.thursdays;
+  if(Array.isArray(doc.days))state.days=doc.days;
   if(doc.tasks)state.tasks=doc.tasks.map(t=>({id:t.id,sec:t.sec,text:t.text,who:t.who||[],done:false,fixed:!!t.fixed}));
   if(doc.brkTasks)state.brkTasks=doc.brkTasks.map(t=>({id:t.id,text:t.text,done:false}));
   if(!state.crewOverride||typeof state.crewOverride!=='object'||Array.isArray(state.crewOverride))state.crewOverride={};}
