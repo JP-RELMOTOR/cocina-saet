@@ -3,8 +3,8 @@
    - HTML / navegación  -> NETWORK-FIRST (siempre intenta traer fresh de GitHub Pages)
    - Libs externas (cdn) -> CACHE-FIRST (no cambian)
    Bumpea CACHE para forzar invalidación en un deploy grande. */
-const CACHE = "cocina-saet-v5";
-const PRECACHE = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
+const CACHE = "cocina-saet-v6";
+const PRECACHE = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png", "./logo.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
