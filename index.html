@@ -1754,7 +1754,7 @@ function switchView(v){currentView=v;
   const navV=v==='montaje'?'hoy':(['turnos','recetas','desayuno'].includes(v)?'mas':v);
   document.querySelectorAll('.bnav button').forEach(b=>b.classList.toggle('active',b.dataset.v===navV));
   document.getElementById('chips').style.display=(v==='hoy')?'':'none';
-  if(v==='menus')renderMenus();
+  if(v==='menus')renderMenus(true);
   if(v==='desayuno')renderBrk();
   if(v==='turnos')renderTurnos();
   if(v==='recetas')renderRecetas();
