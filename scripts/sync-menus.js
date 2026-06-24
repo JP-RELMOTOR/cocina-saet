@@ -162,12 +162,12 @@ async function syncSection(name, path, data){
     return;
   }
   if(process.env.DRY_RUN){
-    console.log(`— DRY RUN — ${name}: escribiría ${data.length} jueves.`);
+    console.log(`— DRY RUN — ${name}: escribiría ${data.length} registros.`);
     return;
   }
   const put = await fetch(DB+path, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
   if(!put.ok){ const b = await put.text().catch(()=> ''); throw new Error(`Firebase rechazó ${name}: HTTP ${put.status} ${b}`); }
-  console.log(`✅ ${name}: ${data.length} jueves actualizados en la nube.`);
+  console.log(`✅ ${name}: ${data.length} registros actualizados en la nube.`);
 }
 
 async function main(){
