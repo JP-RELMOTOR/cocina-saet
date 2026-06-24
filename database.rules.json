@@ -1,0 +1,32 @@
+{
+  "rules": {
+    "//": "Cocina SAET · reglas de Firebase Realtime Database.",
+    "//1": "Todo cerrado por defecto. Solo el árbol 'cocina' es accesible.",
+    "//2": "No hay login: la app y el robot escriben sin token. Por eso esto NO es",
+    "//3": "seguridad real, solo limita el daño (tipos validados, sin claves basura).",
+    "//4": "El robot (scripts/sync-menus.js) escribe cocina/doc/{onceDays,thursdays,days}.",
+
+    ".read": false,
+    ".write": false,
+
+    "cocina": {
+      ".read": true,
+      ".write": true,
+
+      "doc": {
+        ".validate": "newData.hasChildren()",
+        "$campo": { ".validate": true }
+      },
+
+      "done": {
+        "$tarea": { ".validate": "newData.isBoolean()" }
+      },
+
+      "brkDone": {
+        "$tarea": { ".validate": "newData.isBoolean()" }
+      },
+
+      "$otro": { ".validate": false }
+    }
+  }
+}
