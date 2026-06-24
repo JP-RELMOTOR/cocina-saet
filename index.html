@@ -1568,6 +1568,29 @@ function weeklyReset(){
   state.lastResetThu=lbl;
   return true;
 }
+/* === el jueves de cocina más reciente que YA pasó (estrictamente antes de hoy) === */
+function lastPastThursday(){
+  if(!Array.isArray(state.thursdays))return null;
+  const n=new Date(),today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  return state.thursdays
+    .map(t=>({label:t.label,d:parseLabelDate(t.label)}))
+    .filter(x=>x.d&&x.d.getTime()<today.getTime())
+    .sort((a,b)=>b.d.getTime()-a.d.getTime())[0]||null;
+}
+/* === cierre de semana (viernes en adelante): una vez que pasó el jueves de cocina,
+   se borran las tareas MANUALES, se desmarca todo y las de rutina quedan sin asignar.
+   Las manuales que se agreguen durante la semana sobreviven hasta su propio jueves. === */
+function closeOutWeek(){
+  const past=lastPastThursday();
+  if(!past||state.weekClosed===past.label)return false;
+  if(Array.isArray(state.tasks)){
+    state.tasks=state.tasks.filter(t=>/^fx_/.test(t.id||''));   // fuera las manuales
+    state.tasks.forEach(t=>{t.done=false;t.who=[];});           // desmarcar + sin asignar
+  }
+  (state.brkTasks||[]).forEach(t=>t.done=false);
+  state.weekClosed=past.label;
+  return true;
+}
 /* === tareas fijas de cada jueves (siempre presentes en la sección de la mañana) === */
 const FIXED_TASKS=[
   // mañana (orden por defecto)
