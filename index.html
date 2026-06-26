@@ -1000,7 +1000,7 @@ function shiftCalEntry(e){
   if(!m)return e;
   const day=+m[1], idx=MON_SHORT.indexOf(m[2].slice(0,3).toLowerCase());
   if(idx<0)return e;
-  const d=new Date(2026,idx,day+1);
+  const d=new Date(new Date().getFullYear(),idx,day+1);
   return {wd:WD_ES[d.getDay()],dt:d.getDate()+' '+MON_SHORT[d.getMonth()],dish:e.dish,ens:e.ens,cong:e.cong};
 }
 /* Respaldo de "aporta: <congregación>" por fecha. El sitio web dejó de publicar
