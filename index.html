@@ -1506,12 +1506,13 @@ function syncTasksFromDOM(){
 }
 
 /* ---- secciones ---- */
-function addSection(){if(!admin)return;const n=prompt('Nombre de la nueva sección:','Nueva sección');if(!n)return;
-  state.sections.push({id:uid('s'),name:n.trim(),icon:'📋'});save();render();}
-function renameSection(id){if(!admin)return;const s=state.sections.find(x=>x.id===id);const n=prompt('Nombre de la sección:',s.name);if(!n)return;
-  s.name=n.trim();save();render();}
-function delSection(id){if(!admin)return;if(state.tasks.some(t=>t.sec===id)){if(!confirm('Esta sección tiene tareas. ¿Eliminar sección y sus tareas?'))return;}
-  state.sections=state.sections.filter(s=>s.id!==id);state.tasks=state.tasks.filter(t=>t.sec!==id);save();render();}
+function addSection(){if(!admin)return;uiPrompt({title:'Nueva sección',label:'Nombre de la sección',value:'Nueva sección',okLabel:'Agregar',onOk:n=>{
+  if(!n||!n.trim())return;state.sections.push({id:uid('s'),name:n.trim(),icon:'📋'});save();render();}});}
+function renameSection(id){if(!admin)return;const s=state.sections.find(x=>x.id===id);if(!s)return;uiPrompt({title:'Renombrar sección',label:'Nombre de la sección',value:s.name,onOk:n=>{
+  if(!n||!n.trim())return;s.name=n.trim();save();render();}});}
+function delSection(id){if(!admin)return;const doDel=()=>{state.sections=state.sections.filter(s=>s.id!==id);state.tasks=state.tasks.filter(t=>t.sec!==id);save();render();};
+  if(state.tasks.some(t=>t.sec===id))uiConfirm('Esta sección tiene tareas. ¿Eliminar la sección y todas sus tareas?',doDel);
+  else doDel();}
 /* restaurar secciones (Mañana · Intermedio · Tarde) y rutinas al orden por defecto */
 function restoreDefaults(){
   if(!admin)return;
