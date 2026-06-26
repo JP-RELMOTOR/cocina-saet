@@ -1982,12 +1982,21 @@ function renderBrk(){
     ||'<p class="about" style="margin:10px 16px">Sin tareas aún.</p>';
 }
 function toggleBrk(id){const t=state.brkTasks.find(x=>x.id===id);if(t){t.done=!t.done;saveLocal();cloudBrkDone(id,t.done);renderBrk();}}
-function addBrk(){if(!admin)return;const n=prompt('Tarea para adelantar el desayuno de mañana:');if(!n)return;state.brkTasks.push({id:uid('b'),text:n.trim(),done:false});save();renderBrk();}
-function delBrk(id){if(!admin)return;if(!confirm('¿Eliminar esta tarea?'))return;state.brkTasks=state.brkTasks.filter(t=>t.id!==id);save();renderBrk();}
+function addBrk(){if(!admin)return;uiPrompt({title:'Nueva tarea de desayuno',label:'Para adelantar el desayuno de mañana',okLabel:'Agregar',onOk:n=>{
+  if(!n||!n.trim())return;state.brkTasks.push({id:uid('b'),text:n.trim(),done:false});save();renderBrk();}});}
+function delBrk(id){if(!admin)return;uiConfirm('¿Eliminar esta tarea?',()=>{state.brkTasks=state.brkTasks.filter(t=>t.id!==id);save();renderBrk();});}
 function editBrkMenu(){if(!admin)return;const m=state.brkMenu||{base:'',items:[]};
-  const base=prompt('Base del desayuno:',m.base||'');if(base===null)return;
-  const items=prompt('Ítems del desayuno (uno por línea):',(m.items||[]).join('\n'));if(items===null)return;
-  state.brkMenu={base:base.trim(),items:items.split('\n').map(s=>s.trim()).filter(Boolean)};save();renderBrk();toast('Desayuno actualizado');}
+  openModal(`<h2>Editar desayuno</h2>
+    <p class="desc" style="margin:6px 0 0">Base (lo que siempre va)</p>
+    <div style="margin-top:8px"><input id="brkBase" class="uifield" type="text" value="${esc(m.base||'')}"></div>
+    <p class="desc" style="margin:14px 0 0">Ítems (uno por línea)</p>
+    <div style="margin-top:8px"><textarea id="brkItems" class="uifield" rows="6">${esc((m.items||[]).join('\n'))}</textarea></div>
+    <div class="btns" style="margin-top:14px">
+      <button class="btn ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn primary" onclick="saveBrkMenu()">Guardar</button>
+    </div>`);}
+function saveBrkMenu(){if(!admin)return;const base=document.getElementById('brkBase').value,items=document.getElementById('brkItems').value;
+  state.brkMenu={base:base.trim(),items:items.split('\n').map(s=>s.trim()).filter(Boolean)};save();closeModal();renderBrk();toast('Desayuno actualizado');}
 /* ---- equipo ---- */
 function openTeam(){
   openModal(`<h2>Equipo de cocina</h2><p class="desc">${admin?'Toca el círculo para cambiar el color. ↩︎ marca quién reemplaza hoy.':'🔒 Solo el administrador puede editar el equipo.'}</p>
