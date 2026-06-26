@@ -1616,6 +1616,7 @@ const FIXED_TASKS=[
   {id:'fx_mesa2turno',sec:'inter',text:'🍴 Preparar mesa para segundo turno y limpieza de comedor post almuerzo'},
   // tarde
   {id:'fx_comedoronce',sec:'tarde',text:'🍽️ Preparar comedor (once)'},
+  {id:'fx_ordenaralim',sec:'tarde',text:'📦 Ordenar alimentos que trae la congregación para el día siguiente'},
 ];
 function morningSection(){return state.sections.find(s=>/ma(ñ|n)ana/i.test(s.name))||state.sections.find(s=>/almuerzo|ma(ñ|n)/i.test(s.name))||state.sections[0];}
 function fixedSection(key){
