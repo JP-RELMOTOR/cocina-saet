@@ -1220,11 +1220,15 @@ function cloudInit(){
 }
 /* update (no set): fusiona los campos de la app SIN borrar onceDays/thursdays,
    que son propiedad del robot de sincronización. */
-function cloudPushDoc(){if(fbReady&&!applyingRemote)fbRef.child('doc').update(docFromState());}
+function cloudPushDoc(){if(!fbReady||applyingRemote)return;
+  const d=docFromState(),j=JSON.stringify(d);
+  if(j===_lastPush)return;              // de-dupe: corta bucles de escritura si nada cambió
+  _lastPush=j;fbRef.child('doc').update(d);}
 function cloudPushAll(){if(!fbReady)return;const done={},bd={};
   state.tasks.forEach(t=>{if(t.done)done[t.id]=true;});
   (state.brkTasks||[]).forEach(t=>{if(t.done)bd[t.id]=true;});
-  fbRef.set({doc:docFromState(),done:done,brkDone:bd});}
+  // update (no set en la raíz): NO borra onceDays/thursdays/days del robot
+  fbRef.child('doc').update(docFromState());fbRef.child('done').set(done);fbRef.child('brkDone').set(bd);}
 function cloudDone(id,val){if(fbReady&&!applyingRemote)fbRef.child('done/'+id).set(val?true:null);}
 function cloudBrkDone(id,val){if(fbReady&&!applyingRemote)fbRef.child('brkDone/'+id).set(val?true:null);}
 function load(){try{const s=localStorage.getItem(KEY);state=s?JSON.parse(s):structuredClone(DEFAULT);}catch(e){state=structuredClone(DEFAULT);}
