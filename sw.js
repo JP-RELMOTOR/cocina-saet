@@ -2,8 +2,9 @@
    Estrategia híbrida:
    - HTML / navegación  -> NETWORK-FIRST (siempre intenta traer fresh de GitHub Pages)
    - Libs externas (cdn) -> CACHE-FIRST (no cambian)
-   Bumpea CACHE para forzar invalidación en un deploy grande. */
-const CACHE = "cocina-saet-v12";
+   La versión de CACHE se genera SOLA con el hash del contenido cacheado
+   (scripts/bump-sw-version.sh, llamado por el hook de deploy). No editar a mano. */
+const CACHE = "cocina-saet-868ee309ee";
 const PRECACHE = ["./", "./index.html", "./manifest.json", "./recetas-data.js",
   "./icon-192.png", "./icon-512.png", "./logo.png",
   "./img/montaje-almuerzo-1.jpg", "./img/montaje-almuerzo-2.jpg",
