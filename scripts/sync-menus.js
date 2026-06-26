@@ -153,6 +153,45 @@ function saneDays(list){
   return Array.isArray(list) && list.length >= 20 && list.every(d => d.dt && d.dish);
 }
 
+/* ---------------- TURNOS (quiénes trabajan cada día) ----------------
+   La web publica una página de turnos por ciclo EER (turnos-eer-37, -38, …).
+   Cada día: "Lunes 22 de junio : Nombre1, Nombre2, … Nombre5" (sin año).
+   Probamos varios ciclos; los que no existen (404) se ignoran. Se fusiona
+   todo en un mapa { 'dt' -> [nombres] } y luego se adjunta a cada día. */
+const TURNOS_URL = n => `https://sites.google.com/view/residencia-saet/cocina/almuerzo/turnos-eer-${n}`;
+const TURNOS_EERS = [37, 38, 39, 40, 41, 42];
+const TURNOS_STOP = /\b(Semana\b|SAET|Google Sites|Report abuse|Page details|Page updated|REVISI[ÓO]N)/i;
+function parseTurnos(html){
+  const t = htmlToText(html);
+  const re = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s*:/gi;
+  let m, heads = [];
+  while(m = re.exec(t)) heads.push({i:m.index, end:re.lastIndex, day:+m[2], mon:m[3].toLowerCase()});
+  const map = {};
+  for(let k=0;k<heads.length;k++){
+    const h = heads[k];
+    let body = t.slice(h.end, k+1<heads.length ? heads[k+1].i : t.length);
+    body = body.split(TURNOS_STOP)[0];
+    const names = body.split(',').map(clean)
+      .filter(s => s && s.length >= 3 && /[a-záéíóúñ]/i.test(s) && !/^\d/.test(s))
+      .slice(0, 5);
+    if(names.length){ map[h.day + ' ' + SHORT[MON.indexOf(h.mon)]] = names; }
+  }
+  return map;
+}
+async function buildTurnos(){
+  const all = {};
+  for(const n of TURNOS_EERS){
+    try{
+      const res = await fetch(TURNOS_URL(n), {headers:{'User-Agent':'Mozilla/5.0 (compatible; CocinaSAET-sync/1.0)'}});
+      if(!res.ok) continue;                       // 404 → ese ciclo aún no existe
+      const part = parseTurnos(await res.text());
+      Object.assign(all, part);
+      console.log(`  turnos EER ${n}: ${Object.keys(part).length} días`);
+    }catch(e){ /* ignora errores de un ciclo puntual */ }
+  }
+  return all;
+}
+
 /* ---------------- escritura ---------------- */
 async function fetchText(url){
   const res = await fetch(url, {headers:{'User-Agent':'Mozilla/5.0 (compatible; CocinaSAET-sync/1.0)'}});
