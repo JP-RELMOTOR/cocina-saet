@@ -1516,12 +1516,13 @@ function delSection(id){if(!admin)return;const doDel=()=>{state.sections=state.s
 /* restaurar secciones (Mañana · Intermedio · Tarde) y rutinas al orden por defecto */
 function restoreDefaults(){
   if(!admin)return;
-  if(!confirm('¿Restaurar las secciones (Mañana · Intermedio · Tarde) y sus tareas de rutina al orden por defecto?\n\nOjo: las tareas que hayas agregado a mano se quitan. NO afecta menús, equipo ni notas.'))return;
-  state.sections=structuredClone(DEFAULT.sections);
-  state.tasks=[];
-  ensureFixedTasks(); // repone todas las rutinas en su sección y orden
-  save();render();
-  toast('Restaurado al orden por defecto ✅');
+  uiConfirm('¿Restaurar las secciones (Mañana · Intermedio · Tarde) y sus tareas de rutina al orden por defecto?\n\nOjo: las tareas que agregaste a mano se quitan. NO afecta menús, equipo ni notas.',()=>{
+    state.sections=structuredClone(DEFAULT.sections);
+    state.tasks=[];
+    ensureFixedTasks(); // repone todas las rutinas en su sección y orden
+    save();render();
+    toast('Restaurado al orden por defecto ✅');
+  },{okLabel:'Restaurar'});
 }
 
 /* ---- menú ---- */
