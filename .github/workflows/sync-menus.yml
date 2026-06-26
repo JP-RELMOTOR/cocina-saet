@@ -10,6 +10,9 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Descargar el repo
         uses: actions/checkout@v4
@@ -21,3 +24,19 @@ jobs:
 
       - name: Leer la web y actualizar Firebase
         run: node scripts/sync-menus.js
+
+      # Si algo falla (sitio cambió de formato, red, Firebase), avisa creando un
+      # issue en GitHub -> llega correo solo. Evita spam: uno abierto a la vez.
+      - name: Avisar si el robot falló
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create robot-sync --color B60205 --description "Fallo del robot de menus" 2>/dev/null || true
+          if [ "$(gh issue list --label robot-sync --state open --json number --jq 'length')" = "0" ]; then
+            gh issue create --title "⚠️ El robot de sincronización falló" --label robot-sync --body "El workflow de sincronización falló el $(date +%F).
+
+          Ver el run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          Causa probable: el sitio web cambió de formato. Tranquilo: si el parseo es inválido, el robot NO escribe, así que los menús en Firebase están a salvo (solo dejan de actualizarse hasta arreglarlo). Cierra este issue cuando se resuelva."
+          fi
