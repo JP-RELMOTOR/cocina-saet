@@ -1088,7 +1088,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "136880524689",
   appId: "1:136880524689:web:a6472a4776abaa4b675e30"
 };
-let fbRef=null, fbReady=false, applyingRemote=false;
+let fbRef=null, fbReady=false, applyingRemote=false, _lastPush='';
 /* onceDays, thursdays y days NO van aquí: son propiedad del robot de sincronización
    (scripts/sync-menus.js). La app SOLO los lee (ver applyDoc), nunca los escribe,
    para que un push de un cliente no pise lo que actualizó la web. */
