@@ -1486,7 +1486,7 @@ function saveTask(){
   else state.tasks.push({id:uid('t'),sec:editSec,text,who:[...editWho],done:false});
   save();closeModal();render();toast('Tarea guardada ✅');
 }
-function delTask(id){if(!admin)return;if(!confirm('¿Eliminar esta tarea?'))return;state.tasks=state.tasks.filter(t=>t.id!==id);save();render();toast('Tarea eliminada');}
+function delTask(id){if(!admin)return;uiConfirm('¿Eliminar esta tarea?',()=>{state.tasks=state.tasks.filter(t=>t.id!==id);save();render();toast('Tarea eliminada');});}
 /* tras arrastrar: reconstruye el orden Y la sección de cada tarea según dónde quedó */
 function syncTasksFromDOM(){
   if(!admin)return;
