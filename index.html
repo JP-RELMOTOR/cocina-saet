@@ -1411,6 +1411,36 @@ function toggleDone(id){const t=state.tasks.find(x=>x.id===id);t.done=!t.done;sa
 /* ---- modal genérico ---- */
 function openModal(html){document.getElementById('sheet').innerHTML=html;document.getElementById('overlay').classList.add('show');}
 function closeModal(){document.getElementById('overlay').classList.remove('show');}
+/* ---- diálogos en modal (reemplazan los prompt()/confirm() nativos del navegador) ---- */
+let _uiCb=null;
+function _uiRun(){const cb=_uiCb;_uiCb=null;const i=document.getElementById('uiInput');const v=i?i.value:undefined;closeModal();if(cb)cb(v);}
+function uiConfirm(message,onOk,opts){opts=opts||{};_uiCb=onOk;
+  openModal(`<h2>${esc(opts.title||'Confirmar')}</h2>
+    <p class="desc" style="white-space:pre-line;margin-top:6px">${esc(message)}</p>
+    <div class="btns" style="margin-top:18px">
+      <button class="btn ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn ${opts.danger===false?'primary':'danger'}" style="flex:1" onclick="_uiRun()">${esc(opts.okLabel||'Eliminar')}</button>
+    </div>`);}
+function uiPrompt(opts){opts=opts||{};_uiCb=opts.onOk;
+  const v=opts.value!=null?opts.value:'';
+  const field=opts.multiline
+    ? `<textarea id="uiInput" class="uifield" rows="6" placeholder="${esc(opts.placeholder||'')}">${esc(v)}</textarea>`
+    : `<input id="uiInput" class="uifield" type="${opts.password?'password':'text'}" value="${esc(v)}" placeholder="${esc(opts.placeholder||'')}" ${opts.password?'inputmode="numeric"':''} onkeydown="if(event.key==='Enter'){event.preventDefault();_uiRun();}">`;
+  openModal(`<h2>${esc(opts.title||'')}</h2>
+    ${opts.label?`<p class="desc" style="margin:6px 0 0">${esc(opts.label)}</p>`:''}
+    <div style="margin-top:12px">${field}</div>
+    <div class="btns" style="margin-top:14px">
+      <button class="btn ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn primary" onclick="_uiRun()">${esc(opts.okLabel||'Guardar')}</button>
+    </div>`);
+  setTimeout(()=>{const i=document.getElementById('uiInput');if(i){i.focus();if(!opts.multiline&&i.select)i.select();}},60);}
+/* ---- auto-cierre del modo admin por inactividad ---- */
+let _adminTimer=null;
+const ADMIN_TIMEOUT=10*60*1000; // 10 minutos sin actividad
+function _setAdminUI(){const b=document.getElementById('adminBtn');if(b){b.classList.toggle('on',admin);b.innerHTML=admin?'👑 Admin':'🔒 Ver';}}
+function armAdminTimeout(){clearTimeout(_adminTimer);if(!admin)return;_adminTimer=setTimeout(()=>{
+  admin=false;_setAdminUI();render();toast('🔒 Modo admin cerrado por inactividad');},ADMIN_TIMEOUT);}
+['click','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,()=>{if(admin)armAdminTimeout();},true));
 
 /* ---- tarea: crear / editar ---- */
 let editId=null,editSec=null,editWho=[];
