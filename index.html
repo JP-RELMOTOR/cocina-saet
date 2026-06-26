@@ -1398,14 +1398,14 @@ function findRecipes(text){
 const ADMIN_PIN='270216';
 function toggleAdmin(){
   if(!admin){
-    const p=prompt('Ingresa la clave de administrador:');
-    if(p===null)return;
-    if(p!==ADMIN_PIN){toast('Clave incorrecta 🚫');return;}
-    admin=true;
-  }else admin=false;
-  const b=document.getElementById('adminBtn');
-  b.classList.toggle('on',admin);b.innerHTML=admin?'👑 Admin':'🔒 Ver';
-  toast(admin?'Modo administrador activado':'Modo lectura');render();}
+    uiPrompt({title:'🔑 Modo administrador',label:'Ingresa la clave para poder editar.',password:true,okLabel:'Entrar',onOk:p=>{
+      if(p==null)return;
+      if(p!==ADMIN_PIN){toast('Clave incorrecta 🚫');return;}
+      admin=true;_setAdminUI();armAdminTimeout();toast('Modo administrador activado');render();
+    }});
+    return;
+  }
+  admin=false;_setAdminUI();toast('Modo lectura');render();}
 function toggleDone(id){const t=state.tasks.find(x=>x.id===id);t.done=!t.done;saveLocal();cloudDone(id,t.done);render();}
 
 /* ---- modal genérico ---- */
