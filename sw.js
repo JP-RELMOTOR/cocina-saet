@@ -56,10 +56,22 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Otros recursos mismo-origen (manifest, íconos) -> network-first con fallback a cache
+  // Imágenes mismo-origen -> cache-first (persisten offline tras la primera carga online)
+  if (req.destination === "image" || /\.(png|jpe?g|svg|webp|gif)$/i.test(url.pathname)) {
+    e.respondWith(
+      caches.open(CACHE).then((c) =>
+        c.match(req).then((hit) =>
+          hit || fetch(req).then((res) => { if (res.ok) c.put(req, res.clone()); return res; }).catch(() => hit)
+        )
+      )
+    );
+    return;
+  }
+
+  // Otros recursos mismo-origen (recetas-data.js, manifest, íconos) -> network-first con fallback a cache
   e.respondWith(
     fetch(req)
-      .then((res) => { const cp = res.clone(); caches.open(CACHE).then((c) => c.put(req, cp)); return res; })
+      .then((res) => { if (res.ok) { const cp = res.clone(); caches.open(CACHE).then((c) => c.put(req, cp)); } return res; })
       .catch(() => caches.match(req))
   );
 });
