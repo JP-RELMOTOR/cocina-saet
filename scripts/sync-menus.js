@@ -237,6 +237,14 @@ async function main(){
 
     const days = parseDays(almHtml);
     console.log(`  Calendario: ${days.length} días (${days[0]&&days[0].dt} → ${days.length&&days[days.length-1].dt})`);
+    // equipos por día: adjuntar quiénes trabajan (los días que el sitio ya publicó turnos)
+    try{
+      console.log('▶ Turnos por día…');
+      const turnos = await buildTurnos();
+      let conTurno = 0;
+      days.forEach(d => { const team = turnos[d.dt]; if(team && team.length){ d.team = team; conTurno++; } });
+      console.log(`  ${conTurno}/${days.length} días del calendario tienen equipo asignado.`);
+    }catch(e){ console.error('  (turnos no disponibles:', e.message, ') — sigo sin equipos.'); }
     if(!saneDays(days)){ console.error('✋ Calendario: parseo inválido, NO escribo (datos a salvo).'); failed = true; }
     else await syncSection('Calendario', '/cocina/doc/days.json', days);
   }catch(e){ console.error('❌ Almuerzos/Calendario:', e.message); failed = true; }
