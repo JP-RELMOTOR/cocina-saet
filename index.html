@@ -2026,10 +2026,10 @@ function addCook(){if(!admin)return;const i=document.getElementById('newCook');c
   const pal=['#2563eb','#db2777','#c2410c','#7c3aed','#0891b2','#ca8a04','#0d9488','#9333ea'];
   state.cooks.push({id:uid('c'),name:n,color:pal[state.cooks.length%pal.length],sub:false});
   i.value='';save();renderCrew();render();toast(n+' agregado');}
-function delCook(id){if(!admin)return;if(!confirm('¿Quitar a '+cook(id).name+' del equipo?'))return;
-  state.cooks=state.cooks.filter(c=>c.id!==id);
+function delCook(id){if(!admin)return;const c=cook(id);if(!c)return;uiConfirm('¿Quitar a '+c.name+' del equipo?',()=>{
+  state.cooks=state.cooks.filter(x=>x.id!==id);
   state.tasks.forEach(t=>t.who=t.who.filter(w=>w!==id));
-  save();renderCrew();render();}
+  save();render();openTeam();});}
 
 /* ---- toast ---- */
 let tmo;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
