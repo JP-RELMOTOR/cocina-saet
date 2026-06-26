@@ -1369,7 +1369,7 @@ function renderDelivery(){
   }
   el.innerHTML=`<div class="od-ic">${ic}</div><div class="od-time">17:00</div><div class="od-sub">${esc(sub)}</div>`;
 }
-function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 /* coincidencia menú → receta */
 const REC_STOP=new Set(['de','con','al','la','el','y','o','a','en','del','los','las','su','para']);
 const REC_GENERIC=new Set(['vacuno','polo','cerdo','pavo','carne','pescado','ave','jurel','posta','arroz','papas','choclo']);
