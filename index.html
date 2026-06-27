@@ -1972,6 +1972,14 @@ function renderMenus(scrollHere){
   if(scrollHere){const el=document.getElementById('menuHere');if(el)setTimeout(()=>{try{el.scrollIntoView({block:'center'});}catch(e){}},60);}
 }
 
+/* turnos interescuela (quiénes cocinan durante la pausa entre clases) */
+function openInterTurnos(){
+  const list=(state.interTurnos||[]);
+  if(!list.length){toast('Sin turnos interescuela');return;}
+  const body=list.map(d=>`<div class="od-team" style="margin-top:10px"><div class="od-team-h" style="text-transform:capitalize">📅 ${esc((d.wd||'')+' '+(d.dt||''))}</div><div class="od-team-chips">${(d.team||[]).map(n=>`<span>${esc(n)}</span>`).join('')}</div></div>`).join('');
+  openModal(`<h2>🏖️ Turnos interescuela</h2><p class="desc" style="margin:6px 0 0">Quiénes cocinan durante la pausa entre clases.</p>${body}
+    <div class="btns" style="margin-top:16px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
+}
 /* ---- vista Desayuno ---- */
 function renderBrk(){
   const m=state.brkMenu||{base:'',items:[]};
