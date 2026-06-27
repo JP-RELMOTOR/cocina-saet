@@ -271,6 +271,15 @@ async function main(){
     else await syncSection('Calendario', '/cocina/doc/days.json', days);
   }catch(e){ console.error('❌ Almuerzos/Calendario:', e.message); failed = true; }
 
+  // TURNOS INTERESCUELA (durante la pausa entre clases) — supplementario: si falla NO marca el run como fallido
+  try{
+    console.log('▶ Turnos interescuela…');
+    const inter = parseInter(await fetchText(INTER_URL));
+    console.log(`  ${inter.length} días: ${inter.map(d=>d.dt).join(', ')}`);
+    if(!saneInter(inter)) console.error('✋ Interescuela: sin datos válidos, NO escribo (datos a salvo).');
+    else await syncSection('Interescuela', '/cocina/doc/interTurnos.json', inter);
+  }catch(e){ console.error('❌ Interescuela:', e.message); }
+
   if(failed) process.exit(1);
   console.log('🌿 Sincronización completa.');
 }
