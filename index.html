@@ -1963,7 +1963,7 @@ function renderMenus(scrollHere){
         const dish=td?td.dish:(d.dish||'');
         const ens=td?td.ens:(d.ens||'');
         let sep='';const _dd=_dtDate(d.dt);
-        if(!q&&_prev&&_dd){const g=Math.round((_dd-_prev)/86400000);if(g>1)sep=`<div class="mbreak">🏖️ Pausa de la escuela · sin almuerzos durante ${g-1} días (vacaciones entre clases)</div>`;}
+        if(!q&&_prev&&_dd){const g=Math.round((_dd-_prev)/86400000);if(g>1){const hi=(state.interTurnos||[]).length;sep=`<div class="mbreak${hi?' tap':''}"${hi?' onclick="openInterTurnos()"':''}>🏖️ Pausa de la escuela · sin almuerzos durante ${g-1} días${hi?' · <b>👥 ver turnos interescuela ›</b>':' (vacaciones entre clases)'}</div>`;}}
         _prev=_dd||_prev;
         return sep+`<div ${d.dt===hereDt?'id="menuHere" ':''}class="mday tap${thu?' thu':''}" onclick="openDayMenu('${esc(d.dt)}')"><div class="md-top"><span class="md-date">${esc((d.wd||'')+' '+(d.dt||''))}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
         <div class="md-dish">${esc(dish)} <span class="md-x">ⓘ</span></div>${ens?`<div class="md-ens">🥗 ${esc(ens)}</div>`:''}${d.cong?`<div class="md-cong">📍 aporta: ${esc(d.cong)}</div>`:''}</div>`;}).join('');
