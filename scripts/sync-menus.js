@@ -192,6 +192,28 @@ async function buildTurnos(){
   return all;
 }
 
+/* ---------------- TURNOS INTERESCUELA (durante la pausa entre clases) ----------------
+   Página aparte (turnos-interescuela). Formato: "Miércoles 01/07 👨‍🍳 Nombre 👩‍🍳 Nombre…".
+   Los nombres van separados por emojis de cocinero; las fechas son DD/MM. */
+const INTER_URL = 'https://sites.google.com/view/residencia-saet/cocina/almuerzo/turnos-interescuela';
+function parseInter(html){
+  const t = htmlToText(html);
+  const re = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})\s*\/\s*(\d{1,2})/gi;
+  let m, heads = [];
+  while(m = re.exec(t)) heads.push({i:m.index, end:re.lastIndex, wd:m[1].toLowerCase(), day:+m[2], mon:+m[3]});
+  const out = [];
+  for(let k=0;k<heads.length;k++){
+    const h = heads[k];
+    let body = t.slice(h.end, k+1<heads.length ? heads[k+1].i : t.length);
+    body = body.split(/SEMANA|LLEGADA|ESTUDIANTES|🗓|➖/i)[0];          // corta divisores y "llegada estudiantes"
+    const names = (body.match(/[A-Za-zÁÉÍÓÚÑáéíóúñ]+(?:\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]+)+/g) || [])
+      .map(clean).filter(s => s.length >= 4 && s !== s.toUpperCase());   // nombres (2+ palabras, no TODO MAYÚSCULAS)
+    if(names.length) out.push({dt:h.day+' '+SHORT[h.mon-1], wd:h.wd, team:names});
+  }
+  return out;
+}
+function saneInter(list){ return Array.isArray(list) && list.length >= 1 && list.every(d => d.dt && Array.isArray(d.team) && d.team.length); }
+
 /* ---------------- escritura ---------------- */
 async function fetchText(url){
   const res = await fetch(url, {headers:{'User-Agent':'Mozilla/5.0 (compatible; CocinaSAET-sync/1.0)'}});
