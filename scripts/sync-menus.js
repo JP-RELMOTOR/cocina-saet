@@ -244,7 +244,9 @@ async function main(){
     console.log('▶ Onces…');
     const once = parseOnce(await fetchText(ONCE_URL));
     console.log(`  ${once.length} jueves: ${once.map(o=>o.dt).join(', ')}`);
-    if(!saneOnce(once)){ console.error('✋ Onces: parseo inválido, NO escribo (datos a salvo).'); failed = true; }
+    // No-fatal: tener pocas onces es normal cerca de un receso. No escribimos (se
+    // conservan las onces previas) pero NO hacemos fallar todo el run por esto.
+    if(!saneOnce(once)){ console.error('✋ Onces: pocas/sin onces válidas (normal cerca de un receso), NO escribo — datos a salvo.'); }
     else await syncSection('Onces', '/cocina/doc/onceDays.json', once);
   }catch(e){ console.error('❌ Onces:', e.message); failed = true; }
 
