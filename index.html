@@ -2137,21 +2137,29 @@ function shortDate(s){
   return m?(m[1]+' '+m[2].slice(0,3)):s;
 }
 function checkMenusUpdated(){
-  const cur=JSON.stringify([state.thursdays,state.onceDays,state.brkMenu]);
+  // mapas del calendario: equipos por día y menú por día (para avisar por separado)
+  const teamsMap={},calMap={};
+  (state.days||[]).forEach(d=>{if(d&&d.dt){if(Array.isArray(d.team))teamsMap[d.dt]=d.team.join('|');calMap[d.dt]=[d.dish,d.ens,d.cong,d.cant].join('|');}});
+  const curArr=[state.thursdays,state.onceDays,state.brkMenu,teamsMap,calMap,state.interTurnos];
+  const cur=JSON.stringify(curArr);
   let seen=null;try{seen=localStorage.getItem('cocina_menus_seen');}catch(e){}
   if(seen===null){try{localStorage.setItem('cocina_menus_seen',cur);}catch(e){}return;}
   if(seen===cur)return;
   let prev=null;try{prev=JSON.parse(seen);}catch(e){}
   try{localStorage.setItem('cocina_menus_seen',cur);}catch(e){}
   if(!prev||prev.length<3)return; // formato viejo: solo fija la base, sin avisar
-  const thuCh=JSON.stringify(prev[0])!==JSON.stringify(state.thursdays);
-  const onceCh=JSON.stringify(prev[1])!==JSON.stringify(state.onceDays);
-  const desCh=JSON.stringify(prev[2])!==JSON.stringify(state.brkMenu);
+  const ch=i=>prev[i]!==undefined&&JSON.stringify(prev[i])!==JSON.stringify(curArr[i]); // índices nuevos: línea base silenciosa
+  const thuCh=ch(0),onceCh=ch(1),desCh=ch(2),teamsCh=ch(3),calCh=ch(4),interCh=ch(5);
   const parts=[];
   if(thuCh)parts.push('🍽️ almuerzo');
   if(onceCh)parts.push('🫖 once');
   if(desCh)parts.push('🥐 desayuno');
+  if(calCh&&!thuCh)parts.push('📅 calendario');
+  if(teamsCh)parts.push('👥 equipos por día');
+  if(interCh)parts.push('🏖️ interescuela');
   if(!parts.length)return;
+  // a dónde lleva el toque: desayuno solo si es lo único que cambió
+  const target=(desCh&&parts.length===1)?'desayuno':'menus';
   // fechas con menú nuevo o modificado
   const dates=new Set();
   const collect=(pArr,cArr,keyFn,dtFn)=>{const pm={};(pArr||[]).forEach(x=>pm[keyFn(x)]=JSON.stringify(x));(cArr||[]).forEach(x=>{if(pm[keyFn(x)]!==JSON.stringify(x))dates.add(shortDate(dtFn(x)));});};
