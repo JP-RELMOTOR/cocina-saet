@@ -1241,6 +1241,7 @@ function applyDoc(doc){STRUCT_KEYS.forEach(k=>{if(doc[k]!==undefined)state[k]=do
   if(Array.isArray(doc.thursdays))state.thursdays=doc.thursdays;
   if(Array.isArray(doc.days))state.days=fillCong(doc.days);
   if(Array.isArray(doc.interTurnos))state.interTurnos=doc.interTurnos;
+  if(doc.pageMods&&typeof doc.pageMods==='object')state.pageMods=doc.pageMods;
   if(doc.tasks)state.tasks=doc.tasks.map(t=>({id:t.id,sec:t.sec,text:t.text,who:t.who||[],done:false,fixed:!!t.fixed}));
   if(doc.brkTasks)state.brkTasks=doc.brkTasks.map(t=>({id:t.id,text:t.text,done:false}));
   if(!state.crewOverride||typeof state.crewOverride!=='object'||Array.isArray(state.crewOverride))state.crewOverride={};}
