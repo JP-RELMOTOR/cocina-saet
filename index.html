@@ -1922,8 +1922,13 @@ function ensDetail(m){
 function openEnsDetail(){
   const en=state.menu.find(m=>m.cls==='en');const d=ensDetail(en);
   if(!d){toast('Aún no hay insumos de ensalada');return;}
-  const names=d.ens?`<ul class="od-ul"><li>${esc(d.ens)}</li></ul>`:'';
-  openModal(`<h2>🥗 Insumos de ensalada</h2>${names}${cantToList(d.cant,'🥗 Insumo ensaladas (50 porciones)')}
+  const lbl=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:'general';
+  const items=splitItems(d.cant);
+  const names=d.ens?`<div class="od-ens" style="font-size:14.5px;font-weight:700">🥗 ${esc(d.ens)}</div>`:'';
+  const list=items.length
+    ? `<p class="desc" style="margin:12px 0 6px">🛒 <b>Check-list de compras</b> (50 porciones) · toca para marcar comprado/recibido — se comparte con el equipo</p>${shopChecklistHTML(lbl,items)}`
+    : `<p class="desc" style="margin-top:12px">Sin cantidades cargadas para este día.</p>`;
+  openModal(`<h2>🥗 Detalle de la ensalada</h2>${names}${list}
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
 /* ---- detalle por jueves para el menú del mes ---- */
