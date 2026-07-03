@@ -1435,7 +1435,8 @@ function render(){
   if(selLabel){
     const note=(state.dayNote||{})[selLabel]||'';
     if(note||admin){
-      noteEl.innerHTML=`<div class="dnote${note?'':' empty'}"><div class="dn-h">📝 Nota del día${admin?`<span class="dn-edit" onclick="openDayNote()">${note?'editar':'agregar'}</span>`:''}</div>${note?`<p>${esc(note)}</p>`:'<p class="dn-ph">Sin notas. Toca «agregar» para dejar un recordatorio (ej. faltó cilantro, horno falló).</p>'}</div>`;
+      const histN=Object.keys(state.dayNote||{}).filter(k=>(state.dayNote[k]||'').trim()).length;
+      noteEl.innerHTML=`<div class="dnote${note?'':' empty'}"><div class="dn-h">📝 Nota del día${admin?`<span class="dn-edit" onclick="openDayNote()">${note?'editar':'agregar'}</span>`:''}${histN>1||(histN===1&&!note)?`<span class="dn-edit" style="margin-right:${admin?'10px':'0'}" onclick="openNotesHistory()">🕘 historial</span>`:''}</div>${note?`<p>${esc(note)}</p>`:'<p class="dn-ph">Sin notas. Toca «agregar» para dejar un recordatorio (ej. faltó cilantro, horno falló).</p>'}</div>`;
     }else noteEl.innerHTML='';
   }else noteEl.innerHTML='';
   // turnos
