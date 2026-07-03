@@ -2147,6 +2147,16 @@ function renderMenus(scrollHere){
   if(scrollHere){const el=document.getElementById('menuHere');if(el)setTimeout(()=>{try{el.scrollIntoView({block:'center'});}catch(e){}},60);}
 }
 
+/* ---- material de encargados: se abre con la clave de administrador ---- */
+let _encOk=false;
+function openEncargadosDoc(){
+  if(admin||_encOk){switchView('encargados');return;}
+  uiPrompt({title:'🔒 Material de encargados',label:'Contenido interno del equipo. Ingresa la clave de administrador.',password:true,okLabel:'Abrir',onOk:p=>{
+    if(p==null)return;
+    if(p!==ADMIN_PIN){toast('Clave incorrecta 🚫');return;}
+    _encOk=true;switchView('encargados');
+  }});
+}
 /* ---- historial de notas del día (continuidad entre semanas) ---- */
 function openNotesHistory(){
   const entries=Object.entries(state.dayNote||{})
