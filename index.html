@@ -2103,6 +2103,17 @@ function renderMenus(scrollHere){
   if(scrollHere){const el=document.getElementById('menuHere');if(el)setTimeout(()=>{try{el.scrollIntoView({block:'center'});}catch(e){}},60);}
 }
 
+/* ---- historial de notas del día (continuidad entre semanas) ---- */
+function openNotesHistory(){
+  const entries=Object.entries(state.dayNote||{})
+    .filter(([,v])=>(v||'').trim())
+    .map(([label,note])=>({label,note,d:parseLabelDate(label)}))
+    .sort((a,b)=>(b.d?b.d.getTime():0)-(a.d?a.d.getTime():0));
+  if(!entries.length){toast('Sin notas guardadas');return;}
+  const body=entries.map(e=>`<div class="dnote" style="margin:10px 0 0"><div class="dn-h">📅 ${esc(e.label.replace(/ de \d{4}$/,''))}</div><p>${esc(e.note)}</p></div>`).join('');
+  openModal(`<h2>🕘 Historial de notas</h2><p class="desc" style="margin:4px 0 0">Recordatorios de jueves anteriores (ej. qué faltó, qué falló).</p>${body}
+    <div class="btns" style="margin-top:16px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
+}
 /* ---- lista de compras del jueves: cantidades → checklist compartible ---- */
 function splitItems(str){
   // divide por comas y puntos, pero NO dentro de paréntesis: "(reineta, merluza)" queda junto
