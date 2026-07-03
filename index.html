@@ -1273,6 +1273,7 @@ function cloudInit(){
         if(lbl)loadDay(lbl);
       }
       checkMenusUpdated();
+      checkSiteUpdated();
       let ch=migrate();
       if(ensureFixedTasks())ch=true;
       if(autoSelectThursday())ch=true;
