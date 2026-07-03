@@ -2139,10 +2139,23 @@ function splitItems(str){
   if(cur.trim())out.push(cur.trim());
   return out.filter(s=>s.length>2);
 }
+/* checks PERSISTENTES y COMPARTIDOS (state.shopChk, viaja en el doc): sirven para
+   marcar lo comprado y después verificar si llegó la mercadería. Clave por texto
+   del ítem, así no se desalinean si el robot reordena las cantidades. */
+function shopKey(s){return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'').slice(0,40)||'x';}
+function shopChecklistHTML(label,items){
+  const chk=(state.shopChk||{})[label]||{};
+  return `<ul class="shoplist">${items.map(it=>{const k=shopKey(it);return `<li class="${chk[k]?'done':''}" onclick="toggleShopChk('${esc(label)}','${k}',this)">${esc(it)}</li>`;}).join('')}</ul>`;
+}
+function toggleShopChk(label,key,el){
+  if(!state.shopChk||typeof state.shopChk!=='object')state.shopChk={};
+  const m=state.shopChk[label]=state.shopChk[label]||{};
+  if(m[key])delete m[key];else m[key]=true;
+  if(el)el.classList.toggle('done',!!m[key]);
+  save();
+}
 let _shopData=null;
-function openShopList(){
-  const sel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu]:null;
-  if(!sel){toast('Sin jueves seleccionado');return;}
+function shopGroups(sel){
   const o=currentOnce();
   const spA=splitCant(sel.cant||'');
   const groups=[];
@@ -2150,10 +2163,16 @@ function openShopList(){
   if(spA.ens)groups.push({t:'🥗 Ensaladas · '+(sel.ens||''),items:splitItems(spA.ens)});
   if(o&&o.cant)groups.push({t:'🫖 Once',items:splitItems(o.cant)});
   if(o&&o.extra)groups.push({t:'⚠️ Para el día siguiente',items:[o.extra]});
+  return groups;
+}
+function openShopList(){
+  const sel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu]:null;
+  if(!sel){toast('Sin jueves seleccionado');return;}
+  const groups=shopGroups(sel);
   if(!groups.length){toast('Este jueves no tiene cantidades cargadas');return;}
   _shopData={label:sel.label,groups};
-  const body=groups.map((g,gi)=>`<div class="od-sec"><h4 style="margin:14px 0 6px">${esc(g.t)}</h4><ul class="shoplist">${g.items.map((it,ii)=>`<li onclick="this.classList.toggle('done')">${esc(it)}</li>`).join('')}</ul></div>`).join('');
-  openModal(`<h2>🛒 Lista de compras</h2><p class="desc" style="margin:4px 0 0">${esc(sel.label)} · 50 porciones · toca un ítem para tacharlo</p>${body}
+  const body=groups.map(g=>`<div class="od-sec"><h4 style="margin:14px 0 6px">${esc(g.t)}</h4>${shopChecklistHTML(sel.label,g.items)}</div>`).join('');
+  openModal(`<h2>🛒 Lista de compras</h2><p class="desc" style="margin:4px 0 0">${esc(sel.label)} · 50 porciones · toca para marcar (se comparte con el equipo)</p>${body}
     <div class="btns" style="margin-top:16px">
       <button class="btn ghost" onclick="closeModal()">Cerrar</button>
       <button class="btn primary" onclick="shareShopList()">📤 Compartir</button>
@@ -2161,8 +2180,9 @@ function openShopList(){
 }
 function shareShopList(){
   if(!_shopData)return;
+  const chk=(state.shopChk||{})[_shopData.label]||{};
   const txt='🛒 COMPRAS · '+_shopData.label+' (50 porciones)\n\n'
-    +_shopData.groups.map(g=>g.t+'\n'+g.items.map(i=>'▢ '+i).join('\n')).join('\n\n')
+    +_shopData.groups.map(g=>g.t+'\n'+g.items.map(i=>(chk[shopKey(i)]?'✅ ':'▢ ')+i).join('\n')).join('\n\n')
     +'\n\n— Cocina SAET 🍀';
   if(navigator.share){navigator.share({text:txt}).catch(()=>{});}
   else window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
