@@ -25,6 +25,19 @@ jobs:
       - name: Leer la web y actualizar Firebase
         run: node scripts/sync-menus.js
 
+      # Si el vigilante detectó que el sitio actualizó alguna página (pautas,
+      # instrucciones, montaje…), crea un issue -> llega correo. Los menús se
+      # sincronizan solos; esto avisa de TODO lo demás.
+      - name: Avisar si el sitio publicó cambios
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f site-changes.md ]; then
+            gh label create sitio-actualizado --color 0E8A16 --description "El sitio oficial cambio contenido" 2>/dev/null || true
+            gh issue create --title "📰 El sitio oficial actualizó contenido ($(date +%F))" --label sitio-actualizado --body-file site-changes.md
+          fi
+
       # Si algo falla (sitio cambió de formato, red, Firebase), avisa creando un
       # issue en GitHub -> llega correo solo. Evita spam: uno abierto a la vez.
       - name: Avisar si el robot falló
