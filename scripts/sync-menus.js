@@ -214,6 +214,59 @@ function parseInter(html){
 }
 function saneInter(list){ return Array.isArray(list) && list.length >= 1 && list.every(d => d.dt && Array.isArray(d.team) && d.team.length); }
 
+/* ---------------- VIGILANTE DE CAMBIOS DEL SITIO ----------------
+   Google Sites embebe la fecha de última modificación de cada página como
+   timestamp epoch-ms dentro del HTML (el aviso "Última actualización: hace N días").
+   Comparamos contra lo guardado en Firebase (cocina/doc/pageMods): si una página
+   cambió, escribimos site-changes.md y el workflow crea un issue (llega correo).
+   La primera corrida solo guarda la línea base, sin avisar. */
+const SITE_BASE = 'https://sites.google.com/view/residencia-saet/cocina';
+const WATCH_PAGES = {
+  'Menú almuerzos':      ALM_URL,
+  'Menú onces':          ONCE_URL,
+  'Turnos interescuela': INTER_URL,
+  'Encargado de turno':  SITE_BASE + '/encargado-de-turno',
+  'Pautas generales':    SITE_BASE + '/pautas-generales',
+  'Pautas clave':        SITE_BASE + '/pautas-clave',
+  'Montaje':             SITE_BASE + '/montaje',
+  'Desayuno':            SITE_BASE + '/desayuno',
+};
+function pageLastMod(html){
+  const cut = Date.now() - 5*60*1000;   // descarta timestamps del render actual
+  const ts = [...html.matchAll(/1[6-8]\d{11}/g)].map(m => +m[0]).filter(t => t < cut);
+  return ts.length ? Math.max(...ts) : 0;
+}
+async function watchPages(){
+  let stored = {};
+  try{ const r = await fetch(DB + '/cocina/doc/pageMods.json'); if(r.ok) stored = (await r.json()) || {}; }catch(e){}
+  const baseline = !Object.keys(stored).length;
+  const nowMods = {}, changes = [];
+  for(const [name, url] of Object.entries(WATCH_PAGES)){
+    try{
+      const mod = pageLastMod(await fetchText(url));
+      if(!mod) continue;
+      nowMods[name] = mod;
+      if(!baseline && stored[name] && mod > stored[name]) changes.push({name, url, mod});
+    }catch(e){ /* página caída hoy: se reintenta mañana */ }
+  }
+  const fmt = ms => new Date(ms).toLocaleString('es-CL', {timeZone:'America/Santiago', dateStyle:'full', timeStyle:'short'});
+  if(changes.length){
+    console.log(`  📰 ${changes.length} página(s) cambiaron:`);
+    changes.forEach(c => console.log(`    • ${c.name} — ${fmt(c.mod)}`));
+    const body = ['El sitio oficial de la Residencia SAET actualizó estas páginas:', '']
+      .concat(changes.map(c => `- **${c.name}** — ${fmt(c.mod)}\n  ${c.url}`))
+      .concat(['', 'Revisa si hay instrucciones nuevas que convenga reflejar en la app. Los menús/turnos se sincronizan solos; esto aplica a pautas, instrucciones y montaje.'])
+      .join('\n');
+    if(!process.env.DRY_RUN) require('fs').writeFileSync('site-changes.md', body);
+  }else{
+    console.log(baseline ? '  (primera corrida: guardo línea base, sin avisar)' : '  ✓ sin cambios en las páginas vigiladas.');
+  }
+  if(!process.env.DRY_RUN && Object.keys(nowMods).length){
+    const put = await fetch(DB + '/cocina/doc/pageMods.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(Object.assign({}, stored, nowMods))});
+    if(!put.ok) console.error('  (no pude guardar pageMods: HTTP ' + put.status + ')');
+  }
+}
+
 /* ---------------- escritura ---------------- */
 async function fetchText(url){
   const res = await fetch(url, {headers:{'User-Agent':'Mozilla/5.0 (compatible; CocinaSAET-sync/1.0)'}});
