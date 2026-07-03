@@ -1386,6 +1386,7 @@ function load(){try{const s=localStorage.getItem(KEY);state=s?JSON.parse(s):stru
   if(!state.brkMenu||Array.isArray(state.brkMenu)||typeof state.brkMenu!=='object')state.brkMenu=structuredClone(BRK_MENU);
   if(!Array.isArray(state.brkTasks))state.brkTasks=structuredClone(BRK_TASKS);
   if(!state.crewOverride||typeof state.crewOverride!=='object'||Array.isArray(state.crewOverride))state.crewOverride={};
+  if(!state.shopChk||typeof state.shopChk!=='object'||Array.isArray(state.shopChk))state.shopChk={};
   if(!state.encargado||typeof state.encargado!=='object'||Array.isArray(state.encargado))state.encargado={};
   if(typeof state.dayNote!=='object'||state.dayNote==null||Array.isArray(state.dayNote))state.dayNote={};
   if(state.lastResetThu===undefined)state.lastResetThu='';
