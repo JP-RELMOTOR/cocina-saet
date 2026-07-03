@@ -1788,6 +1788,7 @@ function closeOutWeek(){
     state.tasks.forEach(t=>{t.done=false;t.who=[];});           // desmarcar + sin asignar
   }
   (state.brkTasks||[]).forEach(t=>t.done=false);
+  state.shopChk={};                                             // checks de compras: semana nueva, lista limpia
   state.weekClosed=past.label;
   return true;
 }
