@@ -115,6 +115,12 @@
   body.dark .od-team-chips span{background:#16271d;border-color:#2a4636;color:#a7e9c2;}
   .od-sec{margin-top:14px;}.od-sec h4{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:#6d28d9;margin-bottom:7px;}
   .od-cant{margin:0;padding-left:18px;}.od-cant li{font-size:14.5px;line-height:1.5;color:#334155;margin-bottom:4px;}
+  .shoplist{margin:0;padding:0;list-style:none;}
+  .shoplist li{font-size:14.5px;line-height:1.45;color:#334155;padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer;}
+  .shoplist li::before{content:'▢ ';color:var(--brand);font-weight:800;}
+  .shoplist li.done{text-decoration:line-through;opacity:.55;}
+  .shoplist li.done::before{content:'✅ ';}
+  body.dark .shoplist li{color:#c7d0db;background:#19212c;}
   .mday .md-warn{font-size:12px;font-weight:700;color:#b45309;margin-top:6px;}
   .mday .md-cant{font-size:11.5px;color:#64748b;margin-top:5px;line-height:1.45;}
   .mday.tap{cursor:pointer;}.mday.tap:active{opacity:.7;}
