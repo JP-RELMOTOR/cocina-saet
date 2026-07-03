@@ -335,6 +335,12 @@ async function main(){
     else await syncSection('Interescuela', '/cocina/doc/interTurnos.json', inter);
   }catch(e){ console.error('❌ Interescuela:', e.message); }
 
+  // VIGILANTE: ¿alguna página del sitio cambió desde la última corrida?
+  try{
+    console.log('▶ Vigilante de cambios del sitio…');
+    await watchPages();
+  }catch(e){ console.error('  (vigilante falló:', e.message, ') — no es fatal.'); }
+
   if(failed) process.exit(1);
   console.log('🌿 Sincronización completa.');
 }
