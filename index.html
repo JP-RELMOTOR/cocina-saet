@@ -2035,6 +2035,46 @@ function renderMenus(scrollHere){
   if(scrollHere){const el=document.getElementById('menuHere');if(el)setTimeout(()=>{try{el.scrollIntoView({block:'center'});}catch(e){}},60);}
 }
 
+/* ---- lista de compras del jueves: cantidades → checklist compartible ---- */
+function splitItems(str){
+  // divide por comas y puntos, pero NO dentro de paréntesis: "(reineta, merluza)" queda junto
+  const out=[];let cur='',depth=0;
+  for(const c of String(str||'')){
+    if(c==='(')depth++;if(c===')')depth=Math.max(0,depth-1);
+    if((c===','||c==='.')&&depth===0){if(cur.trim())out.push(cur.trim());cur='';}
+    else cur+=c;
+  }
+  if(cur.trim())out.push(cur.trim());
+  return out.filter(s=>s.length>2);
+}
+let _shopData=null;
+function openShopList(){
+  const sel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu]:null;
+  if(!sel){toast('Sin jueves seleccionado');return;}
+  const o=currentOnce();
+  const spA=splitCant(sel.cant||'');
+  const groups=[];
+  if(spA.alm)groups.push({t:'🍽️ Almuerzo · '+(sel.dish||''),items:splitItems(spA.alm)});
+  if(spA.ens)groups.push({t:'🥗 Ensaladas · '+(sel.ens||''),items:splitItems(spA.ens)});
+  if(o&&o.cant)groups.push({t:'🫖 Once',items:splitItems(o.cant)});
+  if(o&&o.extra)groups.push({t:'⚠️ Para el día siguiente',items:[o.extra]});
+  if(!groups.length){toast('Este jueves no tiene cantidades cargadas');return;}
+  _shopData={label:sel.label,groups};
+  const body=groups.map((g,gi)=>`<div class="od-sec"><h4 style="margin:14px 0 6px">${esc(g.t)}</h4><ul class="shoplist">${g.items.map((it,ii)=>`<li onclick="this.classList.toggle('done')">${esc(it)}</li>`).join('')}</ul></div>`).join('');
+  openModal(`<h2>🛒 Lista de compras</h2><p class="desc" style="margin:4px 0 0">${esc(sel.label)} · 50 porciones · toca un ítem para tacharlo</p>${body}
+    <div class="btns" style="margin-top:16px">
+      <button class="btn ghost" onclick="closeModal()">Cerrar</button>
+      <button class="btn primary" onclick="shareShopList()">📤 Compartir</button>
+    </div>`);
+}
+function shareShopList(){
+  if(!_shopData)return;
+  const txt='🛒 COMPRAS · '+_shopData.label+' (50 porciones)\n\n'
+    +_shopData.groups.map(g=>g.t+'\n'+g.items.map(i=>'▢ '+i).join('\n')).join('\n\n')
+    +'\n\n— Cocina SAET 🍀';
+  if(navigator.share){navigator.share({text:txt}).catch(()=>{});}
+  else window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
 /* turnos interescuela (quiénes cocinan durante la pausa entre clases) */
 function openInterTurnos(){
   const list=(state.interTurnos||[]);
