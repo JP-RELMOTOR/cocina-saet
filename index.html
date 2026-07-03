@@ -2219,6 +2219,24 @@ function checkMenusUpdated(){
   const sub=dl.length?('Fechas: '+dl.slice(0,4).join(' · ')+(dl.length>4?'…':'')+' · toca para ver ›'):'Toca para ver ›';
   showMenuUpd('Se actualizó: '+parts.join(' · '),sub,target);
 }
+/* aviso cuando el VIGILANTE del robot detecta que el sitio actualizó páginas de
+   instrucciones (pautas, encargado, montaje, desayuno). Los menús/equipos ya se
+   avisan con checkMenusUpdated; aquí solo el contenido informativo. */
+const SITE_PAGE_VIEWS={'Encargado de turno':'pautas','Pautas generales':'pautas','Pautas clave':'pautas','Montaje':'montaje','Desayuno':'desayuno'};
+function checkSiteUpdated(){
+  const mods=state.pageMods||{};
+  const watched={};Object.keys(SITE_PAGE_VIEWS).forEach(k=>{if(mods[k])watched[k]=mods[k];});
+  if(!Object.keys(watched).length)return;
+  let seen=null;try{seen=JSON.parse(localStorage.getItem('cocina_pagemods_seen'));}catch(e){}
+  try{localStorage.setItem('cocina_pagemods_seen',JSON.stringify(watched));}catch(e){}
+  if(!seen)return; // primera vez: línea base, sin avisar
+  const changed=Object.keys(watched).filter(k=>seen[k]&&watched[k]>seen[k]);
+  if(!changed.length)return;
+  // no pisar un aviso de menús que ya esté en pantalla
+  const el=document.getElementById('menuUpd');
+  if(el&&el.classList.contains('show'))return;
+  showMenuUpd('📰 El sitio actualizó: '+changed.join(' · '),'Toca para ver ›',SITE_PAGE_VIEWS[changed[0]]||'pautas');
+}
 let _menuUpdTarget='menus';
 function showMenuUpd(msg,sub,target){
   const el=document.getElementById('menuUpd');if(!el)return;
