@@ -2049,12 +2049,28 @@ function switchView(v){currentView=v;
   try{window.scrollTo(0,0);}catch(e){}
 }
 function renderTurnos(){
-  const selLabel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:'';
-  document.getElementById('turnosList').innerHTML=Object.keys(TURNOS).map(k=>{
-    const today=k===selLabel;const names=TURNOS[k];
-    return `<div class="trow${today?' today':''}"><div class="td">${today?'🟢 ':'📅 '}${esc(k.replace(/ de 2026$/,''))}</div>
-      <div class="tn">${names.map(n=>{const rep=!BASE_TEAM.includes(n);return `<span class="${rep?'rot':''}">${rep?'↩︎ ':''}${esc(n)}</span>`;}).join('')}</div></div>`;
+  const el=document.getElementById('turnosList');if(!el)return;
+  const dtDate=dt=>{const m=String(dt||'').match(/(\d+)\s+([a-záéíóúñ]+)/i);if(!m)return null;const i=MON_SHORT.indexOf(m[2].slice(0,3).toLowerCase());return i<0?null:new Date(new Date().getFullYear(),i,+m[1]);};
+  const days=(state.days||[]).filter(d=>Array.isArray(d.team)&&d.team.length);
+  if(!days.length){
+    // respaldo histórico (solo si aún no llegó la nube en la primera carga)
+    const selLabel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:'';
+    el.innerHTML=Object.keys(TURNOS).map(k=>{
+      const today=k===selLabel;const names=TURNOS[k];
+      return `<div class="trow${today?' today':''}"><div class="td">${today?'🟢 ':'📅 '}${esc(k.replace(/ de 2026$/,''))}</div>
+        <div class="tn">${names.map(nm=>{const rep=!BASE_TEAM.includes(nm);return `<span class="${rep?'rot':''}">${rep?'↩︎ ':''}${esc(nm)}</span>`;}).join('')}</div></div>`;
+    }).join('');
+    return;
+  }
+  const n=new Date();const today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  const hereIdx=days.findIndex(d=>{const dd=dtDate(d.dt);return dd&&dd.getTime()>=today.getTime();});
+  el.innerHTML=days.map((d,i)=>{
+    const dd=dtDate(d.dt);const isToday=dd&&dd.getTime()===today.getTime();
+    const here=i===hereIdx;const thu=/^juev/i.test(d.wd||'');
+    return `<div ${here?'id="turnoHere" ':''}class="trow${here?' today':''}"><div class="td" style="text-transform:capitalize">${isToday?'🟢 ':'📅 '}${esc((d.wd||'')+' '+(d.dt||''))}${thu?' <span class="md-badge">JUEVES</span>':''}</div>
+      <div class="tn">${d.team.map(nm=>{const rep=thu&&!BASE_TEAM.includes(nm)&&!state.cooks.some(c=>c.name===nm&&!c.sub);return `<span class="${rep?'rot':''}">${rep?'↩︎ ':''}${esc(nm)}</span>`;}).join('')}</div></div>`;
   }).join('');
+  const h=document.getElementById('turnoHere');if(h)setTimeout(()=>{try{h.scrollIntoView({block:'center'});}catch(e){}},60);
 }
 /* ---- marcar quiénes trabajan el día (admin), desde el Equipo ---- */
 let crewPresent=new Set();let crewBoss='';
