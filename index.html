@@ -1450,7 +1450,7 @@ function render(){
   const chips=document.getElementById('chips');chips.innerHTML='';
   // chips = solo el equipo del día (de "Trabajan")
   const _selLabel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
-  const _crew=_selLabel?(state.crewOverride[_selLabel]||defaultCrew()):null;
+  const _crew=_selLabel?crewForLabel(_selLabel):null;
   const _crewSet=_crew?new Set(_crew):null;
   // si el filtro apunta a alguien que hoy no trabaja, vuelve a "Todos"
   if(filter!=='todos'){const fc=state.cooks.find(c=>c.id===filter);if(!fc||(_crewSet&&!_crewSet.has(fc.name)))filter='todos';}
