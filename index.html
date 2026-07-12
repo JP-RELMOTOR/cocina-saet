@@ -2099,7 +2099,7 @@ function siteCrewForLabel(label){
 /* crew a mostrar: 1) lo marcado a mano, 2) el turno del sitio, 3) el equipo base */
 function crewForLabel(label){if(!label)return null;return state.crewOverride[label]||siteCrewForLabel(label)||defaultCrew();}
 function openCrewEdit(){if(!admin)return;const label=curCrewLabel();if(!label)return;
-  crewPresent=new Set(state.crewOverride[label]||defaultCrew());crewBoss=(state.encargado||{})[label]||'';drawCrewEdit();}
+  crewPresent=new Set(crewForLabel(label));crewBoss=(state.encargado||{})[label]||'';drawCrewEdit();}
 function drawCrewEdit(){const label=curCrewLabel();
   const team=state.cooks.map(c=>{const on=crewPresent.has(c.name);
     return `<div class="vol${on?' on':''}" onclick="crewToggle('${jsq(c.name)}')"><span class="vdot" style="background:${c.color}"></span><span class="vn">${esc(c.name)}${c.sub?' ↩︎':''}</span><b>${on?'✓':'+'}</b></div>`;}).join('');
