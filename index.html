@@ -2356,8 +2356,8 @@ function checkMenusUpdated(){
   if(teamsCh)parts.push('👥 equipos por día');
   if(interCh)parts.push('🏖️ interescuela');
   if(!parts.length)return;
-  // a dónde lleva el toque: desayuno solo si es lo único que cambió
-  const target=(desCh&&parts.length===1)?'desayuno':'menus';
+  // a dónde lleva el toque: equipos por día → vista Turnos; desayuno solo si es lo único; resto → calendario
+  const target=teamsCh?'turnos':((desCh&&parts.length===1)?'desayuno':'menus');
   // fechas con menú nuevo o modificado
   const dates=new Set();
   const collect=(pArr,cArr,keyFn,dtFn)=>{const pm={};(pArr||[]).forEach(x=>pm[keyFn(x)]=JSON.stringify(x));(cArr||[]).forEach(x=>{if(pm[keyFn(x)]!==JSON.stringify(x))dates.add(shortDate(dtFn(x)));});};
