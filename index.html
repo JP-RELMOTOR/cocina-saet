@@ -1670,7 +1670,12 @@ function openTaskRefresh(){
 }
 function saveTask(){
   if(!admin)return;
-  const text=document.getElementById('tText').value.trim();
+  const el=document.getElementById('tText');   // en modo "solo asignar" no existe
+  if(editAssignOnly){
+    const t=state.tasks.find(x=>x.id===editId);if(t)t.who=[...editWho];
+    save();closeModal();render();toast('Asignación guardada ✅');return;
+  }
+  const text=(el?el.value:'').trim();
   if(!text){toast('Escribe la tarea');return;}
   if(editId){const t=state.tasks.find(x=>x.id===editId);t.text=text;t.sec=editSec;t.who=[...editWho];}
   else state.tasks.push({id:uid('t'),sec:editSec,text,who:[...editWho],done:false});
