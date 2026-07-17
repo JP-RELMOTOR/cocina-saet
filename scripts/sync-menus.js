@@ -76,6 +76,108 @@ function saneOnce(list){
   return Array.isArray(list) && list.length >= 2 && list.every(o => o.label && o.dt && Array.isArray(o.menus) && o.menus.length >= 1);
 }
 
+/* ---------------- ONCES v2: Excel incrustado desde Google Drive ----------------
+   Desde EER 38 el sitio ya no publica las onces como texto: incrusta un archivo
+   de Drive (iframe) que en realidad es un .xlsx con columnas FECHA|MENU|CANTIDADES
+   (fechas como seriales de Excel). Leemos el ZIP del xlsx con zlib de Node, sin
+   dependencias. Si la página volviera al formato texto, parseOnce sigue de respaldo. */
+const zlib = require('zlib');
+function unzipEntries(buf){
+  // localiza el End Of Central Directory y recorre el directorio central
+  let eocd = -1;
+  for(let i = buf.length - 22; i >= 0 && i > buf.length - 65558; i--){
+    if(buf.readUInt32LE(i) === 0x06054b50){ eocd = i; break; }
+  }
+  if(eocd < 0) throw new Error('ZIP sin EOCD');
+  const count = buf.readUInt16LE(eocd + 10);
+  let off = buf.readUInt32LE(eocd + 16);
+  const files = {};
+  for(let n = 0; n < count; n++){
+    if(buf.readUInt32LE(off) !== 0x02014b50) break;
+    const method = buf.readUInt16LE(off + 10);
+    const csize = buf.readUInt32LE(off + 20);
+    const nameLen = buf.readUInt16LE(off + 28), extraLen = buf.readUInt16LE(off + 30), cmtLen = buf.readUInt16LE(off + 32);
+    const lho = buf.readUInt32LE(off + 42);
+    const name = buf.slice(off + 46, off + 46 + nameLen).toString('utf8');
+    // header local: salta nombre+extra propios (pueden diferir del central)
+    const lNameLen = buf.readUInt16LE(lho + 26), lExtraLen = buf.readUInt16LE(lho + 28);
+    const dataStart = lho + 30 + lNameLen + lExtraLen;
+    const raw = buf.slice(dataStart, dataStart + csize);
+    files[name] = method === 8 ? zlib.inflateRawSync(raw) : raw;
+    off += 46 + nameLen + extraLen + cmtLen;
+  }
+  return files;
+}
+function xmlDecode(s){return String(s||'').replace(/<[^>]+>/g,'').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#10;|&#13;/g,'\n').replace(/&amp;/g,'&');}
+function xlsxRows(buf){
+  const files = unzipEntries(buf);
+  const shared = [];
+  const ssXml = files['xl/sharedStrings.xml'] && files['xl/sharedStrings.xml'].toString('utf8');
+  if(ssXml){ let m, re = /<si\b[^>]*>([\s\S]*?)<\/si>/g;
+    while(m = re.exec(ssXml)) shared.push(xmlDecode((m[1].match(/<t\b[^>]*>[\s\S]*?<\/t>/g)||[]).join(''))); }
+  const shXml = (files['xl/worksheets/sheet1.xml'] || Buffer.from('')).toString('utf8');
+  const rows = [];
+  let rm, rowRe = /<row\b[^>]*>([\s\S]*?)<\/row>/g;
+  while(rm = rowRe.exec(shXml)){
+    const cells = [];
+    let cm, cellRe = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
+    while(cm = cellRe.exec(rm[1])){
+      const attrs = cm[1] || '', inner = cm[2] || '';
+      const v = (inner.match(/<v>([\s\S]*?)<\/v>/) || [,''])[1];
+      const isShared = /t="s"/.test(attrs);
+      cells.push(isShared ? (shared[+v] || '') : xmlDecode(v));
+    }
+    rows.push(cells);
+  }
+  return rows;
+}
+function excelDate(serial){ return new Date(Date.UTC(1899, 11, 30) + Math.round(+serial) * 86400000); }
+const WD_ES2 = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function parseOnceXlsx(buf){
+  const rows = xlsxRows(buf);
+  const out = [];
+  for(const cells of rows){
+    const di = cells.findIndex(v => /^4\d{4}(?:\.0+)?$/.test(String(v).trim()));
+    if(di < 0) continue;
+    const d = excelDate(cells[di]);
+    if(isNaN(d) || d.getUTCFullYear() < 2025) continue;
+    const rest = cells.slice(di + 1).filter(v => String(v).trim());
+    const menuTxt = rest[0] || '', cantTxt = rest[1] || '';
+    if(!menuTxt) continue;
+    // menús: segmentos "Menú N: …"; lo demás con Descongelar/Remojar/Preparar → extra
+    const segs = menuTxt.split(/(?=men[uú]\s*\d)/i).map(clean).filter(Boolean);
+    const menus = [], extras = [];
+    for(let s of segs){
+      const em = s.match(/\b(Descongelar|Remojar|Preparar)\b[\s\S]*$/i);
+      if(em){ extras.push(clean(em[0]).replace(/\.+$/,'')); s = clean(s.slice(0, em.index)); }
+      if(/^men[uú]\s*\d/i.test(s)) menus.push(s.replace(/^men[uú]\s*(\d)\s*:?\s*/i,'Menú $1: ').replace(/\.+$/,''));
+      else if(s && !menus.length) extras.push(s);   // texto suelto antes del primer menú
+    }
+    if(!menus.length && clean(menuTxt)) menus.push(clean(menuTxt).slice(0, 160));
+    const wd = WD_ES2[d.getUTCDay()];
+    if(wd !== 'jueves') continue;                    // la app usa las onces de los JUEVES
+    const day = d.getUTCDate(), mon = d.getUTCMonth();
+    out.push({ label: 'Jueves ' + day + ' de ' + MON[mon] + ' de ' + d.getUTCFullYear(),
+      dt: day + ' ' + SHORT[mon], wd: 'jueves', menus, extra: extras.join(' · '), cant: clean(cantTxt) });
+  }
+  out.sort(byDate);
+  return out;
+}
+async function fetchOnceData(){
+  const html = await fetchText(ONCE_URL);
+  const m = html.match(/drive\.google\.com\/file\/d\/([\w-]+)/);
+  if(m){
+    console.log('  (formato Excel de Drive, id ' + m[1].slice(0,8) + '…)');
+    const res = await fetch('https://drive.google.com/uc?export=download&id=' + m[1],
+      { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CocinaSAET-sync/1.0)' } });
+    if(!res.ok) throw new Error('HTTP ' + res.status + ' al bajar el Excel de onces');
+    const buf = Buffer.from(await res.arrayBuffer());
+    if(buf.slice(0, 2).toString() === 'PK') return parseOnceXlsx(buf);
+    console.error('  (el archivo de Drive no es xlsx; intento formato texto)');
+  }
+  return parseOnce(html);   // respaldo: formato texto antiguo
+}
+
 /* ---------------- ALMUERZOS ---------------- */
 function parseAlm(html){
   const t = htmlToText(html);
