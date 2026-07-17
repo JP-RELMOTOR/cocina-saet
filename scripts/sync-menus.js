@@ -397,7 +397,7 @@ async function main(){
   // ONCES
   try{
     console.log('▶ Onces…');
-    const once = parseOnce(await fetchText(ONCE_URL));
+    const once = await fetchOnceData();
     console.log(`  ${once.length} jueves: ${once.map(o=>o.dt).join(', ')}`);
     // No-fatal: tener pocas onces es normal cerca de un receso. No escribimos (se
     // conservan las onces previas) pero NO hacemos fallar todo el run por esto.
