@@ -1575,6 +1575,8 @@ function render(){
   document.querySelectorAll('.adminonly').forEach(b=>b.classList.toggle('hidden',!admin));
   if(currentView==='menus')renderMenus();
   if(currentView==='desayuno')renderBrk();
+  // el avance/checks son del día que se cocina: se ocultan al planificar otro jueve
+  const ov=document.getElementById('overviewCard');if(ov)ov.style.display=isPlanning()?'none':'';
   updProgress();
 }
 function mkChip(id,label,color){
