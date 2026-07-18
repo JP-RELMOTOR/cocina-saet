@@ -1550,7 +1550,7 @@ function render(){
   const tc=document.getElementById('turnos');tc.innerHTML='';
   state.sections.forEach(sec=>{
     let tasks=state.tasks.filter(t=>t.sec===sec.id);
-    const vis=tasks.filter(t=>filter==='todos'||t.who.includes(filter));
+    const vis=tasks.filter(t=>filter==='todos'||whoOf(t.id).includes(filter));
     if(filter!=='todos'&&!vis.length&&!admin)return;
     const blk=document.createElement('div');blk.className='turno';
     blk.innerHTML=`<div class="th"><span class="ic">${esc(sec.icon)}</span><span class="nm">${esc(sec.name)}</span>
