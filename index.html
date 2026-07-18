@@ -2177,7 +2177,7 @@ function renderTurnos(){
 /* ---- marcar quiénes trabajan el día (admin), desde el Equipo ---- */
 let crewPresent=new Set();let crewBoss='';
 function jsq(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
-function curCrewLabel(){return (state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;}
+function curCrewLabel(){return curViewLabel();}   // sigue la lente: edita el crew/nota del jueve en vista
 function defaultCrew(){return state.cooks.filter(c=>!c.sub).map(c=>c.name);}
 function isRep(name){const c=state.cooks.find(x=>x.name===name);return !!(c&&c.sub);}
 /* --- calce de nombres: el sitio usa nombres COMPLETOS (Vanessa Díaz), la app usa
