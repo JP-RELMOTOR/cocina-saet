@@ -2164,7 +2164,7 @@ function openReceta(ci,i){
   const cats=Object.keys(RECETAS_FULL);const cat=cats[ci];const r=RECETAS_FULL[cat]&&RECETAS_FULL[cat][i];if(!r)return;
   const ing=(r.ingredients||[]).map(x=>`<li>${esc(x)}</li>`).join('')||'<li>—</li>';
   const st=(r.steps||[]).map(x=>`<li>${esc(x)}</li>`).join('')||'<li>Ver detalle en el sitio.</li>';
-  openModal(`<h2>${esc(r.name)}</h2><p class="desc">${esc(cat)}${r.yield?'':' · 50 porciones'}</p>
+  openModal(`<h2>${esc(r.name)}</h2><p class="desc">${esc(cat)}</p>
     ${r.yield?`<div class="od-warn" style="margin:8px 0 10px">📏 <b>Rinde:</b> ${esc(r.yield)}</div>`:''}
     <div class="fld"><label>🧾 Ingredientes</label><ul class="reclist-d">${ing}</ul></div>
     <div class="fld"><label>👨‍🍳 Preparación</label><ol class="recsteps">${st}</ol></div>
