@@ -1689,7 +1689,7 @@ let editId=null,editSec=null,editWho=[],editAssignOnly=false;
 function openTask(id,secId){
   if(!admin)return;
   const t=id?state.tasks.find(x=>x.id===id):null;
-  editId=id;editSec=t?t.sec:secId;editWho=t?[...t.who]:[];
+  editId=id;editSec=t?t.sec:secId;editWho=t?[...whoOf(t.id)]:[];   // asignación DEL jueve en vista
   editAssignOnly=!!(t&&/^fx_/.test(t.id||''));   // rutinas: solo asignar (no cambiar texto ni borrar)
   renderTaskModal();
 }
