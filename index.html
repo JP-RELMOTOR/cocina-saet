@@ -1926,7 +1926,7 @@ function closeOutWeek(){
   if(!past||state.weekClosed===past.label)return false;
   if(Array.isArray(state.tasks)){
     state.tasks=state.tasks.filter(t=>/^fx_/.test(t.id||''));   // fuera las manuales
-    state.tasks.forEach(t=>{t.done=false;t.who=[];});           // desmarcar + sin asignar
+    state.tasks.forEach(t=>{t.done=false;});                    // desmarcar (las asignaciones son por-jueves, no se tocan)
   }
   (state.brkTasks||[]).forEach(t=>t.done=false);
   state.shopChk={};                                             // checks de compras: semana nueva, lista limpia
