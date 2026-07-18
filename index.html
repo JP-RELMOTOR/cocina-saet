@@ -1769,6 +1769,30 @@ function loadDay(label){
   const added=syncOnceExtraTask(o);
   return {ok:true,added};
 }
+/* Reconcilia el "Menú del día" con los datos fuente (thursdays/onceDays) en CADA
+   sincronización. Sin esto, si un cliente guardó textos viejos en el doc (ej. la
+   once "Por definir" antes de que el robot cargara las onces), el texto quedaba
+   pegado para todos hasta el próximo cambio de datos. Ahora se auto-corrige. */
+function syncMenuFromData(){
+  const lbl=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
+  if(!lbl)return false;
+  const t=state.thursdays[state.selThu];
+  let ch=false;
+  const al=state.menu.find(m=>m.cls==='al');
+  if(al&&(al.text!==t.dish||al.cant!==(t.cant||''))){al.text=t.dish;al.cant=t.cant||'';ch=true;}
+  const en=state.menu.find(m=>m.cls==='en');
+  if(en&&en.text!==(t.ens||'')){en.text=t.ens||'';ch=true;}
+  const on=state.menu.find(m=>m.cls==='on');
+  const oi=(state.onceDays||[]).findIndex(x=>x.label===lbl);
+  if(on&&oi>=0){
+    const o=state.onceDays[oi],txt=(o.menus||[]).join(' · ');
+    if(on.text!==txt||on.cant!==(o.cant||'')){
+      on.text=txt;on.menus=(o.menus||[]).slice();on.extra=o.extra||'';on.cant=o.cant||'';
+      state.selOnce=oi;ch=true;
+    }
+  }
+  return ch;
+}
 function applyDay(label){
   if(!admin)return;
   const r=loadDay(label);if(!r.ok)return;
