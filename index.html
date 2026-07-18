@@ -2417,7 +2417,8 @@ function addCook(){if(!admin)return;const i=document.getElementById('newCook');c
   i.value='';save();renderCrew();render();toast(n+' agregado');}
 function delCook(id){if(!admin)return;const c=cook(id);if(!c)return;uiConfirm('¿Quitar a '+c.name+' del equipo?',()=>{
   state.cooks=state.cooks.filter(x=>x.id!==id);
-  state.tasks.forEach(t=>t.who=t.who.filter(w=>w!==id));
+  state.tasks.forEach(t=>{if(Array.isArray(t.who))t.who=t.who.filter(w=>w!==id);});
+  Object.keys(state.assign||{}).forEach(l=>{const m=state.assign[l]||{};Object.keys(m).forEach(tid=>{m[tid]=(m[tid]||[]).filter(w=>w!==id);if(!m[tid].length)delete m[tid];});});
   save();render();openTeam();});}
 
 /* ---- toast ---- */
