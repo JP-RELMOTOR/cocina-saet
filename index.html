@@ -1498,7 +1498,7 @@ function render(){
     const list=crew||[];
     const enc=(state.encargado||{})[selLabel]||'';
     const _baseSet=new Set(defaultCrew());
-    document.getElementById('todayCrew').innerHTML=`<div class="tcrew"><h4>👥 Trabajan · ${esc(selLabel.replace(/ de 2026$/,''))}${admin?`<span class="crewEdit" onclick="openCrewEdit()">✏️ editar</span>`:''}</h4><div class="tchips">${list.length?list.map(n=>{const rep=isRep(n)||!_baseSet.has(n),boss=(n===enc);return `<span class="${rep?'rep':''}">${boss?'⭐ ':''}${rep?'↩︎ ':''}${esc(n)}</span>`;}).join(''):'<span style="opacity:.85">Sin marcar — toca editar</span>'}</div>${enc?`<div class="encline">⭐ Encargado del turno: <b>${esc(enc)}</b></div>`:''}</div>`;
+    document.getElementById('todayCrew').innerHTML=`<div class="tcrew" onclick="switchView('turnos')" style="cursor:pointer"><h4>👥 Trabajan · ${esc(selLabel.replace(/ de 2026$/,''))}<span class="crewMore">todos ›</span>${admin?`<span class="crewEdit" onclick="event.stopPropagation();openCrewEdit()">✏️ editar</span>`:''}</h4><div class="tchips">${list.length?list.map(n=>{const rep=isRep(n)||!_baseSet.has(n),boss=(n===enc);return `<span class="${rep?'rep':''}">${boss?'⭐ ':''}${rep?'↩︎ ':''}${esc(n)}</span>`;}).join(''):'<span style="opacity:.85">Sin marcar — toca editar</span>'}</div>${enc?`<div class="encline">⭐ Encargado del turno: <b>${esc(enc)}</b></div>`:''}</div>`;
   }else document.getElementById('todayCrew').innerHTML='';
   // nota del día
   const noteEl=document.getElementById('dayNote');
