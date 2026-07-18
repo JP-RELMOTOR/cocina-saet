@@ -1398,6 +1398,7 @@ function cloudInit(){
       applyingRemote=false;
       saveLocal();
       if((reset||closed)&&fbReady){fbRef.child('done').set(null);fbRef.child('brkDone').set(null);}
+      if(closed&&fbReady)fbRef.child('doc/shopChk').set(null);   // semana nueva: lista de compras limpia para todos
       if(closed)toast('🔄 Pauta reiniciada para el próximo jueves');
       if(ch)cloudPushDoc();render();
       if(currentView==='desayuno')renderBrk();
