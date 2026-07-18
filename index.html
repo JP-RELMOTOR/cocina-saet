@@ -1498,19 +1498,23 @@ function render(){
   document.getElementById('hSub').textContent=state.sub;
   // chips
   const chips=document.getElementById('chips');chips.innerHTML='';
-  // chips = solo el equipo del día (de "Trabajan")
-  const _selLabel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
+  // chips = solo el equipo del día (de "Trabajan"), del jueve EN VISTA
+  const _selLabel=curViewLabel();
   const _crew=_selLabel?crewForLabel(_selLabel):null;
   const _crewSet=_crew?new Set(_crew):null;
-  // si el filtro apunta a alguien que hoy no trabaja, vuelve a "Todos"
+  // si el filtro apunta a alguien que ese jueves no trabaja, vuelve a "Todos"
   if(filter!=='todos'){const fc=state.cooks.find(c=>c.id===filter);if(!fc||(_crewSet&&!_crewSet.has(fc.name)))filter='todos';}
   chips.appendChild(mkChip('todos','Todos','var(--brand)'));
   state.cooks.forEach(c=>{if(_crewSet&&!_crewSet.has(c.name))return;chips.appendChild(mkChip(c.id,c.name+(c.sub?' ↩︎':''),c.color));});
-  // menu
+  // aviso de planificación cuando NO es el jueves de esta semana
+  const _plan=isPlanning();
+  document.getElementById('planBanner').innerHTML=_plan?`<div class="planban">📋 Planificando · <b>${esc((curViewLabel()||'').replace(/ de \d{4}$/,''))}</b><span class="planback" onclick="goToday()">volver a hoy ›</span></div>`:'';
+  // menu (derivado del jueve en vista)
   const ml=document.getElementById('menuList');ml.innerHTML='';
-  state.menu.forEach(m=>{
+  const _alBlk=viewMenuBlocks().find(x=>x.cls==='al');
+  viewMenuBlocks().forEach(m=>{
     const cls=m.cls||'al';
-    const onceD=onceDetail(m), almD=almDetail(m), ensD=ensDetail(m);
+    const almD=m.cls==='al'&&m.cant, onceD=m.cls==='on'&&(m.menus.length||m.cant), ensD=m.cls==='en'&&splitCant((_alBlk||{}).cant||'').ens;
     const action=onceD?'openOnceDetail()':almD?'openAlmDetail()':ensD?'openEnsDetail()':'';
     const recs=findRecipes(m.text);
     const recHtml=recs.length?`<div class="reclinks">${recs.map(r=>`<button class="reclinkbtn" onclick="event.stopPropagation();openReceta(${r.ci},${r.i})">📖 ${esc(r.name)}</button>`).join('')}</div>`:'';
