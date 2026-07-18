@@ -1729,13 +1729,15 @@ function saveTask(){
   if(!admin)return;
   const el=document.getElementById('tText');   // en modo "solo asignar" no existe
   if(editAssignOnly){
-    const t=state.tasks.find(x=>x.id===editId);if(t)t.who=[...editWho];
+    setWho(editId,editWho);   // asignación DEL jueve en vista (por-jueves)
     save();closeModal();render();toast('Asignación guardada ✅');return;
   }
   const text=(el?el.value:'').trim();
   if(!text){toast('Escribe la tarea');return;}
-  if(editId){const t=state.tasks.find(x=>x.id===editId);t.text=text;t.sec=editSec;t.who=[...editWho];}
-  else state.tasks.push({id:uid('t'),sec:editSec,text,who:[...editWho],done:false});
+  let tid=editId;
+  if(editId){const t=state.tasks.find(x=>x.id===editId);t.text=text;t.sec=editSec;}
+  else{tid=uid('t');state.tasks.push({id:tid,sec:editSec,text,done:false});}
+  setWho(tid,editWho);   // la asignación va al jueve en vista, no global
   save();closeModal();render();toast('Tarea guardada ✅');
 }
 function delTask(id){if(!admin)return;uiConfirm('¿Eliminar esta tarea?',()=>{state.tasks=state.tasks.filter(t=>t.id!==id);save();render();toast('Tarea eliminada');});}
