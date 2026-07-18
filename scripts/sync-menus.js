@@ -343,21 +343,40 @@ async function watchPages(){
   try{ const r = await fetch(DB + '/cocina/doc/pageMods.json'); if(r.ok) stored = (await r.json()) || {}; }catch(e){}
   const baseline = !Object.keys(stored).length;
   const nowMods = {}, changes = [];
-  for(const [name, url] of Object.entries(WATCH_PAGES)){
+  let navHtml = null;   // html de la primera página: de ahí descubrimos las recetas
+  const check = async (name, url) => {
     try{
-      const mod = pageLastMod(await fetchText(url));
-      if(!mod) continue;
+      const html = await fetchText(url);
+      if(!navHtml) navHtml = html;
+      const mod = pageLastMod(html);
+      if(!mod) return;
       nowMods[name] = mod;
+      // páginas NUEVAS (sin fecha guardada) no avisan: quedan como línea base silenciosa
       if(!baseline && stored[name] && mod > stored[name]) changes.push({name, url, mod});
     }catch(e){ /* página caída hoy: se reintenta mañana */ }
+  };
+  for(const [name, url] of Object.entries(WATCH_PAGES)) await check(name, url);
+  // RECETAS: descubiertas del menú de navegación en cada corrida — las recetas
+  // nuevas del sitio entran solas al vigilante, sin mantener listas a mano.
+  if(navHtml){
+    const links = [...new Set([...navHtml.matchAll(/href="(\/view\/residencia-saet\/cocina\/recetas\/[^"#?]+)"/g)].map(m => m[1]))];
+    console.log(`  vigilando ${Object.keys(WATCH_PAGES).length} páginas + ${links.length} recetas`);
+    for(let i = 0; i < links.length; i += 6){
+      await Promise.all(links.slice(i, i + 6).map(u => {
+        const slug = decodeURIComponent(u.split('/').pop()).replace(/[.#$\/\[\]]/g, '-');
+        return check('Receta: ' + slug, 'https://sites.google.com' + u);
+      }));
+    }
   }
   const fmt = ms => new Date(ms).toLocaleString('es-CL', {timeZone:'America/Santiago', dateStyle:'full', timeStyle:'short'});
   if(changes.length){
     console.log(`  📰 ${changes.length} página(s) cambiaron:`);
     changes.forEach(c => console.log(`    • ${c.name} — ${fmt(c.mod)}`));
+    const shown = changes.slice(0, 20);
     const body = ['El sitio oficial de la Residencia SAET actualizó estas páginas:', '']
-      .concat(changes.map(c => `- **${c.name}** — ${fmt(c.mod)}\n  ${c.url}`))
-      .concat(['', 'Revisa si hay instrucciones nuevas que convenga reflejar en la app. Los menús/turnos se sincronizan solos; esto aplica a pautas, instrucciones y montaje.'])
+      .concat(shown.map(c => `- **${c.name}** — ${fmt(c.mod)}\n  ${c.url}`))
+      .concat(changes.length > 20 ? [`- …y ${changes.length - 20} páginas más (ver log del workflow)`] : [])
+      .concat(['', 'Revisa si conviene reflejarlo en la app. Los menús/turnos se sincronizan solos; esto aplica a pautas, instrucciones, montaje y RECETAS (las recetas están copiadas en la app: si cambió una, hay que actualizarla).'])
       .join('\n');
     if(!process.env.DRY_RUN) require('fs').writeFileSync('site-changes.md', body);
   }else{
