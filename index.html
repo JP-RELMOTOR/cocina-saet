@@ -2020,8 +2020,8 @@ function cantToList(str,heading){
   return `<div class="od-sec"><h4>${heading||'📋 Cantidades'}</h4><ul class="od-cant">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
 }
 function openOnceDetail(){
-  const on=state.menu.find(m=>m.cls==='on');const d=onceDetail(on);
-  if(!d){toast('Aún no hay detalle de la once');return;}
+  const d=viewMenuBlocks().find(m=>m.cls==='on');
+  if(!d||(!d.menus.length&&!d.cant)){toast('Aún no hay detalle de la once');return;}
   const menus=d.menus.length?`<ul class="od-ul">${d.menus.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="desc">Sin menú cargado.</p>';
   const extra=d.extra?`<div class="od-warn">⚠️ Para el día siguiente: ${esc(d.extra)}</div>`:'';
   const reuse=`<div class="od-reuse">♻️ La once reutiliza los sobrantes del almuerzo.</div>`;
