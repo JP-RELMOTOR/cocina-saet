@@ -1584,12 +1584,13 @@ function mkChip(id,label,color){
   el.style.setProperty('--c',color);el.innerHTML=`<span class="d"></span>${esc(label)}`;
   el.onclick=()=>{filter=id;render();};return el;}
 function mkTask(t){
-  const main=cook(t.who[0]);const c=main?main.color:'#94a3b8';
-  const pills=t.who.map(id=>{const k=cook(id);if(!k)return'';
+  const who=whoOf(t.id),plan=isPlanning();
+  const main=cook(who[0]);const c=main?main.color:'#94a3b8';
+  const pills=who.map(id=>{const k=cook(id);if(!k)return'';
     return `<span class="pill ${k.sub?'sub':''}" style="--pc:${k.color}"><span class="dot">${initials(k.name)}</span>${esc(k.name)}</span>`;}).join('');
-  const el=document.createElement('div');el.className='task'+(t.done?' done':'')+(t.fixed?' fixed':'');el.style.setProperty('--c',c);el.dataset.id=t.id;
+  const el=document.createElement('div');el.className='task'+((t.done&&!plan)?' done':'')+(t.fixed?' fixed':'')+(plan?' planning':'');el.style.setProperty('--c',c);el.dataset.id=t.id;
   const badge=t.fixed?'<span class="fxbadge">rutina</span>':'';
-  el.innerHTML=`<div class="chk" onclick="toggleDone('${t.id}')">✓</div>
+  el.innerHTML=`<div class="chk"${plan?'':` onclick="toggleDone('${t.id}')"`}>${plan?'':'✓'}</div>
     <div class="body"><div class="txt">${esc(t.text)}${badge}</div><div class="who">${pills||'<span class="pill">Sin asignar</span>'}</div></div>
     ${admin?`<div class="edit"><span class="draghandle" title="Arrastrar para reordenar">⠿</span>${/^fx_/.test(t.id||'')?`<button class="iconbtn" onclick="openTask('${t.id}')" title="Asignar quién la hace">👤</button>`:`<button class="iconbtn" onclick="openTask('${t.id}')">✏️</button><button class="iconbtn del" onclick="delTask('${t.id}')">🗑</button>`}</div>`:''}`;
   return el;
