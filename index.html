@@ -1371,6 +1371,13 @@ function cloudInit(){
     firebase.initializeApp(FIREBASE_CONFIG);
     fbRef=firebase.database().ref('cocina');
     fbReady=true;
+    // estado de conexión real (punto en la barra) — no un toast que miente al abrir
+    firebase.database().ref('.info/connected').on('value',function(s){
+      const on=s.val()===true;
+      const dot=document.getElementById('connDot');
+      if(dot){dot.classList.toggle('on',on);dot.classList.toggle('off',!on);dot.title=on?'Conectado — todos ven lo mismo':'Sin señal — tus cambios se guardan y se envían al reconectar';}
+      if(on&&!_wasConnected){_wasConnected=true;toast('☁️ Conectado en la nube');}
+    });
     fbRef.on('value',function(snap){
       const v=snap.val();
       if(!v){cloudPushAll();return;}
