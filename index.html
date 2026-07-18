@@ -1499,15 +1499,43 @@ function viewMenuBlocks(){
     {tag:'ONCE',cls:'on',text:o?((o.menus||[]).join(' · ')||'Por definir'):'Por definir',menus:o?(o.menus||[]).slice():[],extra:o?(o.extra||''):'',cant:o?(o.cant||''):''}
   ];
 }
-/* deslizar el bloque de menú → jueve anterior/siguiente (local). Izquierda = siguiente. */
+/* deslizar el bloque de menú → jueve anterior/siguiente (local). Izquierda = siguiente.
+   El bloque sigue el dedo mientras se desliza; al soltar, sale hacia un lado y el
+   menú nuevo entra desde el opuesto. */
 (function(){
   const el=document.getElementById('menuCard');if(!el)return;
-  let x0=null,y0=null,t0=0;
-  el.addEventListener('touchstart',e=>{const t=e.changedTouches[0];x0=t.clientX;y0=t.clientY;t0=Date.now();},{passive:true});
+  el.style.touchAction='pan-y';
+  let x0=null,y0=null,t0=0,lock=null; /* lock: 'h' arrastre horizontal, 'v' scroll vertical */
+  const W=()=>el.offsetWidth||320;
+  function canNav(d){const i=curViewIdx();if(i==null||!state.thursdays)return false;const n=i+d;return n>=0&&n<state.thursdays.length;}
+  function setX(x,anim){el.style.transition=anim?'transform .22s ease-out,opacity .22s ease-out':'none';el.style.transform=x?`translateX(${x}px)`:'translateX(0)';el.style.opacity=String(Math.max(.15,1-Math.abs(x)/W()));}
+  function clear(){el.style.transition='';el.style.transform='';el.style.opacity='';}
+  el.addEventListener('touchstart',e=>{const t=e.changedTouches[0];x0=t.clientX;y0=t.clientY;t0=Date.now();lock=null;},{passive:true});
+  el.addEventListener('touchmove',e=>{
+    if(x0==null)return;const t=e.changedTouches[0];const dx=t.clientX-x0,dy=t.clientY-y0;
+    if(!lock){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;lock=(Math.abs(dx)>Math.abs(dy)*1.2)?'h':'v';}
+    if(lock!=='h')return;
+    e.preventDefault();
+    setX(canNav(dx<0?1:-1)?dx:dx/3,false); /* resistencia si no hay más jueves hacia ese lado */
+  },{passive:false});
   el.addEventListener('touchend',e=>{
     if(x0==null)return;const t=e.changedTouches[0];const dx=t.clientX-x0,dy=t.clientY-y0;x0=null;
-    if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.7&&(Date.now()-t0)<800)navThu(dx<0?1:-1);
+    const w=W();
+    const fast=Math.abs(dx)>55&&(Date.now()-t0)<800;
+    const far=Math.abs(dx)>w*0.33;
+    if(!(lock==='h'&&(fast||far)&&Math.abs(dx)>Math.abs(dy)*1.2&&canNav(dx<0?1:-1))){
+      if(lock==='h'){setX(0,true);setTimeout(clear,240);}
+      return;
+    }
+    const d=dx<0?1:-1;
+    setX(-d*w,true); /* el menú actual sale hacia donde apunta el gesto */
+    setTimeout(()=>{
+      navThu(d);
+      setX(d*w,false); /* el nuevo entra desde el lado opuesto */
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{setX(0,true);setTimeout(clear,260);}));
+    },220);
   },{passive:true});
+  el.addEventListener('touchcancel',()=>{x0=null;if(lock==='h'){setX(0,true);setTimeout(clear,240);}},{passive:true});
 })();
 /* ---------- render ---------- */
 function render(){
