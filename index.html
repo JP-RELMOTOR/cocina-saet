@@ -1356,7 +1356,7 @@ function migrate(){
 }
 function cloudConfigured(){return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.indexOf('PEGAR')!==0);}
 function docFromState(){const d={};STRUCT_KEYS.forEach(k=>{if(state[k]!==undefined)d[k]=state[k];});
-  d.tasks=state.tasks.map(t=>{const o={id:t.id,sec:t.sec,text:t.text,who:t.who};if(t.fixed)o.fixed=true;return o;});
+  d.tasks=state.tasks.map(t=>{const o={id:t.id,sec:t.sec,text:t.text,who:t.who||[]};if(t.fixed)o.fixed=true;return o;});
   d.brkTasks=(state.brkTasks||[]).map(t=>({id:t.id,text:t.text}));
   return d;}
 function applyDoc(doc){STRUCT_KEYS.forEach(k=>{if(doc[k]!==undefined)state[k]=doc[k];});
