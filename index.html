@@ -1272,7 +1272,9 @@ let fbRef=null, fbReady=false, applyingRemote=false, _lastPush='';
 /* onceDays, thursdays y days NO van aquí: son propiedad del robot de sincronización
    (scripts/sync-menus.js). La app SOLO los lee (ver applyDoc), nunca los escribe,
    para que un push de un cliente no pise lo que actualizó la web. */
-const STRUCT_KEYS=['title','sub','menu','cooks','sections','brkMenu','selThu','selOnce','crewOverride','encargado','dayNote','lastResetThu','weekClosed','shopChk','migV'];
+const STRUCT_KEYS=['title','sub','menu','cooks','sections','brkMenu','selThu','selOnce','crewOverride','encargado','dayNote','lastResetThu','weekClosed','migV'];
+/* shopChk (checks de compras) va FUERA de STRUCT_KEYS y se escribe granular por ítem
+   (como done/brkDone), para que dos personas marcando a la vez no se pisen. */
 /* limpieza única de datos viejos de asistencia (nombres que no calzan con el Equipo) */
 function migrate(){
   let changed=false;
@@ -1500,7 +1502,7 @@ function render(){
     const vis=tasks.filter(t=>filter==='todos'||t.who.includes(filter));
     if(filter!=='todos'&&!vis.length&&!admin)return;
     const blk=document.createElement('div');blk.className='turno';
-    blk.innerHTML=`<div class="th"><span class="ic">${sec.icon}</span><span class="nm">${esc(sec.name)}</span>
+    blk.innerHTML=`<div class="th"><span class="ic">${esc(sec.icon)}</span><span class="nm">${esc(sec.name)}</span>
       <span class="ct">${vis.length}</span><span class="sp"></span>
       ${admin?`<span class="rename" onclick="renameSection('${sec.id}')">✏️</span><span class="rename del" style="color:#dc2626" onclick="delSection('${sec.id}')">🗑</span>`:''}</div>`;
     const listEl=document.createElement('div');listEl.className='tasklist';listEl.dataset.sec=sec.id;
@@ -1742,7 +1744,7 @@ function openDayPicker(){
   const rows=ths.map(t=>{
     const o=(state.onceDays||[]).find(x=>x.label===t.label);
     const sel=(state.selThu!=null&&state.thursdays[state.selThu]&&state.thursdays[state.selThu].label===t.label);
-    return `<div class="thu-row${sel?' on':''}" onclick="applyDay('${esc(t.label)}')">
+    return `<div class="thu-row${sel?' on':''}" onclick="applyDay('${esc(jsq(t.label))}')">
       <div class="thu-d">📅 ${esc(t.label.replace(/^\w+\s/,''))}</div>
       <div class="thu-m">🍽️ ${esc(t.dish)}${t.ens?' · 🥗 '+esc(t.ens):''}<br>${o?'🫖 '+esc(o.menus.join(' · ')):'<span style="opacity:.55">🫖 once por definir</span>'}</div></div>`;
   }).join('');
@@ -2137,13 +2139,13 @@ function openCrewEdit(){if(!admin)return;const label=curCrewLabel();if(!label)re
   crewPresent=new Set(crewForLabel(label));crewBoss=(state.encargado||{})[label]||'';drawCrewEdit();}
 function drawCrewEdit(){const label=curCrewLabel();
   const team=state.cooks.map(c=>{const on=crewPresent.has(c.name);
-    return `<div class="vol${on?' on':''}" onclick="crewToggle('${jsq(c.name)}')"><span class="vdot" style="background:${c.color}"></span><span class="vn">${esc(c.name)}${c.sub?' ↩︎':''}</span><b>${on?'✓':'+'}</b></div>`;}).join('');
+    return `<div class="vol${on?' on':''}" onclick="crewToggle('${esc(jsq(c.name))}')"><span class="vdot" style="background:${c.color}"></span><span class="vn">${esc(c.name)}${c.sub?' ↩︎':''}</span><b>${on?'✓':'+'}</b></div>`;}).join('');
   const tn=new Set(state.cooks.map(c=>c.name));
-  const extra=[...crewPresent].filter(n=>!tn.has(n)).map(n=>`<div class="vol on" onclick="crewToggle('${jsq(n)}')"><span class="vdot" style="background:#64748b"></span><span class="vn">↩︎ ${esc(n)}</span><b>✓</b></div>`).join('');
+  const extra=[...crewPresent].filter(n=>!tn.has(n)).map(n=>`<div class="vol on" onclick="crewToggle('${esc(jsq(n))}')"><span class="vdot" style="background:#64748b"></span><span class="vn">↩︎ ${esc(n)}</span><b>✓</b></div>`).join('');
   // selector de encargado entre los presentes
   const present=[...crewPresent];
   if(crewBoss&&!crewPresent.has(crewBoss))crewBoss='';
-  const bossChips=present.length?present.map(n=>`<div class="bosschip${crewBoss===n?' on':''}" onclick="crewSetBoss('${jsq(n)}')">${crewBoss===n?'⭐ ':''}${esc(n)}</div>`).join(''):'<span class="desc">Marca primero quiénes vienen.</span>';
+  const bossChips=present.length?present.map(n=>`<div class="bosschip${crewBoss===n?' on':''}" onclick="crewSetBoss('${esc(jsq(n))}')">${crewBoss===n?'⭐ ':''}${esc(n)}</div>`).join(''):'<span class="desc">Marca primero quiénes vienen.</span>';
   openModal(`<h2>¿Quiénes trabajan hoy?</h2><p class="desc">${esc((label||'').replace(/ de 2026$/,''))} · marca de tu equipo quiénes vienen. ↩︎ = reemplazo.</p>
     <div class="volgrid">${team}${extra}</div>
     <div class="addrow"><input type="text" id="newVol" placeholder="Agregar reemplazo externo"><button onclick="crewAddExt()">Agregar</button></div>
@@ -2214,7 +2216,7 @@ function renderMenus(scrollHere){
     let hereDt=null;for(const o of f){const dd=_dtDate(o.dt);if(dd&&dd.getTime()>=_today.getTime()){hereDt=o.dt;break;}}
     body=!f.length?'<p class="about">Sin resultados</p>'
       :f.map(o=>{const thu=/^juev/i.test(o.wd);
-        const tap=thu?` tap" onclick="openOnceMenu('${esc(o.dt)}')`:'';
+        const tap=thu?` tap" onclick="openOnceMenu('${esc(jsq(o.dt))}')`:'';
         return `<div ${o.dt===hereDt?'id="menuHere" ':''}class="mday${thu?' thu':''}${tap}"><div class="md-top"><span class="md-date">${esc(o.wd+' '+o.dt)}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
         <div class="md-dish">${o.menus.map(m=>esc(m)).join(' · ')}${thu?' <span class="md-x">ⓘ</span>':''}</div></div>`;}).join('');
   } else {
@@ -2231,7 +2233,7 @@ function renderMenus(scrollHere){
         let sep='';const _dd=_dtDate(d.dt);
         if(!q&&_prev&&_dd){const g=Math.round((_dd-_prev)/86400000);if(g>1){const hi=(state.interTurnos||[]).length;sep=`<div class="mbreak${hi?' tap':''}"${hi?' onclick="openInterTurnos()"':''}>🏖️ Pausa de la escuela · sin almuerzos durante ${g-1} días${hi?' · <b>👥 ver turnos interescuela ›</b>':' (vacaciones entre clases)'}</div>`;}}
         _prev=_dd||_prev;
-        return sep+`<div ${d.dt===hereDt?'id="menuHere" ':''}class="mday tap${thu?' thu':''}" onclick="openDayMenu('${esc(d.dt)}')"><div class="md-top"><span class="md-date">${esc((d.wd||'')+' '+(d.dt||''))}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
+        return sep+`<div ${d.dt===hereDt?'id="menuHere" ':''}class="mday tap${thu?' thu':''}" onclick="openDayMenu('${esc(jsq(d.dt))}')"><div class="md-top"><span class="md-date">${esc((d.wd||'')+' '+(d.dt||''))}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
         <div class="md-dish">${esc(dish)} <span class="md-x">ⓘ</span></div>${ens?`<div class="md-ens">🥗 ${esc(ens)}</div>`:''}${d.cong?`<div class="md-cong">📍 aporta: ${esc(d.cong)}</div>`:''}</div>`;}).join('');
   }
   document.getElementById('menusList').innerHTML=toggle+body;
@@ -2277,7 +2279,7 @@ function splitItems(str){
 function shopKey(s){return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'').slice(0,40)||'x';}
 function shopChecklistHTML(label,items){
   const chk=(state.shopChk||{})[label]||{};
-  return `<ul class="shoplist">${items.map(it=>{const k=shopKey(it);return `<li class="${chk[k]?'done':''}" onclick="toggleShopChk('${esc(label)}','${k}',this)">${esc(it)}</li>`;}).join('')}</ul>`;
+  return `<ul class="shoplist">${items.map(it=>{const k=shopKey(it);return `<li class="${chk[k]?'done':''}" onclick="toggleShopChk('${esc(jsq(label))}','${k}',this)">${esc(it)}</li>`;}).join('')}</ul>`;
 }
 function toggleShopChk(label,key,el){
   if(!state.shopChk||typeof state.shopChk!=='object')state.shopChk={};
