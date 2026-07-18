@@ -1418,6 +1418,7 @@ function cloudPushAll(){if(!fbReady)return;const done={},bd={};
   // update (no set en la raíz): NO borra onceDays/thursdays/days del robot
   fbRef.child('doc').update(docFromState());fbRef.child('done').set(done);fbRef.child('brkDone').set(bd);}
 function cloudDone(id,val){if(fbReady&&!applyingRemote)fbRef.child('done/'+id).set(val?true:null);}
+function cloudShopChk(label,key,val){if(fbReady&&!applyingRemote)fbRef.child('doc/shopChk').child(label).child(key).set(val?true:null);}
 function cloudBrkDone(id,val){if(fbReady&&!applyingRemote)fbRef.child('brkDone/'+id).set(val?true:null);}
 function load(){try{const s=localStorage.getItem(KEY);state=s?JSON.parse(s):structuredClone(DEFAULT);}catch(e){state=structuredClone(DEFAULT);}
   if(!Array.isArray(state.thursdays))state.thursdays=structuredClone(DEFAULT.thursdays);
