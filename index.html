@@ -463,8 +463,9 @@
 
   <!-- ===================== HOY ===================== -->
   <div id="view-hoy" class="view active">
-  <div class="menu">
-    <div class="mh"><h3>🍽️ Menú del día</h3><span class="rename hidden" id="menuEdit" onclick="openMenu()" style="color:var(--brand);font-weight:700;font-size:12.5px;cursor:pointer">Editar ✏️</span></div>
+  <div id="planBanner"></div>
+  <div class="menu" id="menuCard">
+    <div class="mh"><h3>🍽️ Menú del día</h3><span class="menuNav" title="Desliza para ver otros jueves">‹ desliza ›</span><span class="rename hidden" id="menuEdit" onclick="openMenu()" style="color:var(--brand);font-weight:700;font-size:12.5px;cursor:pointer">Editar ✏️</span></div>
     <div id="thuBanner"></div>
     <div id="menuList"></div>
     <div id="pdfRow" class="hidden" style="display:flex;gap:8px;margin-top:12px">
