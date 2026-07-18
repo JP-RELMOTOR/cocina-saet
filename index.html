@@ -1853,12 +1853,17 @@ function weeklyReset(){
 }
 /* === el jueves de cocina más reciente que YA pasó (estrictamente antes de hoy) === */
 function lastPastThursday(){
-  if(!Array.isArray(state.thursdays))return null;
   const n=new Date(),today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
-  return state.thursdays
+  const list=(state.thursdays||[])
     .map(t=>({label:t.label,d:parseLabelDate(t.label)}))
     .filter(x=>x.d&&x.d.getTime()<today.getTime())
-    .sort((a,b)=>b.d.getTime()-a.d.getTime())[0]||null;
+    .sort((a,b)=>b.d.getTime()-a.d.getTime());
+  if(list.length)return list[0];
+  // fallback por CALENDARIO: el robot poda los jueves ya pasados de la lista.
+  // Calculamos el jueves anterior a hoy con el MISMO formato de label del robot,
+  // para que el cierre de semana ocurra igual y no se re-dispare cuando reaparezca.
+  const d=new Date(today);let back=(d.getDay()-4+7)%7;if(back===0)back=7;d.setDate(d.getDate()-back);
+  return {label:thuLabelFromDate(d),d:d};
 }
 /* === cierre de semana (viernes en adelante): una vez que pasó el jueves de cocina,
    se borran las tareas MANUALES, se desmarca todo y las de rutina quedan sin asignar.
