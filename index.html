@@ -2036,12 +2036,12 @@ function almDetail(m){
   return cant?{dish:m.text||'',cant:cant}:null;
 }
 function openAlmDetail(){
-  const al=state.menu.find(m=>m.cls==='al');const d=almDetail(al);
-  if(!d){toast('Aún no hay detalle del almuerzo');return;}
-  const sp=splitCant(d.cant);
-  const lbl=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:'general';
+  const b=viewMenuBlocks().find(m=>m.cls==='al');
+  if(!b||!b.cant){toast('Aún no hay detalle del almuerzo');return;}
+  const sp=splitCant(b.cant);
+  const lbl=curCrewLabel()||'general';
   const items=splitItems(sp.alm);
-  const dish=`<div class="od-ens" style="font-size:14.5px;font-weight:700">🍽️ ${esc(d.dish||'—')}</div>`;
+  const dish=`<div class="od-ens" style="font-size:14.5px;font-weight:700">🍽️ ${esc(b.text||'—')}</div>`;
   const list=items.length
     ? `<p class="desc" style="margin:12px 0 6px">🛒 <b>Check-list de compras</b> · toca para marcar comprado/recibido — se comparte con el equipo</p>${shopChecklistHTML(lbl,items)}`
     : `<p class="desc" style="margin-top:12px">Sin cantidades cargadas para este día.</p>`;
