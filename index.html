@@ -1414,8 +1414,8 @@ function cloudInit(){
       if(ch)cloudPushDoc();render();
       if(currentView==='desayuno')renderBrk();
       if(currentView==='menus')renderMenus();
+      if(currentView==='turnos')renderTurnos();   // refresca los turnos abiertos con lo que llega del robot
     });
-    toast('☁️ Conectado en la nube');
   }catch(e){console.warn('cloud',e);}
 }
 /* update (no set): fusiona los campos de la app SIN borrar onceDays/thursdays,
