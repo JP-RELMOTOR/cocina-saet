@@ -1345,6 +1345,13 @@ function migrate(){
     }
     state.migV=7;changed=true;
   }
+  if(!(state.migV>=8)){
+    // asignaciones POR JUEVES: sembrar las actuales (globales) en el jueves en curso
+    if(!state.assign||typeof state.assign!=='object')state.assign={};
+    const lbl=(state.selThu!=null&&state.thursdays&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
+    if(lbl){state.assign[lbl]=state.assign[lbl]||{};(state.tasks||[]).forEach(t=>{if(t.who&&t.who.length&&!state.assign[lbl][t.id])state.assign[lbl][t.id]=t.who.slice();});}
+    state.migV=8;changed=true;
+  }
   return changed;
 }
 function cloudConfigured(){return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.indexOf('PEGAR')!==0);}
