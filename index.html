@@ -2061,11 +2061,12 @@ function ensDetail(m){
   return ec?{ens:m.text||'',cant:ec}:null;
 }
 function openEnsDetail(){
-  const en=state.menu.find(m=>m.cls==='en');const d=ensDetail(en);
-  if(!d){toast('Aún no hay insumos de ensalada');return;}
-  const lbl=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:'general';
-  const items=splitItems(d.cant);
-  const names=d.ens?`<div class="od-ens" style="font-size:14.5px;font-weight:700">🥗 ${esc(d.ens)}</div>`:'';
+  const alB=viewMenuBlocks().find(m=>m.cls==='al'),enB=viewMenuBlocks().find(m=>m.cls==='en');
+  const ec=splitCant((alB||{}).cant||'').ens;
+  if(!ec){toast('Aún no hay insumos de ensalada');return;}
+  const lbl=curCrewLabel()||'general';
+  const items=splitItems(ec);
+  const names=(enB&&enB.text)?`<div class="od-ens" style="font-size:14.5px;font-weight:700">🥗 ${esc(enB.text)}</div>`:'';
   const list=items.length
     ? `<p class="desc" style="margin:12px 0 6px">🛒 <b>Check-list de compras</b> · toca para marcar comprado/recibido — se comparte con el equipo</p>${shopChecklistHTML(lbl,items)}`
     : `<p class="desc" style="margin-top:12px">Sin cantidades cargadas para este día.</p>`;
