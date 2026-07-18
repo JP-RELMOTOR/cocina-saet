@@ -2286,9 +2286,10 @@ function shopChecklistHTML(label,items){
 function toggleShopChk(label,key,el){
   if(!state.shopChk||typeof state.shopChk!=='object')state.shopChk={};
   const m=state.shopChk[label]=state.shopChk[label]||{};
-  if(m[key])delete m[key];else m[key]=true;
-  if(el)el.classList.toggle('done',!!m[key]);
-  save();
+  const val=!m[key];
+  if(val)m[key]=true;else delete m[key];
+  if(el)el.classList.toggle('done',val);
+  saveLocal();cloudShopChk(label,key,val);   // granular: no pisa lo que marcó otro
 }
 /* turnos interescuela (quiénes cocinan durante la pausa entre clases) */
 function openInterTurnos(){
