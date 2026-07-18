@@ -1952,7 +1952,7 @@ function splitCant(cant){
 function cantToList(str,heading){
   if(!str)return '';
   const items=str.split(/\.\s+(?=[A-ZÁÉÍÓÚ0-9])/).map(s=>s.replace(/\.\s*$/,'').trim()).filter(Boolean);
-  return `<div class="od-sec"><h4>${heading||'📋 Cantidades (50 porciones)'}</h4><ul class="od-cant">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
+  return `<div class="od-sec"><h4>${heading||'📋 Cantidades'}</h4><ul class="od-cant">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
 }
 function openOnceDetail(){
   const on=state.menu.find(m=>m.cls==='on');const d=onceDetail(on);
@@ -1978,7 +1978,7 @@ function openAlmDetail(){
   const items=splitItems(sp.alm);
   const dish=`<div class="od-ens" style="font-size:14.5px;font-weight:700">🍽️ ${esc(d.dish||'—')}</div>`;
   const list=items.length
-    ? `<p class="desc" style="margin:12px 0 6px">🛒 <b>Check-list de compras</b> (50 porciones) · toca para marcar comprado/recibido — se comparte con el equipo</p>${shopChecklistHTML(lbl,items)}`
+    ? `<p class="desc" style="margin:12px 0 6px">🛒 <b>Check-list de compras</b> · toca para marcar comprado/recibido — se comparte con el equipo</p>${shopChecklistHTML(lbl,items)}`
     : `<p class="desc" style="margin-top:12px">Sin cantidades cargadas para este día.</p>`;
   openModal(`<h2>🍽️ Detalle del almuerzo</h2>${dish}${list}
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
@@ -2002,7 +2002,7 @@ function openEnsDetail(){
   const items=splitItems(d.cant);
   const names=d.ens?`<div class="od-ens" style="font-size:14.5px;font-weight:700">🥗 ${esc(d.ens)}</div>`:'';
   const list=items.length
-    ? `<p class="desc" style="margin:12px 0 6px">🛒 <b>Check-list de compras</b> (50 porciones) · toca para marcar comprado/recibido — se comparte con el equipo</p>${shopChecklistHTML(lbl,items)}`
+    ? `<p class="desc" style="margin:12px 0 6px">🛒 <b>Check-list de compras</b> · toca para marcar comprado/recibido — se comparte con el equipo</p>${shopChecklistHTML(lbl,items)}`
     : `<p class="desc" style="margin-top:12px">Sin cantidades cargadas para este día.</p>`;
   openModal(`<h2>🥗 Detalle de la ensalada</h2>${names}${list}
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
@@ -2018,7 +2018,7 @@ function openDayMenu(dt){
   const dish=td?td.dish:(d.dish||'');
   const ens=td?td.ens:(d.ens||'');
   const sp=splitCant(td?(td.cant||''):(d.cant||''));   // cantidades: jueves de thursdays, resto de days
-  const ps=td?' (50 porciones)':'';
+  const ps='';
   let body=`<ul class="od-ul"><li>🍽️ ${esc(dish||'—')}</li></ul>`;
   if(ens)body+=`<div class="od-ens">🥗 <b>Ensalada:</b> ${esc(ens)}</div>`;
   if(d.cong)body+=`<div style="margin:8px 0 0;font-size:12px;color:#94a3b8">📍 aporta: ${esc(d.cong)}</div>`;
@@ -2037,7 +2037,7 @@ function openOnceMenu(dt){
   const menus=(od&&od.menus&&od.menus.length)?od.menus:(o.menus||[]);
   let body=menus.length?`<ul class="od-ul">${menus.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="desc">Sin menú.</p>';
   if(od&&od.extra)body+=`<div class="od-warn">⚠️ Para el día siguiente: ${esc(od.extra)}</div>`;
-  if(od&&od.cant)body+=cantToList(od.cant,'📋 Cantidades (50 porciones)');
+  if(od&&od.cant)body+=cantToList(od.cant,'📋 Cantidades');
   else body+=`<p class="desc" style="margin-top:12px">ℹ️ Las cantidades por insumo están cargadas para los jueves con once disponible.</p>`;
   openModal(`<h2 style="text-transform:capitalize">🫖 ${esc(o.wd+' '+o.dt)}</h2>${body}
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
