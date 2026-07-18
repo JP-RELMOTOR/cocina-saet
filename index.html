@@ -1532,7 +1532,8 @@ function viewMenuBlocks(){
     setTimeout(()=>{
       navThu(d);
       setX(d*w,false); /* el nuevo entra desde el lado opuesto */
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{setX(0,true);setTimeout(clear,260);}));
+      void el.offsetWidth; /* fuerza reflow para que la posición inicial se aplique antes de animar */
+      setX(0,true);setTimeout(clear,260);
     },220);
   },{passive:true});
   el.addEventListener('touchcancel',()=>{x0=null;if(lock==='h'){setX(0,true);setTimeout(clear,240);}},{passive:true});
