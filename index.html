@@ -2568,6 +2568,27 @@ function showMenuUpd(msg,sub,target){
 }
 function goMenuUpd(){dismissMenuUpd();switchView(_menuUpdTarget);}
 function dismissMenuUpd(){const el=document.getElementById('menuUpd');if(el)el.classList.remove('show');if(menuUpdTimer){clearTimeout(menuUpdTimer);menuUpdTimer=null;}}
+/* ---------- "¿Qué hay de nuevo?": avisito que aparece UNA sola vez tras cada mejora.
+   Para anunciar una próxima mejora: cambiar NEWS.v (fecha-slug único, si no cambia
+   no se muestra nada) y redactar los items en lenguaje simple. ---------- */
+const NEWS={
+  v:'2026-07-17-menu-deslizable',
+  title:'✨ La app mejoró',
+  items:[
+    '👆 Ahora el <b>Menú del día</b> sigue tu dedo al deslizar: ves cómo un jueves se va y el siguiente entra suavecito.',
+    '↩️ Si soltás a mitad de camino, el menú vuelve a su lugar y no cambia nada.'
+  ]
+};
+function checkAppNews(){
+  let seen=null;try{seen=localStorage.getItem('cocina_news_seen');}catch(e){}
+  if(seen===NEWS.v)return;
+  const ov=document.getElementById('overlay');
+  if(ov&&ov.classList.contains('show')){setTimeout(checkAppNews,8000);return;} // no pisar un modal abierto
+  try{localStorage.setItem('cocina_news_seen',NEWS.v);}catch(e){}
+  openModal(`<h2>${NEWS.title}</h2><p class="desc">Esto es lo nuevo de esta actualización:</p>
+    ${NEWS.items.map(t=>`<div class="newsit">${t}</div>`).join('')}
+    <div class="btns"><button class="btn primary" onclick="closeModal()" style="flex:1">¡Buenísimo!</button></div>`);
+}
 function showUpdate(){var b=document.getElementById('updateBanner');if(b)b.classList.add('show');}
 function applyUpdate(){if(swWaiting)swWaiting.postMessage({type:'SKIP_WAITING'});var b=document.getElementById('updateBanner');if(b)b.classList.remove('show');}
 if('serviceWorker' in navigator){

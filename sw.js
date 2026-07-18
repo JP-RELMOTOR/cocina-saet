@@ -4,7 +4,7 @@
    - Libs externas (cdn) -> CACHE-FIRST (no cambian)
    La versión de CACHE se genera SOLA con el hash del contenido cacheado
    (scripts/bump-sw-version.sh, llamado por el hook de deploy). No editar a mano. */
-const CACHE = "cocina-saet-41d67e121e";
+const CACHE = "cocina-saet-921583d66b";
 const PRECACHE = ["./", "./index.html", "./manifest.json", "./recetas-data.js",
   "./icon-192.png", "./icon-512.png", "./logo.png",
   "./img/montaje-almuerzo-1.jpg", "./img/montaje-almuerzo-2.jpg",
