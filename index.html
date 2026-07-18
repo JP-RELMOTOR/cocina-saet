@@ -1387,6 +1387,7 @@ function cloudInit(){
       let ch=migrate();
       if(ensureFixedTasks())ch=true;
       if(autoSelectThursday())ch=true;
+      if(syncMenuFromData())ch=true;
       const closed=closeOutWeek();if(closed)ch=true;
       const reset=weeklyReset();if(reset)ch=true;
       if(syncEncargadoTask())ch=true;
