@@ -1468,6 +1468,30 @@ function uid(p){return p+Math.random().toString(36).slice(2,8);}
 function cook(id){return state.cooks.find(c=>c.id===id);}
 function initials(n){const p=n.trim().split(/\s+/);return (p.length>=2?(p[0][0]+p[1][0]):n.slice(0,2)).toUpperCase();}
 
+/* ---------- lente local de jueves (para deslizar y planificar) ----------
+   viewIdx es LOCAL (no se sincroniza): así deslizar en un teléfono no cambia el
+   jueves de los demás. null = seguir al jueves oficial (selThu, que cocina hoy). */
+let viewIdx=null;
+function curViewIdx(){let i=(viewIdx!=null&&state.thursdays&&state.thursdays[viewIdx])?viewIdx:state.selThu;return (i!=null&&state.thursdays&&state.thursdays[i])?i:null;}
+function curViewLabel(){const i=curViewIdx();return i!=null?state.thursdays[i].label:null;}
+function isPlanning(){return viewIdx!=null&&viewIdx!==state.selThu&&!!(state.thursdays&&state.thursdays[viewIdx]);}
+function navThu(delta){const i=curViewIdx();if(i==null||!state.thursdays)return;const n=i+delta;if(n<0||n>=state.thursdays.length)return;viewIdx=(n===state.selThu)?null:n;render();try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){}}
+function goToday(){viewIdx=null;render();}
+/* asignaciones POR JUEVES: state.assign[label][taskId]=[cookIds] */
+function assignMap(label){const l=label||curViewLabel();return (l&&state.assign&&state.assign[l])||{};}
+function whoOf(taskId){return assignMap()[taskId]||[];}
+function setWho(taskId,arr){const l=curViewLabel();if(!l)return;if(!state.assign||typeof state.assign!=='object')state.assign={};if(!state.assign[l])state.assign[l]={};if(arr&&arr.length)state.assign[l][taskId]=arr.slice();else delete state.assign[l][taskId];}
+/* bloques de menú DERIVADOS del jueve en vista (no de state.menu, que es del jueves oficial) */
+function viewMenuBlocks(){
+  const i=curViewIdx();const t=(i!=null&&state.thursdays[i])?state.thursdays[i]:null;
+  if(!t)return [];
+  const o=(state.onceDays||[]).find(x=>x.label===t.label)||null;
+  return [
+    {tag:'ALMUERZO',cls:'al',text:t.dish||'',cant:t.cant||''},
+    {tag:'ENSALADA',cls:'en',text:t.ens||'',cant:t.cant||''},
+    {tag:'ONCE',cls:'on',text:o?((o.menus||[]).join(' · ')||'Por definir'):'Por definir',menus:o?(o.menus||[]).slice():[],extra:o?(o.extra||''):'',cant:o?(o.cant||''):''}
+  ];
+}
 /* ---------- render ---------- */
 function render(){
   document.getElementById('hTitle').textContent=state.title;
