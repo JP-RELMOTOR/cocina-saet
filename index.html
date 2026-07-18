@@ -2126,14 +2126,13 @@ function jsq(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 function curCrewLabel(){return (state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;}
 function defaultCrew(){return state.cooks.filter(c=>!c.sub).map(c=>c.name);}
 function isRep(name){const c=state.cooks.find(x=>x.name===name);return !!(c&&c.sub);}
-/* --- calce tolerante de nombres: el sitio usa nombres COMPLETOS (Vanessa Díaz),
-   la app usa cortos (Vanesa). Tolera 1 diferencia de letra (Vanesa≈Vanessa). --- */
-function _nrm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+/* --- calce de nombres: el sitio usa nombres COMPLETOS (Vanessa Díaz), la app usa
+   cortos (Vanesa). Normalizamos colapsando letras dobles (vanessa→vanesa) y exigimos
+   calce EXACTO de tokens. Así "Vanessa"≈"Vanesa" (misma persona, doble s), pero
+   "Gabriel"≠"Gabriela" y "Camila"≠"Camilo" NO se confunden (personas distintas). --- */
+function _nrm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/([a-z])\1+/g,'$1');}
 function _toks(s){return _nrm(s).split(/[^a-z0-9]+/).filter(Boolean);}
-function _close(a,b){if(a===b)return true;if(Math.abs(a.length-b.length)>1)return false;
-  let i=0,j=0,e=0;while(i<a.length&&j<b.length){if(a[i]===b[j]){i++;j++;}else{if(++e>1)return false;if(a.length>b.length)i++;else if(b.length>a.length)j++;else{i++;j++;}}}
-  return e+(a.length-i)+(b.length-j)<=1;}
-function _cookMatches(cookName,siteName){const ct=_toks(cookName),st=_toks(siteName);return ct.length>0&&ct.every(t=>st.some(u=>_close(u,t)));}
+function _cookMatches(cookName,siteName){const ct=_toks(cookName),st=new Set(_toks(siteName));return ct.length>0&&ct.every(t=>st.has(t));}
 /* turno OFICIAL del sitio para un jueves (state.days[].team, nombres completos):
    mapea a los cocineros conocidos; los que no calzan quedan con su nombre completo. */
 function siteCrewForLabel(label){
