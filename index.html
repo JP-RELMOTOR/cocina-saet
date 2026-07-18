@@ -2492,7 +2492,9 @@ function toggleTheme(){var d=!document.body.classList.contains('dark');
   try{localStorage.setItem('cocina_theme',d?'dark':'light');}catch(e){}applyTheme();}
 applyTheme();
 setInterval(function(){try{renderDelivery();}catch(e){}},60000); // refresca la cuenta regresiva cada minuto
-load();render();cloudInit();setTimeout(checkAppNews,1500);
+load();render();cloudInit();
+/* checkAppNews vive en el siguiente <script>; la flecha lo resuelve recién al dispararse */
+setTimeout(()=>{if(typeof checkAppNews==='function')checkAppNews();},1500);
 </script>
 
 <script>
