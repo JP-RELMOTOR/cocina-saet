@@ -1277,7 +1277,7 @@ let fbRef=null, fbReady=false, applyingRemote=false, _lastPush='', _wasConnected
 /* onceDays, thursdays y days NO van aquí: son propiedad del robot de sincronización
    (scripts/sync-menus.js). La app SOLO los lee (ver applyDoc), nunca los escribe,
    para que un push de un cliente no pise lo que actualizó la web. */
-const STRUCT_KEYS=['title','sub','menu','cooks','sections','brkMenu','selThu','selOnce','crewOverride','encargado','dayNote','lastResetThu','weekClosed','migV'];
+const STRUCT_KEYS=['title','sub','menu','cooks','sections','brkMenu','selThu','selOnce','crewOverride','encargado','dayNote','lastResetThu','weekClosed','assign','migV'];
 /* shopChk (checks de compras) va FUERA de STRUCT_KEYS y se escribe granular por ítem
    (como done/brkDone), para que dos personas marcando a la vez no se pisen. */
 /* limpieza única de datos viejos de asistencia (nombres que no calzan con el Equipo) */
