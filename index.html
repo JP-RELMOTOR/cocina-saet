@@ -2110,13 +2110,19 @@ function cantToList(str,heading){
   const items=str.split(/\.\s+(?=[A-ZÁÉÍÓÚ0-9])/).map(s=>s.replace(/\.\s*$/,'').trim()).filter(Boolean);
   return `<div class="od-sec"><h4>${heading||'📋 Cantidades'}</h4><ul class="od-cant">${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
 }
+function onceChecklistHTML(label,cant){
+  const items=splitItems(cant);
+  if(!items.length)return cant?cantToList(cant,'📋 Cantidades'):'';
+  return `<p class="desc" style="margin:12px 0 6px">🛒 <b>Check-list de compras</b> · toca para marcar comprado/recibido — se comparte con el equipo</p>${shopChecklistHTML(label||'general',items)}`;
+}
 function openOnceDetail(){
   const d=viewMenuBlocks().find(m=>m.cls==='on');
   if(!d||(!d.menus.length&&!d.cant)){toast('Aún no hay detalle de la once');return;}
   const menus=d.menus.length?`<ul class="od-ul">${d.menus.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="desc">Sin menú cargado.</p>';
   const extra=d.extra?`<div class="od-warn">⚠️ Para el día siguiente: ${esc(d.extra)}</div>`:'';
+  const checklist=onceChecklistHTML(curCrewLabel()||'general',d.cant);
   const reuse=`<div class="od-reuse">♻️ La once reutiliza los sobrantes del almuerzo.</div>`;
-  openModal(`<h2>🫖 Detalle de la once</h2>${menus}${extra}${cantToList(d.cant)}${reuse}
+  openModal(`<h2>🫖 Detalle de la once</h2>${menus}${extra}${checklist}${reuse}
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
 /* detalle del almuerzo: {dish,cant} si hay cantidades, o null */
@@ -2191,10 +2197,12 @@ function openOnceMenu(dt){
   const o=ONCE_CAL.find(x=>String(x.dt)===String(dt));
   if(!o){toast('Sin detalle');return;}
   const od=(state.onceDays||[]).find(x=>x.dt===o.dt);
+  const th=thuByDt(o.dt);
+  const label=(od&&od.label)||(th&&th.label)||(o.wd+' '+o.dt);
   const menus=(od&&od.menus&&od.menus.length)?od.menus:(o.menus||[]);
   let body=menus.length?`<ul class="od-ul">${menus.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="desc">Sin menú.</p>';
   if(od&&od.extra)body+=`<div class="od-warn">⚠️ Para el día siguiente: ${esc(od.extra)}</div>`;
-  if(od&&od.cant)body+=cantToList(od.cant,'📋 Cantidades');
+  if(od&&od.cant)body+=onceChecklistHTML(label,od.cant);
   else body+=`<p class="desc" style="margin-top:12px">ℹ️ Las cantidades por insumo están cargadas para los jueves con once disponible.</p>`;
   openModal(`<h2 style="text-transform:capitalize">🫖 ${esc(o.wd+' '+o.dt)}</h2>${body}
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
