@@ -1,0 +1,12 @@
+{
+  "name": "cocina-saet",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:sync": "node --test tests/sync-menus.test.js",
+    "sync:dry": "DRY_RUN=1 node scripts/sync-menus.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

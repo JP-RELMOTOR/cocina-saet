@@ -16,6 +16,29 @@
 const ONCE_URL = 'https://sites.google.com/view/residencia-saet/cocina/once-cena/men%C3%BA-onces';
 const ALM_URL  = 'https://sites.google.com/view/residencia-saet/cocina/almuerzo/men%C3%BA-almuerzo';
 const DB = 'https://cocina-saet-default-rtdb.firebaseio.com';
+const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyDlzQFp11ZRjkDmFw8g_-mHAs3zpY-oSpY';
+let dbAuthToken = '';
+
+function dbUrl(path){
+  return DB + path + (dbAuthToken ? (path.includes('?') ? '&' : '?') + 'auth=' + encodeURIComponent(dbAuthToken) : '');
+}
+
+async function authenticateFirebase(){
+  const email = process.env.FIREBASE_SYNC_EMAIL;
+  const password = process.env.FIREBASE_SYNC_PASSWORD;
+  if(!email || !password){
+    console.warn('⚠️ Robot sin credenciales de Firebase: funciona solo mientras las reglas públicas antiguas sigan activas.');
+    return false;
+  }
+  const res = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + encodeURIComponent(FIREBASE_API_KEY), {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({email, password, returnSecureToken:true})
+  });
+  const body = await res.json().catch(()=>({}));
+  if(!res.ok || !body.idToken) throw new Error('Firebase Authentication rechazó al robot: ' + (body.error && body.error.message || 'HTTP ' + res.status));
+  dbAuthToken = body.idToken;
+  return true;
+}
 
 const MON = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const SHORT = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -31,16 +54,20 @@ function htmlToText(html){
     .replace(/\s+/g,' ');
 }
 
-// localiza los encabezados de día ("Jueves, 4 de junio de 2026") y devuelve sus posiciones
+// Localiza los encabezados de día ("Jueves, 4 de junio de 2027") y devuelve sus posiciones.
+// El año se toma del sitio de origen: así el robot no deja de funcionar al cambiar de año.
 function dayHeads(t){
-  const re = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo),?\s+(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+2026/gi;
+  const re = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo),?\s+(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+(\d{4})/gi;
   let m, heads = [];
-  while(m = re.exec(t)) heads.push({i:m.index, end:re.lastIndex, wd:m[1].toLowerCase(), day:+m[2], mon:m[3].toLowerCase()});
+  while(m = re.exec(t)) heads.push({i:m.index, end:re.lastIndex, wd:m[1].toLowerCase(), day:+m[2], mon:m[3].toLowerCase(), year:+m[4]});
   return heads;
 }
 function byDate(a,b){
-  const pa=a.label.match(/(\d+) de (\w+)/), pb=b.label.match(/(\d+) de (\w+)/);
-  return (MON.indexOf(pa[2])*100+ +pa[1]) - (MON.indexOf(pb[2])*100+ +pb[1]);
+  const p = item => {
+    const m = String(item.label || '').match(/(\d+) de (\w+) de (\d{4})/i);
+    return m ? Date.UTC(+m[3], MON.indexOf(m[2].toLowerCase()), +m[1]) : Number.MAX_SAFE_INTEGER;
+  };
+  return p(a) - p(b);
 }
 
 /* ---------------- ONCES ---------------- */
@@ -53,9 +80,12 @@ function parseOnce(html){
     if(!/^juev/.test(h.wd)) continue;
     const body = t.slice(h.end, k+1<heads.length ? heads[k+1].i : t.length);
     let menus = [];
-    const mr = /Men[uú]\s*(\d+)\s*:\s*([^]*?)(?=Men[uú]\s*\d+\s*:|Descongelar|Cantidades|$)/gi;
+    // El sitio usa ambos formatos: "Menú 1:" y "Menú: 1:".
+    // También toleramos el mismo menú repetido por las variantes responsive de Google Sites.
+    const mr = /Men[uú]\s*:?\s*(\d+)\s*:\s*([^]*?)(?=Men[uú]\s*:?\s*\d+\s*:|Descongelar|Cantidades|$)/gi;
     let mm;
-    while(mm = mr.exec(body)){const txt = clean(mm[2]).replace(/\.$/,''); if(txt) menus.push('Menú '+mm[1]+': '+txt);}
+    while(mm = mr.exec(body)){const txt = clean(mm[2]).replace(/[.\s(]+$/,''); if(txt) menus.push('Menú '+mm[1]+': '+txt);}
+    menus = [...new Set(menus)];
     if(!menus.length){
       const mz = body.match(/Men[uú]\s*:?\s*([^]*?)(?=Descongelar|Cantidades|$)/i);
       if(mz){clean(mz[1]).replace(/\.$/,'').split('/').map(s=>s.trim()).filter(Boolean).forEach(s=>menus.push(s));}
@@ -67,7 +97,7 @@ function parseOnce(html){
     const cz = body.match(/Cantidades\s*:?\s*([^]*)$/i);
     if(cz) cant = clean(cz[1]);
     const idx = MON.indexOf(h.mon);
-    out.push({label:'Jueves '+h.day+' de '+h.mon+' de 2026', dt:h.day+' '+SHORT[idx], wd:'jueves', menus, extra, cant});
+    out.push({label:'Jueves '+h.day+' de '+h.mon+' de '+h.year, dt:h.day+' '+SHORT[idx], wd:'jueves', menus, extra, cant});
   }
   out.sort(byDate);
   return out;
@@ -206,7 +236,7 @@ function parseAlm(html){
       if(sp){ ens = clean(sp[1]); cant = clean(sp[2]); }
       else { ens = clean(after); cant = ''; }
     }
-    out.push({label:'Jueves '+h.day+' de '+h.mon+' de 2026', dish, ens, cant});
+    out.push({label:'Jueves '+h.day+' de '+h.mon+' de '+h.year, dish, ens, cant});
   }
   out.sort(byDate);
   return out;
@@ -340,7 +370,7 @@ function pageLastMod(html){
 }
 async function watchPages(){
   let stored = {};
-  try{ const r = await fetch(DB + '/cocina/doc/pageMods.json'); if(r.ok) stored = (await r.json()) || {}; }catch(e){}
+  try{ const r = await fetch(dbUrl('/cocina/doc/pageMods.json')); if(r.ok) stored = (await r.json()) || {}; }catch(e){}
   const baseline = !Object.keys(stored).length;
   const nowMods = {}, changes = [];
   let navHtml = null;   // html de la primera página: de ahí descubrimos las recetas
@@ -383,7 +413,7 @@ async function watchPages(){
     console.log(baseline ? '  (primera corrida: guardo línea base, sin avisar)' : '  ✓ sin cambios en las páginas vigiladas.');
   }
   if(!process.env.DRY_RUN && Object.keys(nowMods).length){
-    const put = await fetch(DB + '/cocina/doc/pageMods.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(Object.assign({}, stored, nowMods))});
+    const put = await fetch(dbUrl('/cocina/doc/pageMods.json'), {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(Object.assign({}, stored, nowMods))});
     if(!put.ok) console.error('  (no pude guardar pageMods: HTTP ' + put.status + ')');
   }
 }
@@ -396,7 +426,7 @@ async function fetchText(url){
 }
 async function syncSection(name, path, data){
   let current = null;
-  try{ const c = await fetch(DB+path); if(c.ok) current = await c.json(); }catch(e){}
+  try{ const c = await fetch(dbUrl(path)); if(c.ok) current = await c.json(); }catch(e){}
   if(current && JSON.stringify(current) === JSON.stringify(data)){
     console.log(`✓ ${name}: la nube ya está al día.`);
     return;
@@ -405,13 +435,15 @@ async function syncSection(name, path, data){
     console.log(`— DRY RUN — ${name}: escribiría ${data.length} registros.`);
     return;
   }
-  const put = await fetch(DB+path, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  const put = await fetch(dbUrl(path), {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
   if(!put.ok){ const b = await put.text().catch(()=> ''); throw new Error(`Firebase rechazó ${name}: HTTP ${put.status} ${b}`); }
   console.log(`✅ ${name}: ${data.length} registros actualizados en la nube.`);
 }
 
 async function main(){
   let failed = false;
+
+  await authenticateFirebase();
 
   // ONCES
   try{
@@ -429,7 +461,7 @@ async function main(){
     console.log('▶ Almuerzos…');
     const almHtml = await fetchText(ALM_URL);
     const alm = parseAlm(almHtml);
-    console.log(`  ${alm.length} jueves: ${alm.map(o=>o.label.replace('Jueves ','').replace(' de 2026','')).join(' · ')}`);
+    console.log(`  ${alm.length} jueves: ${alm.map(o=>o.label.replace('Jueves ','').replace(/ de \d{4}$/,'')).join(' · ')}`);
     if(!saneAlm(alm)){ console.error('✋ Almuerzos: parseo inválido, NO escribo (datos a salvo).'); failed = true; }
     else await syncSection('Almuerzos', '/cocina/doc/thursdays.json', alm);
 
@@ -466,4 +498,8 @@ async function main(){
   console.log('🌿 Sincronización completa.');
 }
 
-main().catch(e=>{ console.error('❌ Error general:', e.message); process.exit(1); });
+if(require.main === module){
+  main().catch(e=>{ console.error('❌ Error general:', e.message); process.exit(1); });
+}
+
+module.exports = { dayHeads, parseOnce, parseAlm, parseDays, parseInter, fetchOnceData, saneOnce, saneAlm, saneDays, saneInter, dbUrl };

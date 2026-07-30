@@ -22,7 +22,14 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Probar el sincronizador
+        run: node --test tests/*.test.js
+
       - name: Leer la web y actualizar Firebase
+        env:
+          FIREBASE_SYNC_EMAIL: ${{ secrets.FIREBASE_SYNC_EMAIL }}
+          FIREBASE_SYNC_PASSWORD: ${{ secrets.FIREBASE_SYNC_PASSWORD }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
         run: node scripts/sync-menus.js
 
       # Si el vigilante detectó que el sitio actualizó alguna página (pautas,
