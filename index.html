@@ -2288,15 +2288,24 @@ function saveDayNote(){if(!admin)return;const label=curCrewLabel();if(!label)ret
 function renderRecetas(){
   const data=(typeof RECETAS_FULL!=='undefined')?RECETAS_FULL:{};
   const cats=Object.keys(data);
-  const q=(document.getElementById('recSearch')?document.getElementById('recSearch').value:'').toLowerCase();
-  const search=`<input class="search" id="recSearch" placeholder="🔎 Buscar receta…" value="${esc(q)}" oninput="renderRecetas()" style="margin-top:4px">`;
+  const input=document.getElementById('recSearch');
+  const q=(input?input.value:'').toLowerCase();
   let body=cats.map((cat,ci)=>{
     const items=data[cat].map((r,i)=>({r,i})).filter(o=>!q||o.r.name.toLowerCase().includes(q));
     if(!items.length)return'';
     return `<details class="pauta"${q?' open':''}><summary>${esc(cat)} <span class="reccount">${items.length}</span></summary><div class="pbody"><div class="recitems">${items.map(o=>`<button class="recitem" onclick="openReceta(${ci},${o.i})">${esc(o.r.name)}<span>›</span></button>`).join('')}</div></div></details>`;
   }).join('');
   if(q&&!body)body='<p class="about">Sin resultados</p>';
-  document.getElementById('recetasList').innerHTML=search+body;
+  const list=document.getElementById('recetasList');
+  if(!list)return;
+  // Mantén el input fuera del área que se actualiza: reemplazar todo el
+  // contenedor en cada tecla hacía que el navegador perdiera el foco.
+  const results=document.getElementById('recetasResults');
+  if(results){
+    results.innerHTML=body;
+  }else{
+    list.innerHTML=`<input class="search" id="recSearch" placeholder="🔎 Buscar receta…" value="${esc(input?input.value:'')}" oninput="renderRecetas()" style="margin-top:4px"><div id="recetasResults">${body}</div>`;
+  }
 }
 function openReceta(ci,i){
   const cats=Object.keys(RECETAS_FULL);const cat=cats[ci];const r=RECETAS_FULL[cat]&&RECETAS_FULL[cat][i];if(!r)return;
