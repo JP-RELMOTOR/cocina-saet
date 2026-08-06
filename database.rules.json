@@ -1,17 +1,17 @@
 {
   "rules": {
     "//": "Cocina SAET · reglas de Firebase Realtime Database.",
-    "//1": "Todo cerrado por defecto. Solo el árbol 'cocina' es accesible.",
-    "//2": "No hay login: la app y el robot escriben sin token. Por eso esto NO es",
-    "//3": "seguridad real, solo limita el daño (tipos validados, sin claves basura).",
-    "//4": "El robot (scripts/sync-menus.js) escribe cocina/doc/{onceDays,thursdays,days}.",
+    "//1": "Todo cerrado por defecto. Solo usuarios autenticados pueden acceder a 'cocina'.",
+    "//2": "Crear los usuarios de Firebase Authentication antes de publicar estas reglas.",
+    "//3": "El robot usa su cuenta técnica mediante secretos de GitHub Actions.",
+    "//4": "Ver SECURITY_MIGRATION.md para aplicar el cambio sin interrumpir la app.",
 
     ".read": false,
     ".write": false,
 
     "cocina": {
-      ".read": true,
-      ".write": true,
+      ".read": "auth != null",
+      ".write": "auth != null",
 
       "doc": {
         ".validate": "newData.hasChildren()",

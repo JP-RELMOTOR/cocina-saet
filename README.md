@@ -10,10 +10,16 @@ El equipo trabaja los **jueves** y cocina para ~50 personas. La app permite:
 - ⋯ **Más** — equipo y colores, lista de compras, compartir cronograma, carga del menú mensual en PDF.
 - 🔑 **Modo administrador** protegido con clave (solo quien edita).
 
-Todo funciona en el navegador del celular y se guarda en el propio dispositivo.
+Todo funciona en el navegador del celular y usa Firebase para compartir los cambios del equipo en tiempo real.
 
 ## Uso
 
-Abre la página (GitHub Pages) o el archivo `index.html`. Para editar, entra al modo administrador con tu clave.
+Abre la página publicada en GitHub Pages. Para usar los datos compartidos, toca el punto de conexión e inicia sesión con una cuenta autorizada. Para editar la pauta, entra al modo administrador con tu clave.
+
+## Mantención
+
+- Ejecutar pruebas: `npm test`.
+- Seguridad y activación de usuarios: [SECURITY_MIGRATION.md](SECURITY_MIGRATION.md).
+- Flujo de despliegue y estructura: [MAINTENANCE.md](MAINTENANCE.md).
 
 > Hecho con cariño para el equipo de cocina del Trébol.

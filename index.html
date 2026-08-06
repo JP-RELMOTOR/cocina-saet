@@ -1025,8 +1025,10 @@
 <div class="menu-upd" id="menuUpd" onclick="goMenuUpd()" style="cursor:pointer"><span class="mu-ic">🔄</span><span class="mu-tx"><b id="menuUpdTxt">Menús actualizados</b><small id="menuUpdSub">Toca para ver ›</small></span><button onclick="event.stopPropagation();dismissMenuUpd()">✕</button></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+<script src="config.js"></script>
 <script src="recetas-data.js"></script>
 <script>
 /* ---------- estado ---------- */
@@ -1276,16 +1278,8 @@ const KEY='cocina_saet_v4';
 /* ===================== SINCRONIZACIÓN EN LA NUBE (Firebase) =====================
    👉 PEGA AQUÍ la config de tu proyecto Firebase (Realtime Database).
    Mientras diga "PEGAR_AQUI", la app funciona solo en este dispositivo. */
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDlzQFp11ZRjkDmFw8g_-mHAs3zpY-oSpY",
-  authDomain: "cocina-saet.firebaseapp.com",
-  databaseURL: "https://cocina-saet-default-rtdb.firebaseio.com",
-  projectId: "cocina-saet",
-  storageBucket: "cocina-saet.firebasestorage.app",
-  messagingSenderId: "136880524689",
-  appId: "1:136880524689:web:a6472a4776abaa4b675e30"
-};
-let fbRef=null, fbReady=false, applyingRemote=false, _lastPush='', _wasConnected=false;
+const FIREBASE_CONFIG = window.COCINA_CONFIG && window.COCINA_CONFIG.firebase;
+let fbRef=null, fbReady=false, applyingRemote=false, _lastPush='', _wasConnected=false, fbUser=null;
 /* onceDays, thursdays y days NO van aquí: son propiedad del robot de sincronización
    (scripts/sync-menus.js). La app SOLO los lee (ver applyDoc), nunca los escribe,
    para que un push de un cliente no pise lo que actualizó la web. */
@@ -1385,56 +1379,77 @@ function applyDoc(doc){STRUCT_KEYS.forEach(k=>{if(doc[k]!==undefined)state[k]=do
 function applyDone(dm,bm){dm=dm||{};bm=bm||{};
   state.tasks.forEach(t=>t.done=!!dm[t.id]);
   (state.brkTasks||[]).forEach(t=>t.done=!!bm[t.id]);}
+function setCloudStatus(on,title){
+  const dot=document.getElementById('connDot');
+  if(dot){dot.classList.toggle('on',!!on);dot.classList.toggle('off',!on);dot.title=title;dot.onclick=on?null:openCloudLogin;}
+}
+function openCloudLogin(){
+  if(!cloudConfigured()||!firebase.auth)return;
+  uiPrompt({title:'☁️ Conectar al equipo',label:'Ingresa el correo autorizado para usar los datos compartidos.',placeholder:'correo@ejemplo.com',okLabel:'Continuar',onOk:email=>{
+    if(!email)return;
+    uiPrompt({title:'☁️ Conectar al equipo',label:'Ingresa tu contraseña.',password:true,okLabel:'Conectar',onOk:password=>{
+      if(!password)return;
+      firebase.auth().signInWithEmailAndPassword(email.trim(),password).catch(e=>toast('No se pudo conectar: '+(e.code==='auth/invalid-credential'?'revisa tu correo o contraseña':e.message)));
+    }});
+  }});
+}
+function cloudStart(){
+  if(fbReady)return;
+  fbRef=firebase.database().ref('cocina');
+  fbReady=true;
+  // estado de conexión real (punto en la barra) — no un toast que miente al abrir
+  firebase.database().ref('.info/connected').on('value',function(s){
+    const on=s.val()===true;
+    setCloudStatus(on,on?'Conectado — todos ven lo mismo':'Sin señal — tus cambios se guardan y se envían al reconectar');
+    if(on&&!_wasConnected){_wasConnected=true;toast('☁️ Conectado en la nube');}
+  });
+  fbRef.on('value',function(snap){
+    const v=snap.val();
+    if(!v){cloudPushAll();return;}
+    applyingRemote=true;
+    const prevLabel=(state.selThu!=null&&state.thursdays&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
+    const beforeMenus=JSON.stringify([state.thursdays,state.onceDays]);
+    if(v.doc)applyDoc(v.doc);
+    applyDone(v.done,v.brkDone);
+    // si el robot actualizó los menús, refrescar el día cargado con los datos nuevos
+    if(JSON.stringify([state.thursdays,state.onceDays])!==beforeMenus){
+      // el robot puede correr la lista (se cae el jueves que ya pasó) → re-ubicar el día por FECHA, no por posición
+      if(prevLabel&&Array.isArray(state.thursdays)){
+        const ni=state.thursdays.findIndex(t=>t.label===prevLabel);
+        if(ni>=0)state.selThu=ni;
+      }
+      const lbl=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
+      if(lbl)loadDay(lbl);
+    }
+    checkMenusUpdated();
+    checkSiteUpdated();
+    let ch=migrate();
+    if(ensureFixedTasks())ch=true;
+    if(autoSelectThursday())ch=true;
+    if(syncMenuFromData())ch=true;
+    const closed=closeOutWeek();if(closed)ch=true;
+    const reset=weeklyReset();if(reset)ch=true;
+    if(syncEncargadoTask())ch=true;
+    if(syncOnceExtraTask(currentOnce()))ch=true;
+    applyingRemote=false;
+    saveLocal();
+    if((reset||closed)&&fbReady){fbRef.child('done').set(null);fbRef.child('brkDone').set(null);}
+    if(closed&&fbReady)fbRef.child('doc/shopChk').set(null);   // semana nueva: lista de compras limpia para todos
+    if(closed)toast('🔄 Pauta reiniciada para el próximo jueves');
+    if(ch)cloudPushDoc();render();
+    if(currentView==='desayuno')renderBrk();
+    if(currentView==='menus')renderMenus();
+    if(currentView==='turnos')renderTurnos();   // refresca los turnos abiertos con lo que llega del robot
+  });
+}
 function cloudInit(){
   if(!cloudConfigured())return;
   try{
     firebase.initializeApp(FIREBASE_CONFIG);
-    fbRef=firebase.database().ref('cocina');
-    fbReady=true;
-    // estado de conexión real (punto en la barra) — no un toast que miente al abrir
-    firebase.database().ref('.info/connected').on('value',function(s){
-      const on=s.val()===true;
-      const dot=document.getElementById('connDot');
-      if(dot){dot.classList.toggle('on',on);dot.classList.toggle('off',!on);dot.title=on?'Conectado — todos ven lo mismo':'Sin señal — tus cambios se guardan y se envían al reconectar';}
-      if(on&&!_wasConnected){_wasConnected=true;toast('☁️ Conectado en la nube');}
-    });
-    fbRef.on('value',function(snap){
-      const v=snap.val();
-      if(!v){cloudPushAll();return;}
-      applyingRemote=true;
-      const prevLabel=(state.selThu!=null&&state.thursdays&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
-      const beforeMenus=JSON.stringify([state.thursdays,state.onceDays]);
-      if(v.doc)applyDoc(v.doc);
-      applyDone(v.done,v.brkDone);
-      // si el robot actualizó los menús, refrescar el día cargado con los datos nuevos
-      if(JSON.stringify([state.thursdays,state.onceDays])!==beforeMenus){
-        // el robot puede correr la lista (se cae el jueves que ya pasó) → re-ubicar el día por FECHA, no por posición
-        if(prevLabel&&Array.isArray(state.thursdays)){
-          const ni=state.thursdays.findIndex(t=>t.label===prevLabel);
-          if(ni>=0)state.selThu=ni;
-        }
-        const lbl=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
-        if(lbl)loadDay(lbl);
-      }
-      checkMenusUpdated();
-      checkSiteUpdated();
-      let ch=migrate();
-      if(ensureFixedTasks())ch=true;
-      if(autoSelectThursday())ch=true;
-      if(syncMenuFromData())ch=true;
-      const closed=closeOutWeek();if(closed)ch=true;
-      const reset=weeklyReset();if(reset)ch=true;
-      if(syncEncargadoTask())ch=true;
-      if(syncOnceExtraTask(currentOnce()))ch=true;
-      applyingRemote=false;
-      saveLocal();
-      if((reset||closed)&&fbReady){fbRef.child('done').set(null);fbRef.child('brkDone').set(null);}
-      if(closed&&fbReady)fbRef.child('doc/shopChk').set(null);   // semana nueva: lista de compras limpia para todos
-      if(closed)toast('🔄 Pauta reiniciada para el próximo jueves');
-      if(ch)cloudPushDoc();render();
-      if(currentView==='desayuno')renderBrk();
-      if(currentView==='menus')renderMenus();
-      if(currentView==='turnos')renderTurnos();   // refresca los turnos abiertos con lo que llega del robot
+    firebase.auth().onAuthStateChanged(user=>{
+      fbUser=user||null;
+      if(fbUser)cloudStart();
+      else setCloudStatus(false,'Conexión local — toca aquí para iniciar sesión');
     });
   }catch(e){console.warn('cloud',e);}
 }
@@ -1587,7 +1602,7 @@ function render(){
     const list=crew||[];
     const enc=(state.encargado||{})[selLabel]||'';
     const _baseSet=new Set(defaultCrew());
-    document.getElementById('todayCrew').innerHTML=`<div class="tcrew" onclick="switchView('turnos')" style="cursor:pointer"><h4>👥 Trabajan · ${esc(selLabel.replace(/ de 2026$/,''))}<span class="crewMore">todos ›</span>${admin?`<span class="crewEdit" onclick="event.stopPropagation();openCrewEdit()">✏️ editar</span>`:''}</h4><div class="tchips">${list.length?list.map(n=>{const rep=isRep(n)||!_baseSet.has(n),boss=(n===enc);return `<span class="${rep?'rep':''}">${boss?'⭐ ':''}${rep?'↩︎ ':''}${esc(n)}</span>`;}).join(''):'<span style="opacity:.85">Sin marcar — toca editar</span>'}</div>${enc?`<div class="encline">⭐ Encargado del turno: <b>${esc(enc)}</b></div>`:''}</div>`;
+    document.getElementById('todayCrew').innerHTML=`<div class="tcrew" onclick="switchView('turnos')" style="cursor:pointer"><h4>👥 Trabajan · ${esc(selLabel.replace(/ de \d{4}$/,''))}<span class="crewMore">todos ›</span>${admin?`<span class="crewEdit" onclick="event.stopPropagation();openCrewEdit()">✏️ editar</span>`:''}</h4><div class="tchips">${list.length?list.map(n=>{const rep=isRep(n)||!_baseSet.has(n),boss=(n===enc);return `<span class="${rep?'rep':''}">${boss?'⭐ ':''}${rep?'↩︎ ':''}${esc(n)}</span>`;}).join(''):'<span style="opacity:.85">Sin marcar — toca editar</span>'}</div>${enc?`<div class="encline">⭐ Encargado del turno: <b>${esc(enc)}</b></div>`:''}</div>`;
   }else document.getElementById('todayCrew').innerHTML='';
   // nota del día
   const noteEl=document.getElementById('dayNote');
@@ -1711,10 +1726,13 @@ function openDeliveryHistory(){
 }
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 /* coincidencia menú → receta */
-const REC_STOP=new Set(['de','con','al','la','el','y','o','a','en','del','los','las','su','para']);
+const REC_STOP=new Set(['de','con','al','la','el','y','o','a','en','del','los','las','su','para','sin','por','una','uno','dos','tres','mas','que']);
 const REC_GENERIC=new Set(['vacuno','polo','cerdo','pavo','carne','pescado','ave','jurel','posta','arroz','papas','choclo']);
 function recNorm(s){return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/gn/g,'n').replace(/([a-z])\1+/g,'$1');}
-function recWords(s){return recNorm(s).split(/[^a-z0-9]+/).filter(w=>w.length>=4&&!REC_STOP.has(w));}
+/* mínimo 3 letras: nombres como "Pie de limón", "Pan amasado" o "Pho de vacuno" dependen
+   de esa palabra corta. Con mínimo 4 se perdía y "Pie de limón" quedaba reducido a "limon",
+   enganchándose a cualquier ensalada al limón. */
+function recWords(s){return recNorm(s).split(/[^a-z0-9]+/).filter(w=>w.length>=3&&!REC_STOP.has(w));}
 function findRecipes(text){
   if(typeof RECETAS_FULL==='undefined'||!text)return[];
   const tw=new Set(recWords(text));if(!tw.size)return[];
@@ -1728,7 +1746,7 @@ function findRecipes(text){
 }
 
 /* ---------- acciones ---------- */
-const ADMIN_PIN='270216';
+const ADMIN_PIN=(window.COCINA_CONFIG&&window.COCINA_CONFIG.adminPin)||'';
 function toggleAdmin(){
   if(!admin){
     uiPrompt({title:'🔑 Modo administrador',label:'Ingresa la clave para poder editar.',password:true,okLabel:'Entrar',onOk:p=>{
@@ -2258,7 +2276,7 @@ function renderTurnos(){
     const selLabel=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:'';
     el.innerHTML=Object.keys(TURNOS).map(k=>{
       const today=k===selLabel;const names=TURNOS[k];
-      return `<div class="trow${today?' today':''}"><div class="td">${today?'🟢 ':'📅 '}${esc(k.replace(/ de 2026$/,''))}</div>
+      return `<div class="trow${today?' today':''}"><div class="td">${today?'🟢 ':'📅 '}${esc(k.replace(/ de \d{4}$/,''))}</div>
         <div class="tn">${names.map(nm=>{const rep=!BASE_TEAM.includes(nm);return `<span class="${rep?'rot':''}">${rep?'↩︎ ':''}${esc(nm)}</span>`;}).join('')}</div></div>`;
     }).join('');
     return;
@@ -2308,7 +2326,7 @@ function drawCrewEdit(){const label=curCrewLabel();
   const present=[...crewPresent];
   if(crewBoss&&!crewPresent.has(crewBoss))crewBoss='';
   const bossChips=present.length?present.map(n=>`<div class="bosschip${crewBoss===n?' on':''}" onclick="crewSetBoss('${esc(jsq(n))}')">${crewBoss===n?'⭐ ':''}${esc(n)}</div>`).join(''):'<span class="desc">Marca primero quiénes vienen.</span>';
-  openModal(`<h2>¿Quiénes trabajan hoy?</h2><p class="desc">${esc((label||'').replace(/ de 2026$/,''))} · marca de tu equipo quiénes vienen. ↩︎ = reemplazo.</p>
+  openModal(`<h2>¿Quiénes trabajan hoy?</h2><p class="desc">${esc((label||'').replace(/ de \d{4}$/,''))} · marca de tu equipo quiénes vienen. ↩︎ = reemplazo.</p>
     <div class="volgrid">${team}${extra}</div>
     <div class="addrow"><input type="text" id="newVol" placeholder="Agregar reemplazo externo"><button onclick="crewAddExt()">Agregar</button></div>
     <h4 class="bosshead">⭐ Encargado del turno</h4>
@@ -2327,7 +2345,7 @@ function crewSave(){if(!admin)return;const label=curCrewLabel();if(!label)return
 function crewReset(){if(!admin)return;const label=curCrewLabel();if(label)delete state.crewOverride[label];if(state.encargado)delete state.encargado[label];save();closeModal();render();toast('Restaurado al equipo base');}
 function openDayNote(){if(!admin)return;const label=curCrewLabel();if(!label)return;
   const cur=(state.dayNote||{})[label]||'';
-  openModal(`<h2>📝 Nota del día</h2><p class="desc">${esc(label.replace(/ de 2026$/,''))} · queda guardada y se comparte con el equipo.</p>
+  openModal(`<h2>📝 Nota del día</h2><p class="desc">${esc(label.replace(/ de \d{4}$/,''))} · queda guardada y se comparte con el equipo.</p>
     <textarea id="dnInput" class="dn-ta" placeholder="Ej.: faltó cilantro, el horno calienta de más, sobró puré para la once…">${esc(cur)}</textarea>
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="saveDayNote()">Guardar</button></div>`);
   setTimeout(()=>{const t=document.getElementById('dnInput');if(t)t.focus();},50);}
