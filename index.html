@@ -1388,7 +1388,7 @@ function applyDone(dm,bm){dm=dm||{};bm=bm||{};
   (state.brkTasks||[]).forEach(t=>t.done=!!bm[t.id]);}
 function setCloudStatus(on,title){
   const dot=document.getElementById('connDot');
-  if(dot){dot.classList.toggle('on',!!on);dot.classList.toggle('off',!on);dot.title=title;dot.onclick=on?null:openCloudLogin;}
+  if(dot){dot.classList.toggle('on',!!on);dot.classList.toggle('off',!on);dot.title=title;dot.onclick=fbUser?null:openCloudLogin;}
 }
 function canEditShared(){return !cloudConfigured()||!!fbUser;}
 function requireSharedEdit(){
@@ -1463,7 +1463,10 @@ function cloudStart(){
   // estado de conexión real (punto en la barra) — no un toast que miente al abrir
   firebase.database().ref('.info/connected').on('value',function(s){
     const on=s.val()===true;
-    setCloudStatus(on,on?'Conectado — todos ven lo mismo':'Sin señal — tus cambios se guardan y se envían al reconectar');
+    const online=fbUser
+      ? 'Conectado — todos ven lo mismo'
+      : 'Pauta compartida conectada — inicia sesión solo para editar';
+    setCloudStatus(on,on?online:'Sin señal — no se pudo cargar la pauta compartida');
     if(on&&!_wasConnected){_wasConnected=true;toast('☁️ Conectado en la nube');}
   });
   fbRef.on('value',function(snap){
@@ -1520,25 +1523,27 @@ function cloudInit(){
     firebase.initializeApp(FIREBASE_CONFIG);
     firebase.auth().onAuthStateChanged(user=>{
       fbUser=user||null;
-      if(fbUser)cloudStart();
-      else setCloudStatus(false,'Conexión local — toca aquí para iniciar sesión');
+      // La pauta puede leerse aunque Firebase Authentication no esté habilitado
+      // todavía. Editar sigue exigiendo una sesión, pero así todo el equipo ve
+      // las asignaciones que ya están en Realtime Database.
+      cloudStart();
     });
   }catch(e){console.warn('cloud',e);}
 }
 /* update (no set): fusiona los campos de la app SIN borrar onceDays/thursdays,
    que son propiedad del robot de sincronización. */
-function cloudPushDoc(){if(!fbReady||applyingRemote)return;
+function cloudPushDoc(){if(!fbReady||!fbUser||applyingRemote)return;
   const d=docFromState(),j=JSON.stringify(d);
   if(j===_lastPush)return;              // de-dupe: corta bucles de escritura si nada cambió
   _lastPush=j;fbRef.child('doc').update(d);}
-function cloudPushAll(){if(!fbReady)return;const done={},bd={};
+function cloudPushAll(){if(!fbReady||!fbUser)return;const done={},bd={};
   state.tasks.forEach(t=>{if(t.done)done[t.id]=true;});
   (state.brkTasks||[]).forEach(t=>{if(t.done)bd[t.id]=true;});
   // update (no set en la raíz): NO borra onceDays/thursdays/days del robot
   fbRef.child('doc').update(docFromState());fbRef.child('done').set(done);fbRef.child('brkDone').set(bd);}
-function cloudDone(id,val){if(fbReady&&!applyingRemote)fbRef.child('done/'+id).set(val?true:null);}
-function cloudShopChk(label,key,val){if(fbReady&&!applyingRemote)fbRef.child('doc/shopChk').child(label).child(key).set(val?true:null);}
-function cloudBrkDone(id,val){if(fbReady&&!applyingRemote)fbRef.child('brkDone/'+id).set(val?true:null);}
+function cloudDone(id,val){if(fbReady&&fbUser&&!applyingRemote)fbRef.child('done/'+id).set(val?true:null);}
+function cloudShopChk(label,key,val){if(fbReady&&fbUser&&!applyingRemote)fbRef.child('doc/shopChk').child(label).child(key).set(val?true:null);}
+function cloudBrkDone(id,val){if(fbReady&&fbUser&&!applyingRemote)fbRef.child('brkDone/'+id).set(val?true:null);}
 function load(){try{const s=localStorage.getItem(KEY);state=s?JSON.parse(s):structuredClone(DEFAULT);}catch(e){state=structuredClone(DEFAULT);}
   if(!Array.isArray(state.thursdays))state.thursdays=structuredClone(DEFAULT.thursdays);
   if(state.selThu===undefined)state.selThu=null;
