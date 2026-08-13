@@ -1274,12 +1274,19 @@ const DESAYUNO_CAL=[
 ];
 let state, admin=false, filter='todos', currentView='hoy', menuCat='alm', selOnce=null;
 const KEY='cocina_saet_v4';
+const ASSIGN_RECOVERY_KEY=KEY+'_assign_recovery';
 
 /* ===================== SINCRONIZACIÓN EN LA NUBE (Firebase) =====================
    👉 PEGA AQUÍ la config de tu proyecto Firebase (Realtime Database).
    Mientras diga "PEGAR_AQUI", la app funciona solo en este dispositivo. */
 const FIREBASE_CONFIG = window.COCINA_CONFIG && window.COCINA_CONFIG.firebase;
 let fbRef=null, fbReady=false, applyingRemote=false, _lastPush='', _wasConnected=false, fbUser=null;
+/* Al principio la app permitía abrir "Admin" solo con el PIN, aun sin haber
+   iniciado sesión en Firebase. Esos cambios quedaban encerrados en ese teléfono
+   y el mensaje de guardado daba una falsa sensación de que el equipo los veía.
+   Conservamos una copia acotada de asignaciones de hoy/futuras al conectarse por
+   primera vez, para poder recuperar las que se hicieron con esa versión. */
+let firstCloudLoad=true, localAssignRecovery=null;
 /* onceDays, thursdays y days NO van aquí: son propiedad del robot de sincronización
    (scripts/sync-menus.js). La app SOLO los lee (ver applyDoc), nunca los escribe,
    para que un push de un cliente no pise lo que actualizó la web. */
@@ -1383,6 +1390,62 @@ function setCloudStatus(on,title){
   const dot=document.getElementById('connDot');
   if(dot){dot.classList.toggle('on',!!on);dot.classList.toggle('off',!on);dot.title=title;dot.onclick=on?null:openCloudLogin;}
 }
+function canEditShared(){return !cloudConfigured()||!!fbUser;}
+function requireSharedEdit(){
+  if(canEditShared())return true;
+  toast('☁️ Conecta la nube antes de editar: así todo el equipo verá el cambio');
+  openCloudLogin();
+  return false;
+}
+function futureLocalAssignments(remoteDoc){
+  const local=(state&&state.assign&&typeof state.assign==='object')?state.assign:{};
+  const remote=(remoteDoc&&remoteDoc.assign&&typeof remoteDoc.assign==='object')?remoteDoc.assign:{};
+  const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const draft={};
+  Object.keys(local).forEach(label=>{
+    const d=parseLabelDate(label);
+    if(!d||d.getTime()<today.getTime())return; // no recuperar pautas históricas por accidente
+    const localTasks=local[label]||{},remoteTasks=remote[label]||{};
+    Object.keys(localTasks).forEach(taskId=>{
+      const mine=Array.isArray(localTasks[taskId])?localTasks[taskId]:[];
+      const theirs=Array.isArray(remoteTasks[taskId])?remoteTasks[taskId]:[];
+      if(mine.length&&JSON.stringify(mine)!==JSON.stringify(theirs)){
+        if(!draft[label])draft[label]={};
+        draft[label][taskId]=mine.slice();
+      }
+    });
+  });
+  return Object.keys(draft).length?draft:null;
+}
+function savedAssignmentRecovery(){
+  try{const d=JSON.parse(localStorage.getItem(ASSIGN_RECOVERY_KEY)||'null');return d&&typeof d==='object'&&!Array.isArray(d)?d:null;}catch(e){return null;}
+}
+function keepAssignmentRecovery(draft){
+  localAssignRecovery=draft;
+  try{localStorage.setItem(ASSIGN_RECOVERY_KEY,JSON.stringify(draft));}catch(e){}
+}
+function clearAssignmentRecovery(){
+  localAssignRecovery=null;
+  try{localStorage.removeItem(ASSIGN_RECOVERY_KEY);}catch(e){}
+}
+function offerLocalAssignmentRecovery(){
+  const draft=localAssignRecovery;if(!draft)return;
+  const count=Object.values(draft).reduce((n,m)=>n+Object.keys(m).length,0);
+  const days=Object.keys(draft).map(x=>x.replace(/ de \d{4}$/,'')).join(' · ');
+  openModal(`<h2>☁️ Recuperar asignaciones</h2>
+    <p class="desc">Encontramos ${count} asignaci${count===1?'ón':'ones'} guardada${count===1?'':'s'} solo en este teléfono (${esc(days)}). ¿Quieres enviarlas ahora a la pauta compartida?</p>
+    <div class="btns" style="margin-top:16px"><button class="btn ghost" onclick="discardLocalAssignmentRecovery()">Usar nube</button><button class="btn primary" onclick="restoreLocalAssignments()">Enviar asignaciones</button></div>`);
+}
+function discardLocalAssignmentRecovery(){clearAssignmentRecovery();closeModal();toast('Se mantuvo la pauta de la nube');}
+function restoreLocalAssignments(){
+  const draft=localAssignRecovery;if(!draft)return;
+  if(!state.assign||typeof state.assign!=='object')state.assign={};
+  Object.keys(draft).forEach(label=>{
+    state.assign[label]=state.assign[label]||{};
+    Object.keys(draft[label]).forEach(taskId=>{state.assign[label][taskId]=draft[label][taskId].slice();});
+  });
+  clearAssignmentRecovery();save();closeModal();render();toast('Asignaciones enviadas al equipo ✅');
+}
 function openCloudLogin(){
   if(!cloudConfigured()||!firebase.auth)return;
   uiPrompt({title:'☁️ Conectar al equipo',label:'Ingresa el correo autorizado para usar los datos compartidos.',placeholder:'correo@ejemplo.com',okLabel:'Continuar',onOk:email=>{
@@ -1406,6 +1469,14 @@ function cloudStart(){
   fbRef.on('value',function(snap){
     const v=snap.val();
     if(!v){cloudPushAll();return;}
+    // Antes de aplicar la nube, guarda únicamente asignaciones actuales/futuras
+    // que existen localmente y difieren de ella. Así una persona que asignó sin
+    // sesión puede elegir recuperarlas, sin sobrescribirlas automáticamente.
+    if(firstCloudLoad){
+      const draft=savedAssignmentRecovery()||futureLocalAssignments(v.doc);
+      if(draft)keepAssignmentRecovery(draft);
+      firstCloudLoad=false;
+    }
     applyingRemote=true;
     const prevLabel=(state.selThu!=null&&state.thursdays&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
     const beforeMenus=JSON.stringify([state.thursdays,state.onceDays]);
@@ -1437,6 +1508,7 @@ function cloudStart(){
     if(closed&&fbReady)fbRef.child('doc/shopChk').set(null);   // semana nueva: lista de compras limpia para todos
     if(closed)toast('🔄 Pauta reiniciada para el próximo jueves');
     if(ch)cloudPushDoc();render();
+    if(localAssignRecovery)setTimeout(offerLocalAssignmentRecovery,80);
     if(currentView==='desayuno')renderBrk();
     if(currentView==='menus')renderMenus();
     if(currentView==='turnos')renderTurnos();   // refresca los turnos abiertos con lo que llega del robot
@@ -1749,6 +1821,10 @@ function findRecipes(text){
 const ADMIN_PIN=(window.COCINA_CONFIG&&window.COCINA_CONFIG.adminPin)||'';
 function toggleAdmin(){
   if(!admin){
+    // El PIN protege la edición de la interfaz; la sesión de Firebase es lo que
+    // hace que las asignaciones lleguen a los demás teléfonos. No permitir un
+    // "guardado" local que parezca compartido.
+    if(!requireSharedEdit())return;
     uiPrompt({title:'🔑 Modo administrador',label:'Ingresa la clave para poder editar.',password:true,okLabel:'Entrar',onOk:p=>{
       if(p==null)return;
       if(p!==ADMIN_PIN){toast('Clave incorrecta 🚫');return;}
