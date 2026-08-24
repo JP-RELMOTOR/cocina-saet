@@ -241,8 +241,14 @@ function parseAlm(html){
   out.sort(byDate);
   return out;
 }
+/* El sitio publica una VENTANA MÓVIL de menús (a veces solo 3 o 4 jueves por
+   delante). Pedir muchos jueves hacía fallar el robot todos los días sin que
+   nada estuviera roto. Basta con que los jueves publicados se lean completos. */
 function saneAlm(list){
-  return Array.isArray(list) && list.length >= 8 && list.every(o => o.label && o.dish && o.cant);
+  return Array.isArray(list) && list.length >= 1 && list.every(o => o.label && o.dish && o.cant);
+}
+function almValidos(list){
+  return (list || []).filter(o => o.label && o.dish && o.cant);
 }
 
 /* ---------------- CALENDARIO COMPLETO (todos los días) ---------------- */
