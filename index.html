@@ -1526,9 +1526,11 @@ function cloudInit(){
     firebase.initializeApp(FIREBASE_CONFIG);
     firebase.auth().onAuthStateChanged(user=>{
       fbUser=user||null;
-      // La pauta puede leerse aunque Firebase Authentication no esté habilitado
-      // todavía. Editar sigue exigiendo una sesión, pero así todo el equipo ve
-      // las asignaciones que ya están en Realtime Database.
+      // Nadie tiene que escribir correo ni contraseña: si el proyecto tiene
+      // habilitado el acceso anónimo, la app se identifica sola en silencio.
+      // Si no lo tiene, igual funciona con las reglas actuales de la base.
+      if(!user&&!_anonTried){_anonTried=true;
+        try{firebase.auth().signInAnonymously().catch(e=>console.warn('anon',e&&e.code));}catch(e){}}
       cloudStart();
     });
   }catch(e){console.warn('cloud',e);}
