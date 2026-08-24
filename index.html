@@ -1469,10 +1469,7 @@ function cloudStart(){
   // estado de conexión real (punto en la barra) — no un toast que miente al abrir
   firebase.database().ref('.info/connected').on('value',function(s){
     const on=s.val()===true;
-    const online=fbUser
-      ? 'Conectado — todos ven lo mismo'
-      : 'Pauta compartida conectada — inicia sesión solo para editar';
-    setCloudStatus(on,on?online:'Sin señal — no se pudo cargar la pauta compartida');
+    setCloudStatus(on,on?'Conectado — todos ven lo mismo':'Sin señal — no se pudo cargar la pauta compartida');
     if(on&&!_wasConnected){_wasConnected=true;toast('☁️ Conectado en la nube');}
   });
   fbRef.on('value',function(snap){
