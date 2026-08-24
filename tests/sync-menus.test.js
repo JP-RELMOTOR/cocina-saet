@@ -32,6 +32,18 @@ test('extrae almuerzo y calendario futuros', () => {
   assert.equal(days[1].dt, '9 ene');
 });
 
+test('acepta una ventana corta de almuerzos (el sitio publica pocas semanas)', () => {
+  const html = 'Jueves, 8 de enero de 2027 Menú principal: Guiso de lentejas. Ensaladas: Tomate. Insumo principal: 4 kg de lentejas. Insumo ensaladas: 3 kg de tomates. Viernes, 9 de enero de 2027';
+  const lunches = parseAlm(html);
+  assert.equal(lunches.length, 1);
+  assert.equal(saneAlm(lunches), true);
+});
+
+test('rechaza almuerzos sin plato ni insumos (formato cambiado)', () => {
+  assert.equal(saneAlm([{ label: 'Jueves 8 de enero de 2027', dish: '', cant: '' }]), false);
+  assert.equal(saneAlm([]), false);
+});
+
 test('extrae turnos interescuela', () => {
   const rows = parseInter('Miércoles 07/01 Juan Pérez María Soto SEMANA');
   assert.deepEqual(rows, [{ dt: '7 ene', wd: 'miércoles', team: ['Juan Pérez María Soto'] }]);
