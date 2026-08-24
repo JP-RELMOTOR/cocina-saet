@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { dayHeads, parseOnce, parseAlm, parseDays, parseInter } = require('../scripts/sync-menus.js');
+const { dayHeads, parseOnce, parseAlm, parseDays, parseInter, saneAlm } = require('../scripts/sync-menus.js');
 
 test('detecta encabezados de cualquier año', () => {
   const heads = dayHeads('Jueves, 8 de enero de 2027');
