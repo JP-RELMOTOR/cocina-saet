@@ -468,8 +468,18 @@ async function main(){
     const almHtml = await fetchText(ALM_URL);
     const alm = parseAlm(almHtml);
     console.log(`  ${alm.length} jueves: ${alm.map(o=>o.label.replace('Jueves ','').replace(/ de \d{4}$/,'')).join(' · ')}`);
-    if(!saneAlm(alm)){ console.error('✋ Almuerzos: parseo inválido, NO escribo (datos a salvo).'); failed = true; }
-    else await syncSection('Almuerzos', '/cocina/doc/thursdays.json', alm);
+    const almOk = almValidos(alm);
+    if(almOk.length < alm.length){
+      const perdidos = alm.filter(o => !almOk.includes(o)).map(o => o.label).join(' · ');
+      console.error(`  ⚠️ ${alm.length - almOk.length} jueves sin plato o sin insumos: ${perdidos}`);
+    }
+    if(!alm.length){
+      // Sin jueves publicados (receso, página en blanco): no es un error del robot.
+      console.error('✋ Almuerzos: la página no trae jueves (¿receso?), NO escribo — datos a salvo.');
+    }else if(!saneAlm(almOk)){
+      // Hay jueves publicados pero ninguno se pudo leer → el formato SÍ cambió.
+      console.error('✋ Almuerzos: parseo inválido, NO escribo (datos a salvo).'); failed = true;
+    }else await syncSection('Almuerzos', '/cocina/doc/thursdays.json', almOk);
 
     const days = parseDays(almHtml);
     console.log(`  Calendario: ${days.length} días (${days[0]&&days[0].dt} → ${days.length&&days[days.length-1].dt})`);
