@@ -1,25 +1,25 @@
-# Activación segura de Firebase
+# Acceso a los datos compartidos
 
-Este repositorio ya contiene la app preparada para exigir usuarios autenticados y el robot preparado para autenticarse. La última parte se hace en las consolas de Firebase y GitHub; no se deben guardar contraseñas ni secretos en archivos del proyecto.
+## Cómo funciona hoy (agosto 2026)
 
-## Orden seguro
+- La app **no pide correo ni contraseña** a nadie. Para editar basta la clave del equipo (`adminPin` de `config.js`), igual que al principio.
+- Todo lo que se edita se guarda en Realtime Database, así que **todos los voluntarios ven lo mismo** en su teléfono.
+- Las reglas publicadas en Firebase son las abiertas. El robot de sincronización escribe sin credenciales.
+- Al abrir, la app intenta una sesión **anónima** en silencio. Hoy el proyecto no la tiene activada y no pasa nada: se reintenta solo si alguna vez la nube rechaza una escritura.
 
-1. En Firebase Console abre **Authentication > Sign-in method** y habilita **Correo electrónico/contraseña**.
-2. En **Authentication > Users**, crea una cuenta para cada persona que necesite usar los datos compartidos. Crea además una cuenta técnica exclusiva, por ejemplo `cocina-sync@...`, para el robot.
-3. En GitHub, en **Settings > Secrets and variables > Actions**, crea estos secretos:
-   - `FIREBASE_SYNC_EMAIL`: correo de la cuenta técnica.
-   - `FIREBASE_SYNC_PASSWORD`: contraseña de esa cuenta.
-   - `FIREBASE_API_KEY`: la `apiKey` de `config.js`. No es secreta, pero se mantiene centralizada para que el workflow no dependa del código.
-4. Publica primero este código. Antes de activar las reglas nuevas, abre la app, toca el punto de conexión y valida que una cuenta creada pueda iniciar sesión.
-5. En **Realtime Database > Rules**, reemplaza las reglas por el contenido de `database.rules.json` y pulsa **Publish**.
-6. Ejecuta manualmente el workflow **Sincronizar onces desde la web**. Debe superar la etapa de pruebas y actualizar Firebase con la cuenta técnica.
+Se probó y se descartó exigir una cuenta de Firebase por persona: dejaba fuera al equipo (nadie recuerda esa contraseña) y las ediciones quedaban encerradas en un teléfono. Si vuelves a tocar esto, no reintroduzcas ese requisito sin resolver antes cómo entra el equipo.
 
-## Qué cambia
+## Si algún día quieres cerrar la base
 
-- Sin sesión, la app conserva datos locales pero no lee ni escribe los datos compartidos.
-- Con una cuenta creada por el administrador, cada integrante puede usar la sincronización normalmente.
-- El PIN de modo administrador sigue siendo una capa de interfaz, no una identidad de seguridad. La protección real son las cuentas de Firebase y las reglas.
+`database.rules.json` contiene reglas que exigen `auth != null`. **No las publiques sin hacer los tres pasos completos**, o la app y el robot dejan de escribir:
+
+1. En Firebase Console, **Authentication > Sign-in method**, habilita **Anónimo**. Con eso la app se identifica sola, sin pedir nada a nadie (el código ya lo hace).
+2. Crea una cuenta técnica de correo/contraseña para el robot (por ejemplo `cocina-sync@…`) y guárdala en GitHub, en **Settings > Secrets and variables > Actions**:
+   - `FIREBASE_SYNC_EMAIL`, `FIREBASE_SYNC_PASSWORD` y `FIREBASE_API_KEY` (la `apiKey` de `config.js`).
+3. Recién entonces publica las reglas de `database.rules.json` y lanza a mano el workflow **Sincronizar onces desde la web** para comprobar que el robot sigue escribiendo.
+
+Ten presente qué protege eso realmente: la sesión anónima no distingue personas, así que evita que un curioso escriba con `curl`, pero no reemplaza la clave del equipo. La clave del PIN sigue siendo la puerta de la edición en la app.
 
 ## Reversión de emergencia
 
-Si algo falla después de publicar las reglas, vuelve temporalmente a las reglas anteriores desde el historial de Firebase Rules. No borres datos de `cocina`. Luego revisa que los tres secretos de GitHub y la cuenta técnica estén correctamente configurados.
+Si algo falla tras publicar reglas nuevas, vuelve a las anteriores desde el historial de **Realtime Database > Rules**. No borres datos de `cocina`.
