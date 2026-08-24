@@ -1529,8 +1529,13 @@ function cloudInit(){
       // Nadie tiene que escribir correo ni contraseña: si el proyecto tiene
       // habilitado el acceso anónimo, la app se identifica sola en silencio.
       // Si no lo tiene, igual funciona con las reglas actuales de la base.
-      if(!user&&!_anonTried){_anonTried=true;
-        try{firebase.auth().signInAnonymously().catch(e=>console.warn('anon',e&&e.code));}catch(e){}}
+      if(!user&&!_anonTried&&!anonDisabled()){_anonTried=true;
+        try{firebase.auth().signInAnonymously().catch(e=>{
+          console.warn('anon',e&&e.code);
+          // Si el proyecto no tiene el acceso anónimo activado, no insistir en
+          // cada apertura de la app (se reintenta solo si la nube rechaza algo).
+          if(e&&e.code==='auth/configuration-not-found')try{localStorage.setItem(ANON_OFF_KEY,'1');}catch(_){}
+        });}catch(e){}}
       cloudStart();
     });
   }catch(e){console.warn('cloud',e);}
