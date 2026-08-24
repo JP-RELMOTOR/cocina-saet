@@ -1388,15 +1388,21 @@ function applyDone(dm,bm){dm=dm||{};bm=bm||{};
   (state.brkTasks||[]).forEach(t=>t.done=!!bm[t.id]);}
 function setCloudStatus(on,title){
   const dot=document.getElementById('connDot');
-  if(dot){dot.classList.toggle('on',!!on);dot.classList.toggle('off',!on);dot.title=title;dot.onclick=fbUser?null:openCloudLogin;}
+  if(dot){dot.classList.toggle('on',!!on);dot.classList.toggle('off',!on);dot.title=title;dot.onclick=null;}
 }
-function canEditShared(){return !cloudConfigured()||!!fbUser;}
-function requireSharedEdit(){
-  if(canEditShared())return true;
-  toast('☁️ Conecta la nube antes de editar: así todo el equipo verá el cambio');
+/* Editar NO exige una cuenta personal de Firebase: la clave de administrador es
+   la puerta, y todo lo que se guarda va a la nube para que el equipo lo vea.
+   Si algún día las reglas de la base exigen sesión, el rechazo se detecta aquí
+   y recién entonces se ofrece iniciar sesión (en vez de pedirla siempre). */
+let _deniedShown=false;
+function cloudWriteError(e){
+  const code=(e&&(e.code||e.message)||'')+'';
+  if(!/permission|denied/i.test(code))return;
+  if(_deniedShown)return;_deniedShown=true;
+  toast('☁️ La nube rechazó el cambio: hay que iniciar sesión');
   openCloudLogin();
-  return false;
 }
+function cloudTry(p){try{if(p&&p.catch)p.catch(cloudWriteError);}catch(e){cloudWriteError(e);}}
 function futureLocalAssignments(remoteDoc){
   const local=(state&&state.assign&&typeof state.assign==='object')?state.assign:{};
   const remote=(remoteDoc&&remoteDoc.assign&&typeof remoteDoc.assign==='object')?remoteDoc.assign:{};
