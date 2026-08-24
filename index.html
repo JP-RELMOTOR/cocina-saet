@@ -1831,10 +1831,8 @@ function findRecipes(text){
 const ADMIN_PIN=(window.COCINA_CONFIG&&window.COCINA_CONFIG.adminPin)||'';
 function toggleAdmin(){
   if(!admin){
-    // El PIN protege la edición de la interfaz; la sesión de Firebase es lo que
-    // hace que las asignaciones lleguen a los demás teléfonos. No permitir un
-    // "guardado" local que parezca compartido.
-    if(!requireSharedEdit())return;
+    // Basta la clave del equipo: lo que se edite se guarda en la nube y lo ven
+    // todos. No se pide correo ni contraseña de Firebase.
     uiPrompt({title:'🔑 Modo administrador',label:'Ingresa la clave para poder editar.',password:true,okLabel:'Entrar',onOk:p=>{
       if(p==null)return;
       if(p!==ADMIN_PIN){toast('Clave incorrecta 🚫');return;}
