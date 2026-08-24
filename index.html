@@ -1286,7 +1286,7 @@ let fbRef=null, fbReady=false, applyingRemote=false, _lastPush='', _wasConnected
    y el mensaje de guardado daba una falsa sensación de que el equipo los veía.
    Conservamos una copia acotada de asignaciones de hoy/futuras al conectarse por
    primera vez, para poder recuperar las que se hicieron con esa versión. */
-let firstCloudLoad=true, localAssignRecovery=null;
+let firstCloudLoad=true, localAssignRecovery=null, _anonTried=false;
 /* onceDays, thursdays y days NO van aquí: son propiedad del robot de sincronización
    (scripts/sync-menus.js). La app SOLO los lee (ver applyDoc), nunca los escribe,
    para que un push de un cliente no pise lo que actualizó la web. */
