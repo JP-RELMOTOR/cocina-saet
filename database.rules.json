@@ -1,10 +1,10 @@
 {
   "rules": {
-    "//": "Cocina SAET · reglas de Firebase Realtime Database.",
+    "//": "Cocina SAET · reglas de Firebase Realtime Database. NO PUBLICADAS HOY.",
     "//1": "Todo cerrado por defecto. Solo usuarios autenticados pueden acceder a 'cocina'.",
-    "//2": "Crear los usuarios de Firebase Authentication antes de publicar estas reglas.",
-    "//3": "El robot usa su cuenta técnica mediante secretos de GitHub Actions.",
-    "//4": "Ver SECURITY_MIGRATION.md para aplicar el cambio sin interrumpir la app.",
+    "//2": "OJO: publicar esto sin habilitar antes el acceso ANÓNIMO deja al equipo sin poder editar.",
+    "//3": "El robot necesita su cuenta técnica (secretos de GitHub Actions) antes de publicarlas.",
+    "//4": "Leer SECURITY_MIGRATION.md completo antes de tocar esto.",
 
     ".read": false,
     ".write": false,
