@@ -287,8 +287,10 @@ function parseDays(html){
   out.sort((a,b)=>key(a.dt)-key(b.dt));
   return out;
 }
+// Igual que los almuerzos: la ventana publicada puede acortarse (una o dos
+// semanas). Con una semana completa ya hay datos útiles y ciertos.
 function saneDays(list){
-  return Array.isArray(list) && list.length >= 20 && list.every(d => d.dt && d.dish);
+  return Array.isArray(list) && list.length >= 7 && list.every(d => d.dt && d.dish);
 }
 
 /* ---------------- TURNOS (quiénes trabajan cada día) ----------------
