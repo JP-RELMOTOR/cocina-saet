@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "REPO='/Users/jpcorrea/Claude Code - RELMOTOR/App Cocina SAET'; bash \"$REPO/scripts/bump-sw-version.sh\" \"$REPO\"; if [ -n \"$(git -C \"$REPO\" status --porcelain 2>/dev/null)\" ]; then git -C \"$REPO\" add -A && git -C \"$REPO\" -c user.name=JP-RELMOTOR -c user.email=jp.relmotor@gmail.com commit -q -m 'deploy: auto-update' && git -C \"$REPO\" push -q origin main; fi; exit 0",
+            "timeout": 40,
+            "statusMessage": "Desplegando a GitHub Pages…"
+          }
+        ]
+      }
+    ]
+  }
+}

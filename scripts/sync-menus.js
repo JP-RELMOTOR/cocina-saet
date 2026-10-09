@@ -15,6 +15,7 @@
 
 const ONCE_URL = 'https://sites.google.com/view/residencia-saet/cocina/once-cena/men%C3%BA-onces';
 const ALM_URL  = 'https://sites.google.com/view/residencia-saet/cocina/almuerzo/men%C3%BA-almuerzo';
+const ALM_INDEX_URL = 'https://sites.google.com/view/residencia-saet/cocina/almuerzo';
 const DB = 'https://cocina-saet-default-rtdb.firebaseio.com';
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyDlzQFp11ZRjkDmFw8g_-mHAs3zpY-oSpY';
 let dbAuthToken = '';
@@ -68,6 +69,24 @@ function byDate(a,b){
     return m ? Date.UTC(+m[3], MON.indexOf(m[2].toLowerCase()), +m[1]) : Number.MAX_SAFE_INTEGER;
   };
   return p(a) - p(b);
+}
+
+// La página de almuerzo enlaza el menú vigente, cuyo nombre cambia por escuela.
+// Solo seguimos enlaces de almuerzo del propio sitio; nunca menús de aseo/onces.
+function lunchMenuLinks(html){
+  const urls = [...html.matchAll(/href="([^"]+)"/g)].map(m => {
+    try { return new URL(m[1].replace(/&amp;/g, '&'), ALM_INDEX_URL); } catch(e) { return null; }
+  }).filter(u => u && u.origin === 'https://sites.google.com' &&
+    /^\/view\/residencia-saet\/cocina\/almuerzo\/men[úu]-(?:almuerzo|(?:esce|eer)-\d+)\/?$/i.test(decodeURIComponent(u.pathname)));
+  return [...new Set(urls.map(u => u.origin + u.pathname))];
+}
+async function fetchLunchData(){
+  const indexHtml = await fetchText(ALM_INDEX_URL);
+  const links = lunchMenuLinks(indexHtml);
+  if(links.length > 1) throw new Error('La web enlaza varios menús de almuerzo: revisar cuál corresponde antes de sincronizar.');
+  const url = links[0] || ALM_URL;
+  console.log('  fuente vigente: ' + url);
+  return {url, html: await fetchText(url), indexHtml};
 }
 
 /* ---------------- ONCES ---------------- */
@@ -209,6 +228,14 @@ async function fetchOnceData(){
 }
 
 /* ---------------- ALMUERZOS ---------------- */
+function parseLunchBody(body){
+  body = body.split(/\bSEMANA\s+\d+|SAET\s*[-–]\s*REVISI[ÓO]N|Google Sites|Report abuse/i)[0];
+  // ESCE 20: Menú almuerzo / Ens. / Ingredientes. Separa por etiquetas,
+  // no por números: las ensaladas e ingredientes pueden contener decimales.
+  const m = body.match(/Men[uú]\s+almuerzo\s*:\s*([\s\S]*?)(?:\.\s*Ens\.?\s+([\s\S]*?))?\s+Ingredientes\s*:\s*([\s\S]*)$/i);
+  if(!m) return null;
+  return {dish: clean(m[1]).replace(/\.\s+/g,' · '), ens: clean(m[2]), cant: clean(m[3])};
+}
 function parseAlm(html){
   const t = htmlToText(html);
   const heads = dayHeads(t);
@@ -218,7 +245,10 @@ function parseAlm(html){
     if(!/^juev/.test(h.wd)) continue;
     const body = t.slice(h.end, k+1<heads.length ? heads[k+1].i : t.length);
     let dish='', ens='', cant='';
-    if(/Men[uú]\s+principal\s*:/i.test(body)){
+    const current = parseLunchBody(body);
+    if(current){
+      ({dish, ens, cant} = current);
+    } else if(/Men[uú]\s+principal\s*:/i.test(body)){
       // formato A: Menú principal / Ensaladas / Insumo principal / Insumo ensaladas
       const d  = body.match(/Men[uú]\s+principal\s*:\s*([^]*?)\.\s*Ensaladas\s*:/i);
       const e  = body.match(/Ensaladas\s*:\s*([^]*?)\.\s*Insumo\s+principal\s*:/i);
@@ -260,7 +290,13 @@ function parseDays(html){
     const h = heads[k];
     const body = t.slice(h.end, k+1<heads.length ? heads[k+1].i : t.length);
     let dish='', ens='', cong='', cant='';
-    if(/Men[uú]\s+principal\s*:/i.test(body)){
+    const current = parseLunchBody(body);
+    if(current){
+      ({dish, ens, cant} = current);
+    } else if(/Men[uú]\s+almuerzo\s*:/i.test(body)){
+      // Menú aún incompleto en origen: no interpretar ingredientes como ensalada.
+      continue;
+    } else if(/Men[uú]\s+principal\s*:/i.test(body)){
       // formato A: [cong] Menú principal: dish. Ensaladas: ens. Insumo principal: … Insumo ensaladas: …
       const cm = body.match(/^[\s|]*([^]*?)\s*Men[uú]\s+principal\s*:/i);
       if(cm) cong = clean(cm[1]);
@@ -338,12 +374,14 @@ async function buildTurnos(){
 const INTER_URL = 'https://sites.google.com/view/residencia-saet/cocina/almuerzo/turnos-interescuela';
 function parseInter(html){
   const t = htmlToText(html);
-  const re = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})\s*\/\s*(\d{1,2})/gi;
+  // Google Sites separa dígitos con etiquetas/espacios: «0 6 / 10», «25 /0 9».
+  const re = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d(?:\s*\d)?)\s*\/\s*(\d(?:\s*\d)?)(?!\s*\d)/gi;
   let m, heads = [];
-  while(m = re.exec(t)) heads.push({i:m.index, end:re.lastIndex, wd:m[1].toLowerCase(), day:+m[2], mon:+m[3]});
+  while(m = re.exec(t)) heads.push({i:m.index, end:re.lastIndex, wd:m[1].toLowerCase(), day:+m[2].replace(/\s/g,''), mon:+m[3].replace(/\s/g,'')});
   const out = [];
   for(let k=0;k<heads.length;k++){
     const h = heads[k];
+    if(h.mon < 1 || h.mon > 12 || h.day < 1 || h.day > [31,29,31,30,31,30,31,31,30,31,30,31][h.mon-1]) continue;
     let body = t.slice(h.end, k+1<heads.length ? heads[k+1].i : t.length);
     body = body.split(/SEMANA|LLEGADA|ESTUDIANTES|🗓|➖/i)[0];          // corta divisores y "llegada estudiantes"
     const names = (body.match(/[A-Za-zÁÉÍÓÚÑáéíóúñ]+(?:\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]+)+/g) || [])
@@ -352,7 +390,7 @@ function parseInter(html){
   }
   return out;
 }
-function saneInter(list){ return Array.isArray(list) && list.length >= 1 && list.every(d => d.dt && Array.isArray(d.team) && d.team.length); }
+function saneInter(list){ return Array.isArray(list) && list.length >= 1 && list.every(d => /^(?:[1-9]|[12]\d|3[01]) (?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)$/.test(d.dt) && Array.isArray(d.team) && d.team.length); }
 
 /* ---------------- VIGILANTE DE CAMBIOS DEL SITIO ----------------
    Google Sites embebe la fecha de última modificación de cada página como
@@ -376,7 +414,7 @@ function pageLastMod(html){
   const ts = [...html.matchAll(/1[6-8]\d{11}/g)].map(m => +m[0]).filter(t => t < cut);
   return ts.length ? Math.max(...ts) : 0;
 }
-async function watchPages(){
+async function watchPages(lunchUrl){
   let stored = {};
   try{ const r = await fetch(dbUrl('/cocina/doc/pageMods.json')); if(r.ok) stored = (await r.json()) || {}; }catch(e){}
   const baseline = !Object.keys(stored).length;
@@ -393,12 +431,13 @@ async function watchPages(){
       if(!baseline && stored[name] && mod > stored[name]) changes.push({name, url, mod});
     }catch(e){ /* página caída hoy: se reintenta mañana */ }
   };
-  for(const [name, url] of Object.entries(WATCH_PAGES)) await check(name, url);
+  const pages = {...WATCH_PAGES, 'Menú almuerzos': lunchUrl || ALM_URL, 'Almuerzo (instrucciones)': ALM_INDEX_URL};
+  for(const [name, url] of Object.entries(pages)) await check(name, url);
   // RECETAS: descubiertas del menú de navegación en cada corrida — las recetas
   // nuevas del sitio entran solas al vigilante, sin mantener listas a mano.
   if(navHtml){
     const links = [...new Set([...navHtml.matchAll(/href="(\/view\/residencia-saet\/cocina\/recetas\/[^"#?]+)"/g)].map(m => m[1]))];
-    console.log(`  vigilando ${Object.keys(WATCH_PAGES).length} páginas + ${links.length} recetas`);
+    console.log(`  vigilando ${Object.keys(pages).length} páginas + ${links.length} recetas`);
     for(let i = 0; i < links.length; i += 6){
       await Promise.all(links.slice(i, i + 6).map(u => {
         const slug = decodeURIComponent(u.split('/').pop()).replace(/[.#$\/\[\]]/g, '-');
@@ -450,6 +489,7 @@ async function syncSection(name, path, data){
 
 async function main(){
   let failed = false;
+  let lunchUrl = null;
 
   await authenticateFirebase();
 
@@ -467,7 +507,9 @@ async function main(){
   // ALMUERZOS (jueves con cantidades) + CALENDARIO COMPLETO (todos los días)
   try{
     console.log('▶ Almuerzos…');
-    const almHtml = await fetchText(ALM_URL);
+    const lunch = await fetchLunchData();
+    lunchUrl = lunch.url;
+    const almHtml = lunch.html;
     const alm = parseAlm(almHtml);
     console.log(`  ${alm.length} jueves: ${alm.map(o=>o.label.replace('Jueves ','').replace(/ de \d{4}$/,'')).join(' · ')}`);
     const almOk = almValidos(alm);
@@ -509,7 +551,7 @@ async function main(){
   // VIGILANTE: ¿alguna página del sitio cambió desde la última corrida?
   try{
     console.log('▶ Vigilante de cambios del sitio…');
-    await watchPages();
+    await watchPages(lunchUrl);
   }catch(e){ console.error('  (vigilante falló:', e.message, ') — no es fatal.'); }
 
   if(failed) process.exit(1);
@@ -520,4 +562,4 @@ if(require.main === module){
   main().catch(e=>{ console.error('❌ Error general:', e.message); process.exit(1); });
 }
 
-module.exports = { dayHeads, parseOnce, parseAlm, parseDays, parseInter, fetchOnceData, saneOnce, saneAlm, saneDays, saneInter, dbUrl };
+module.exports = { dayHeads, parseOnce, parseAlm, parseDays, parseInter, fetchOnceData, fetchLunchData, lunchMenuLinks, saneOnce, saneAlm, saneDays, saneInter, dbUrl };
