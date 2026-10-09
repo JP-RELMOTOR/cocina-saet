@@ -248,6 +248,8 @@ function parseAlm(html){
     const current = parseLunchBody(body);
     if(current){
       ({dish, ens, cant} = current);
+    } else if(/Men[uú]\s+almuerzo\s*:/i.test(body)){
+      // Conserva el jueves como inválido para avisar sin escribir datos parciales.
     } else if(/Men[uú]\s+principal\s*:/i.test(body)){
       // formato A: Menú principal / Ensaladas / Insumo principal / Insumo ensaladas
       const d  = body.match(/Men[uú]\s+principal\s*:\s*([^]*?)\.\s*Ensaladas\s*:/i);
@@ -531,6 +533,7 @@ async function main(){
     try{
       console.log('▶ Turnos por día…');
       const turnos = await buildTurnos();
+      if(!Object.keys(turnos).length) console.log('  La web no tiene turnos de escuela disponibles; no se reutilizan equipos históricos.');
       let conTurno = 0;
       days.forEach(d => { const team = turnos[d.dt]; if(team && team.length){ d.team = team; conTurno++; } });
       console.log(`  ${conTurno}/${days.length} días del calendario tienen equipo asignado.`);
