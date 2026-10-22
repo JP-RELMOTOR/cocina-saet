@@ -64,3 +64,13 @@ test('no confunde nombres parecidos y respeta la fecha de inicio',()=>{
   assert.equal(team.current(old,parse),false);assert.equal(team.current(today,parse),true);
   assert.equal(team.current(future,parse),true);
 });
+test('reconoce la tarjeta Cony F. guardada en la nube y conserva su id',()=>{
+  const s=legacy();s.cooks=s.cooks.filter(c=>c.id!=='connie');
+  s.cooks.push({id:'ccws5kr',name:'Cony F.',color:'#9333ea',sub:true});
+  s.cooks.push({id:'c7',name:'Constanza Fridman',color:'#7c3aed',sub:false});
+  s.teamVersion=1;s.assign[today].t1=['ccws5kr','c7'];
+  team.migrate(s,parse);
+  assert.equal(s.cooks.filter(c=>c.name==='Constanza Fridman').length,1);
+  assert.equal(s.cooks.find(c=>c.name==='Constanza Fridman').id,'ccws5kr');
+  assert.deepEqual(s.assign[today].t1,['ccws5kr']);assert.equal(s.teamVersion,2);
+});
