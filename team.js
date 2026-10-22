@@ -16,13 +16,14 @@ const CocinaTeam = (() => {
   const retired = name => matches(name,'Gabriel','Díaz') || matches(name,'Vanessa','Díaz');
   const member = name => defaults.find(c => c.id==='c5' ? matches(name,'Melisa','Gómez')
     : c.id==='c6' ? matches(name,'Evelyn','Latín')
-    : c.id==='c7' ? matches(name,'Constanza','Fridman') || matches(name,'Connie','Fridman') : false);
+    : c.id==='c7' ? matches(name,'Constanza','Fridman') || matches(name,'Connie','Fridman')
+      || /^cony f\.?$/.test(norm(name)) : false);
   const current = (label, parseDate) => {
     const date=parseDate(label);
     return !!date && date.getTime()>=new Date(2026,9,22).getTime();
   };
   function migrate(state, parseDate) {
-    if(state.teamVersion>=1)return false;
+    if(state.teamVersion>=2)return false;
     state.cooks=Array.isArray(state.cooks)?state.cooks:structuredClone(defaults);
     state.retiredCooks=state.retiredCooks||[];
     const removed=new Set();
@@ -65,7 +66,7 @@ const CocinaTeam = (() => {
     for(const [oldId,newId] of aliases)if(oldId!==newId&&!state.retiredCooks.some(c=>c.id===oldId)){
       const c=state.cooks.find(c=>c.id===newId);state.retiredCooks.push({...c,id:oldId});
     }
-    state.teamVersion=1;
+    state.teamVersion=2;
     return true;
   }
   return {defaults,migrate,current,retired,member};
