@@ -1,15 +1,27 @@
 name: Sincronizar onces desde la web
 
-# Se ejecuta solo todos los días a las 11:00 UTC (~08:00 en Chile)
+# Revisa cada 3 horas; el minuto 17 evita la franja de mayor carga de GitHub.
 # y también se puede lanzar a mano desde la pestaña Actions de GitHub.
 on:
   schedule:
-    - cron: '0 11 * * *'
+    - cron: '17 */3 * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/sync-menus.js
+      - tests/sync-menus.test.js
+      - tests/fixtures/**
+      - .github/workflows/sync-menus.yml
+
+concurrency:
+  group: sync-menus
+  cancel-in-progress: false
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       issues: write

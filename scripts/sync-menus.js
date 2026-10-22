@@ -90,39 +90,69 @@ async function fetchLunchData(){
 }
 
 /* ---------------- ONCES ---------------- */
-function parseOnce(html){
-  const t = htmlToText(html);
-  const heads = dayHeads(t);
-  const out = [];
-  for(let k=0;k<heads.length;k++){
-    const h = heads[k];
-    if(!/^juev/.test(h.wd)) continue;
-    const body = t.slice(h.end, k+1<heads.length ? heads[k+1].i : t.length);
-    let menus = [];
-    // El sitio usa ambos formatos: "Menú 1:" y "Menú: 1:".
-    // También toleramos el mismo menú repetido por las variantes responsive de Google Sites.
-    const mr = /Men[uú]\s*:?\s*(\d+)\s*:\s*([^]*?)(?=Men[uú]\s*:?\s*\d+\s*:|Descongelar|Cantidades|$)/gi;
-    let mm;
-    while(mm = mr.exec(body)){const txt = clean(mm[2]).replace(/[.\s(]+$/,''); if(txt) menus.push('Menú '+mm[1]+': '+txt);}
-    menus = [...new Set(menus)];
-    if(!menus.length){
-      const mz = body.match(/Men[uú]\s*:?\s*([^]*?)(?=Descongelar|Cantidades|$)/i);
-      if(mz){clean(mz[1]).replace(/\.$/,'').split('/').map(s=>s.trim()).filter(Boolean).forEach(s=>menus.push(s));}
+// Las onces pueden omitir el año. Se obtiene de la revisión publicada o de
+// otra fecha completa de la MISMA página, nunca del reloj del robot.
+function onceDayHeads(t){
+  const re=/(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo),?\s+(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)(?:\s+de\s+(\d{4}))?/gi;
+  const heads=[...t.matchAll(re)].map(m=>({i:m.index,end:m.index+m[0].length,wd:m[1].toLowerCase(),day:+m[2],mon:m[3].toLowerCase(),year:m[4]?+m[4]:null}));
+  const revisions=[...t.matchAll(/REVISI[ÓO]N\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+(\d{4})/gi)];
+  if(new Set(revisions.map(m=>m[1].toLowerCase()+' '+m[2])).size>1)throw new Error('Onces: varias revisiones; año ambiguo.');
+  const anchor=revisions.length?{mon:revisions[0][1].toLowerCase(),year:+revisions[0][2]}:heads.find(h=>h.year);
+  for(const h of heads){
+    if(h.year)continue;
+    if(!anchor)throw new Error('Onces: fechas sin año y sin revisión fechada; no se puede inferir el año.');
+    const diff=MON.indexOf(h.mon)-MON.indexOf(anchor.mon);
+    h.year=anchor.year+(diff < -6 ? 1 : diff > 6 ? -1 : 0);
+    const date=new Date(Date.UTC(h.year,MON.indexOf(h.mon),h.day));
+    const weekday=['domingo','lunes','martes','miercoles','jueves','viernes','sabado'][date.getUTCDay()];
+    if(date.getUTCDate()!==h.day||weekday!==h.wd.normalize('NFD').replace(/[\u0300-\u036f]/g,'')){
+      throw new Error('Onces: fecha sin año incompatible con la revisión: '+h.wd+' '+h.day+' de '+h.mon+'.');
     }
-    let extra = '';
-    const ex = body.match(/Descongelar([^]*?)(?=Cantidades|$)/i);
-    if(ex) extra = 'Descongelar ' + clean(ex[1]).replace(/\.$/,'');
-    let cant = '';
-    const cz = body.match(/Cantidades\s*:?\s*([^]*)$/i);
-    if(cz) cant = clean(cz[1]);
-    const idx = MON.indexOf(h.mon);
-    out.push({label:'Jueves '+h.day+' de '+h.mon+' de '+h.year, dt:h.day+' '+SHORT[idx], wd:'jueves', menus, extra, cant});
   }
-  out.sort(byDate);
-  return out;
+  return heads;
+}
+function parseOnce(html){
+  const t=htmlToText(html), heads=onceDayHeads(t), out=[];
+  for(let k=0;k<heads.length;k++){
+    const h=heads[k];if(!/^juev/.test(h.wd))continue;
+    const body=t.slice(h.end,k+1<heads.length?heads[k+1].i:t.length)
+      .split(/\bSEMANA\s+\d+|SAET\s*[-–]\s*REVISI[ÓO]N|Google Sites|Report abuse/i)[0];
+    const menuBody=body.split(/Descongelar|Remojar|Preparar|Cantidades/i)[0];
+    const markers=[...menuBody.matchAll(/Men[uú]\s*(?::\s*)?(\d+)?\s*:\s*/gi)];
+    let menus=[];
+    for(let i=0;i<markers.length;i++){
+      const m=markers[i], text=clean(menuBody.slice(m.index+m[0].length,i+1<markers.length?markers[i+1].index:menuBody.length)).replace(/[.\s(]+$/,'');
+      if(!text)continue; // “Menú:” seguido de “Menú 1:” es solo un encabezado.
+      if(m[1])menus.push('Menú '+m[1]+': '+text);
+      else menus.push(...text.split('/').map(clean).filter(Boolean));
+    }
+    menus=[...new Set(menus)];
+    const ex=body.match(/(Descongelar|Remojar|Preparar)([\s\S]*?)(?=Cantidades|$)/i);
+    const cz=body.match(/Cantidades\s*:?\s*([\s\S]*)$/i);
+    const idx=MON.indexOf(h.mon);
+    out.push({label:'Jueves '+h.day+' de '+h.mon+' de '+h.year,dt:h.day+' '+SHORT[idx],wd:'jueves',menus,
+      extra:ex?clean(ex[1]+' '+ex[2]).replace(/[.)\s]+$/,''):'',cant:cz?clean(cz[1]):''});
+  }
+  return out.sort(byDate);
 }
 function saneOnce(list){
-  return Array.isArray(list) && list.length >= 2 && list.every(o => o.label && o.dt && Array.isArray(o.menus) && o.menus.length >= 1);
+  if(!Array.isArray(list)||!list.length)return false;
+  const labels=new Set();
+  return list.every(o=>{
+    const m=String(o.label||'').match(/^Jueves (\d{1,2}) de (\w+) de (\d{4})$/);
+    if(!m||labels.has(o.label))return false;
+    labels.add(o.label);
+    const month=MON.indexOf(m[2]),date=new Date(Date.UTC(+m[3],month,+m[1]));
+    return month>=0&&date.getUTCMonth()===month&&date.getUTCDate()===+m[1]&&date.getUTCDay()===4
+      &&o.dt===+m[1]+' '+SHORT[month]&&Array.isArray(o.menus)&&o.menus.length>0&&o.menus.every(m=>typeof m==='string'&&m.trim());
+  });
+}
+function assertCurrentOnce(list, now=new Date()){
+  if(!saneOnce(list))throw new Error('Onces: lectura vacía, incompleta o fechas inválidas. Se conservan los datos anteriores.');
+  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Santiago',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
+  const last=list.slice().sort(byDate).at(-1).label.match(/(\d+) de (\w+) de (\d{4})/);
+  const lastDay=last[3]+'-'+String(MON.indexOf(last[2])+1).padStart(2,'0')+'-'+last[1].padStart(2,'0');
+  if(lastDay<today)throw new Error('Onces: la fuente solo contiene fechas vencidas (última: '+lastDay+'). Revisar la publicación oficial.');
 }
 
 /* ---------------- ONCES v2: Excel incrustado desde Google Drive ----------------
@@ -476,7 +506,7 @@ async function fetchText(url){
 async function syncSection(name, path, data){
   let current = null;
   try{ const c = await fetch(dbUrl(path)); if(c.ok) current = await c.json(); }catch(e){}
-  if(current && JSON.stringify(current) === JSON.stringify(data)){
+  if(current && require('node:util').isDeepStrictEqual(current,data)){
     console.log(`✓ ${name}: la nube ya está al día.`);
     return;
   }
@@ -486,7 +516,9 @@ async function syncSection(name, path, data){
   }
   const put = await fetch(dbUrl(path), {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
   if(!put.ok){ const b = await put.text().catch(()=> ''); throw new Error(`Firebase rechazó ${name}: HTTP ${put.status} ${b}`); }
-  console.log(`✅ ${name}: ${data.length} registros actualizados en la nube.`);
+  const check=await fetch(dbUrl(path));
+  if(!check.ok||!require('node:util').isDeepStrictEqual(await check.json(),data))throw new Error('No se pudo verificar la escritura de '+name);
+  console.log(`✅ ${name}: ${data.length} registros actualizados y verificados en la nube.`);
 }
 
 async function main(){
@@ -500,10 +532,8 @@ async function main(){
     console.log('▶ Onces…');
     const once = await fetchOnceData();
     console.log(`  ${once.length} jueves: ${once.map(o=>o.dt).join(', ')}`);
-    // No-fatal: tener pocas onces es normal cerca de un receso. No escribimos (se
-    // conservan las onces previas) pero NO hacemos fallar todo el run por esto.
-    if(!saneOnce(once)){ console.error('✋ Onces: pocas/sin onces válidas (normal cerca de un receso), NO escribo — datos a salvo.'); }
-    else await syncSection('Onces', '/cocina/doc/onceDays.json', once);
+    assertCurrentOnce(once);
+    await syncSection('Onces', '/cocina/doc/onceDays.json', once);
   }catch(e){ console.error('❌ Onces:', e.message); failed = true; }
 
   // ALMUERZOS (jueves con cantidades) + CALENDARIO COMPLETO (todos los días)
@@ -565,4 +595,4 @@ if(require.main === module){
   main().catch(e=>{ console.error('❌ Error general:', e.message); process.exit(1); });
 }
 
-module.exports = { dayHeads, parseOnce, parseAlm, parseDays, parseInter, fetchOnceData, fetchLunchData, lunchMenuLinks, saneOnce, saneAlm, saneDays, saneInter, dbUrl };
+module.exports = { onceDayHeads, assertCurrentOnce, syncSection, dayHeads, parseOnce, parseAlm, parseDays, parseInter, fetchOnceData, fetchLunchData, lunchMenuLinks, saneOnce, saneAlm, saneDays, saneInter, dbUrl };
