@@ -2565,11 +2565,14 @@ function openNotesHistory(){
 }
 /* ---- lista de compras del jueves: cantidades → checklist compartible ---- */
 function splitItems(str){
-  // divide por comas y puntos, pero NO dentro de paréntesis: "(reineta, merluza)" queda junto
+  // Conserva decimales y millares (4,5 kg; 1.750 g) y el texto entre paréntesis.
+  const text=String(str||'');
   const out=[];let cur='',depth=0;
-  for(const c of String(str||'')){
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    const numericSeparator=/[0-9]/.test(text[i-1]||'')&&/[0-9]/.test(text[i+1]||'');
     if(c==='(')depth++;if(c===')')depth=Math.max(0,depth-1);
-    if((c===','||c==='.')&&depth===0){if(cur.trim())out.push(cur.trim());cur='';}
+    if((c===','||c==='.')&&depth===0&&!numericSeparator){if(cur.trim())out.push(cur.trim());cur='';}
     else cur+=c;
   }
   if(cur.trim())out.push(cur.trim());
