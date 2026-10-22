@@ -2439,7 +2439,7 @@ function drawCrewEdit(){const label=curCrewLabel();
   const present=[...crewPresent];
   if(crewBoss&&!crewPresent.has(crewBoss))crewBoss='';
   const bossChips=present.length?present.map(n=>`<button type="button" aria-pressed="${crewBoss===n}" class="bosschip${crewBoss===n?' on':''}" onclick="crewSetBoss('${esc(jsq(n))}')">${crewBoss===n?'⭐ ':''}${esc(n)}</button>`).join(''):'<span class="desc">Marca primero quiénes vienen.</span>';
-  openModal(`<h2>Equipo del día</h2><p class="desc">${esc((label||'').replace(/ de \d{4}$/,''))} · el equipo fijo ya está seleccionado. Desmarca a quien falte o agrega un reemplazo.</p>
+  openModal(`<h2>Equipo del día</h2><p class="desc">${esc((label||'').replace(/ de \d{4}$/,''))} · Revisa quiénes vienen. Desmarca a quien falte o agrega un reemplazo.</p>
     <div class="volgrid">${team}${extra}</div>
     <div class="addrow"><input type="text" id="newVol" placeholder="Agregar reemplazo externo"><button onclick="crewAddExt()">Agregar</button></div>
     <h4 class="bosshead">⭐ Encargado del turno</h4>
