@@ -455,6 +455,31 @@
   .vhead h2{letter-spacing:-.4px;}
   .tag{border-radius:8px;letter-spacing:.4px;}
   .chip,.asg,.ss{transition:.15s;}
+
+  /* Equipo: identidad visible, edición secundaria y objetivos táctiles amplios. */
+  .team-heading{font-size:14px;margin:20px 0 10px;color:var(--ink);}
+  .team-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--member-color);border-radius:12px;margin:8px 0;padding:12px;}
+  .team-card-main{display:flex;align-items:center;gap:12px;}
+  .team-avatar{display:grid;place-items:center;flex-shrink:0;width:40px;height:40px;border-radius:50%;background:var(--member-color);color:#fff;font-size:13px;font-weight:800;}
+  .team-identity{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px;}
+  .team-identity strong{font-size:16px;overflow-wrap:anywhere;}
+  .team-identity span,.team-help{font-size:12px;color:var(--mut);}
+  .team-controls summary,.team-add summary{cursor:pointer;min-height:44px;padding:14px 0 8px;font-size:13px;font-weight:700;color:var(--brand);}
+  .team-controls label,.team-add label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--mut);}
+  .team-controls input[type=text],.team-controls select{width:100%;min-width:0;min-height:44px;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;font-size:16px;}
+  .team-actions{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin-top:12px;}
+  .team-actions label:not(.team-color){flex:1;min-width:130px;}
+  .team-color input{width:44px;height:44px;border:0;background:none;cursor:pointer;}
+  .team-remove{min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:#b91c1c;font:inherit;cursor:pointer;}
+  .team-help{margin-top:16px;}
+  .vol,.bosschip,.asg,.chip{font-family:inherit;text-align:left;min-height:44px;}
+  .vol{width:100%;background:var(--card);}
+  .bosschip{background:var(--card);}
+  button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--brand);outline-offset:3px;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
+  body.dark .team-controls summary,body.dark .team-add summary{color:#8bd783;}
+  body.dark .team-remove{color:#fca5a5;}
+
 </style>
 </head>
 <body>
@@ -992,7 +1017,7 @@
   <div id="view-turnos" class="view">
     <div class="vhead"><h2>🔁 Turnos</h2><p>Quiénes cocinan cada día · del sitio oficial</p></div>
     <div id="turnosList"></div>
-    <p class="about">El equipo base —Juan Pablo, Mijal, Gabriel, Vanessa y Melissa— va <b>todos los jueves</b>.<br>Solo cuando falta alguno entra un <b>reemplazo</b>, que aparece destacado.</p>
+    <p class="about">Desde el 22 de octubre, el equipo fijo es <b>Juan Pablo, Mijal, Evelyn, Melisa y Constanza Fridman</b>.<br>La asistencia de cada jueves se ajusta desde Hoy. Los turnos publicados se conservan como referencia.</p>
     <p class="about">Fuente oficial: <a href="https://sites.google.com/view/residencia-saet/inicio" target="_blank" rel="noopener" class="srclink">Residencia SAET ↗</a><br>Toca el enlace para validar la información en el sitio oficial.</p>
   </div>
 
@@ -1030,6 +1055,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
 <script src="config.js"></script>
 <script src="recetas-data.js"></script>
+<script src="team.js"></script>
 <script>
 /* ---------- estado ---------- */
 const DEFAULT={
@@ -1043,14 +1069,7 @@ const DEFAULT={
       extra:'Descongelar 4 kg de pechuga de pollo',
       cant:'Pie de limón: ver recetario. Pan: 35 unidades. Quesillo: 7 pqts, aceite de oliva y orégano. Tomates: 15 unidades en rodajas. Lechugas: 2 unidades. Crema de zapallo (5 L): 4 kg de zapallo camote, 3 cebollas, 400 ml de crema de leche sin lactosa, nuez moscada.'},
   ],
-  cooks:[
-    {id:'c1',name:'Juan Pablo',color:'#2563eb',sub:false},
-    {id:'c2',name:'Mijal',color:'#db2777',sub:false},
-    {id:'c3',name:'Gabriel',color:'#c2410c',sub:false},
-    {id:'c4',name:'Vanesa',color:'#7c3aed',sub:false},
-    {id:'c5',name:'Melissa',color:'#0891b2',sub:false},
-    {id:'c6',name:'Evelyn Latín',color:'#ca8a04',sub:true},
-  ],
+  cooks:structuredClone(CocinaTeam.defaults),
   sections:[
     {id:'s1',name:'Mañana',icon:'🌅'},
     {id:'s2',name:'Intermedio',icon:'🔄'},
@@ -1058,14 +1077,14 @@ const DEFAULT={
   ],
   tasks:[
     {id:'t1',sec:'s1',text:'Almuerzo',who:['c1','c2','c5'],done:false},
-    {id:'t2',sec:'s1',text:'Ensalada y comedor',who:['c4'],done:false},
+    {id:'t2',sec:'s1',text:'Ensalada y comedor',who:[],done:false},
     {id:'t3',sec:'s1',text:'Limpieza utensilios desayuno, hervidores y desayuno viernes',who:['c6'],done:false},
-    {id:'t4',sec:'s2',text:'Lavado loza',who:['c5','c4'],done:false},
+    {id:'t4',sec:'s2',text:'Lavado loza',who:['c5'],done:false},
     {id:'t5',sec:'s2',text:'Lavado budineras y ollas',who:['c1','c2'],done:false},
     {id:'t6',sec:'s2',text:'Calentar comida 2º turno y poner mesa 2º turno · Limpieza comedor término',who:['c6'],done:false},
     {id:'t7',sec:'s3',text:'Menú 1',who:['c1','c2'],done:false},
     {id:'t8',sec:'s3',text:'Menú 2',who:['c5','c6'],done:false},
-    {id:'t9',sec:'s3',text:'Menú 3 y comedor',who:['c4'],done:false},
+    {id:'t9',sec:'s3',text:'Menú 3 y comedor',who:[],done:false},
   ],
   selThu:0,
   deliveryLog:{},
@@ -1208,7 +1227,7 @@ function shiftCalEntry(e){
 const CONG_BY_DT=(()=>{const m={};SEED_DAYS_JUN.concat(SEED_DAYS.map(shiftCalEntry)).forEach(d=>{if(d.cong&&d.dt&&!m[d.dt])m[d.dt]=d.cong;});return m;})();
 function fillCong(days){if(Array.isArray(days))days.forEach(d=>{if(d&&!d.cong&&CONG_BY_DT[d.dt])d.cong=CONG_BY_DT[d.dt];});return days;}
 /* Turnos del equipo (EER37 · jueves) — quiénes trabajan cada jueves */
-const BASE_TEAM=['Juan Pablo Correa','Mijal de Correa','Gabriel Díaz','Vanessa Díaz','Melissa Gómez'];
+const BASE_TEAM=['Juan Pablo Correa','Mijal de Correa','Evelyn Latín','Melisa Gómez','Constanza Fridman'];
 const TURNOS={
   'Jueves 4 de junio de 2026':['Juan Pablo Correa','Mijal de Correa','Constanza Fridman','Gabriel Díaz','Vanessa Díaz'],
   'Jueves 11 de junio de 2026':['Juan Pablo Correa','Mijal de Correa','Melissa Gómez','Gabriel Díaz','Vanessa Díaz'],
@@ -1290,7 +1309,7 @@ let firstCloudLoad=true, localAssignRecovery=null, _anonTried=false;
 /* onceDays, thursdays y days NO van aquí: son propiedad del robot de sincronización
    (scripts/sync-menus.js). La app SOLO los lee (ver applyDoc), nunca los escribe,
    para que un push de un cliente no pise lo que actualizó la web. */
-const STRUCT_KEYS=['title','sub','menu','cooks','sections','brkMenu','selThu','selOnce','crewOverride','encargado','dayNote','deliveryLog','lastResetThu','weekClosed','assign','migV'];
+const STRUCT_KEYS=['title','sub','menu','cooks','sections','brkMenu','selThu','selOnce','crewOverride','encargado','dayNote','deliveryLog','lastResetThu','weekClosed','assign','migV','teamVersion','retiredCooks'];
 /* shopChk (checks de compras) va FUERA de STRUCT_KEYS y se escribe granular por ítem
    (como done/brkDone), para que dos personas marcando a la vez no se pisen. */
 /* limpieza única de datos viejos de asistencia (nombres que no calzan con el Equipo) */
@@ -1365,6 +1384,7 @@ function migrate(){
     if(lbl){state.assign[lbl]=state.assign[lbl]||{};(state.tasks||[]).forEach(t=>{if(t.who&&t.who.length&&!state.assign[lbl][t.id])state.assign[lbl][t.id]=t.who.slice();});}
     state.migV=8;changed=true;
   }
+  if(CocinaTeam.migrate(state,parseLabelDate))changed=true;
   return changed;
 }
 function cloudConfigured(){return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.indexOf('PEGAR')!==0);}
@@ -1373,6 +1393,8 @@ function docFromState(){const d={};STRUCT_KEYS.forEach(k=>{if(state[k]!==undefin
   d.brkTasks=(state.brkTasks||[]).map(t=>({id:t.id,text:t.text}));
   return d;}
 function applyDoc(doc){STRUCT_KEYS.forEach(k=>{if(doc[k]!==undefined)state[k]=doc[k];});
+  // La versión local no debe impedir migrar un documento antiguo de la nube.
+  state.teamVersion=doc.teamVersion||0;
   // menús sincronizados por el robot (solo lectura desde la app)
   if(Array.isArray(doc.onceDays))state.onceDays=doc.onceDays;
   if(Array.isArray(doc.thursdays))state.thursdays=doc.thursdays;
@@ -1451,7 +1473,7 @@ function restoreLocalAssignments(){
   if(!state.assign||typeof state.assign!=='object')state.assign={};
   Object.keys(draft).forEach(label=>{
     state.assign[label]=state.assign[label]||{};
-    Object.keys(draft[label]).forEach(taskId=>{state.assign[label][taskId]=draft[label][taskId].slice();});
+    Object.keys(draft[label]).forEach(taskId=>{state.assign[label][taskId]=draft[label][taskId].filter(id=>state.cooks.some(c=>c.id===id));});
   });
   clearAssignmentRecovery();save();closeModal();render();toast('Asignaciones enviadas al equipo ✅');
 }
@@ -1585,7 +1607,7 @@ function load(){try{const s=localStorage.getItem(KEY);state=s?JSON.parse(s):stru
 function saveLocal(){localStorage.setItem(KEY,JSON.stringify(state));}
 function save(){saveLocal();cloudPushDoc();}
 function uid(p){return p+Math.random().toString(36).slice(2,8);}
-function cook(id){return state.cooks.find(c=>c.id===id);}
+function cook(id){return state.cooks.find(c=>c.id===id)||(state.retiredCooks||[]).find(c=>c.id===id);}
 function initials(n){const p=n.trim().split(/\s+/);return (p.length>=2?(p[0][0]+p[1][0]):n.slice(0,2)).toUpperCase();}
 
 /* ---------- lente local de jueves (para deslizar y planificar) ----------
@@ -1692,10 +1714,11 @@ function render(){
   const crew=selLabel?crewForLabel(selLabel):null;
   if(selLabel){
     const list=crew||[];
-    const confirmed=!!(state.crewOverride[selLabel]||siteCrewForLabel(selLabel));
+    const fixedTeam=CocinaTeam.current(selLabel,parseLabelDate);
+    const confirmed=!!(state.crewOverride[selLabel]||(!fixedTeam&&siteCrewForLabel(selLabel)));
     const enc=(state.encargado||{})[selLabel]||'';
     const _baseSet=new Set(defaultCrew());
-    document.getElementById('todayCrew').innerHTML=`<div class="tcrew" onclick="switchView('turnos')" style="cursor:pointer"><h4>👥 ${confirmed?'Trabajan':'Equipo base · por confirmar'} · ${esc(selLabel.replace(/ de \d{4}$/,''))}<span class="crewMore">todos ›</span>${admin?`<span class="crewEdit" onclick="event.stopPropagation();openCrewEdit()">✏️ editar</span>`:''}</h4><div class="tchips">${list.length?list.map(n=>{const rep=isRep(n)||!_baseSet.has(n),boss=(n===enc);return `<span class="${rep?'rep':''}">${boss?'⭐ ':''}${rep?'↩︎ ':''}${esc(n)}</span>`;}).join(''):'<span style="opacity:.85">Sin marcar — toca editar</span>'}</div>${enc?`<div class="encline">⭐ Encargado del turno: <b>${esc(enc)}</b></div>`:''}</div>`;
+    document.getElementById('todayCrew').innerHTML=`<div class="tcrew" onclick="switchView('turnos')" style="cursor:pointer"><h4>👥 ${confirmed?'Trabajan':fixedTeam?'Equipo fijo':'Equipo base · por confirmar'} · ${esc(selLabel.replace(/ de \d{4}$/,''))}<span class="crewMore">todos ›</span>${admin?`<span class="crewEdit" onclick="event.stopPropagation();openCrewEdit()">✏️ editar</span>`:''}</h4><div class="tchips">${list.length?list.map(n=>{const rep=isRep(n)||!_baseSet.has(n),boss=(n===enc);return `<span class="${rep?'rep':''}">${boss?'⭐ ':''}${rep?'↩︎ ':''}${esc(n)}</span>`;}).join(''):'<span style="opacity:.85">Sin marcar — toca editar</span>'}</div>${enc?`<div class="encline">⭐ Encargado del turno: <b>${esc(enc)}</b></div>`:''}</div>`;
   }else document.getElementById('todayCrew').innerHTML='';
   // nota del día
   const noteEl=document.getElementById('dayNote');
@@ -1740,7 +1763,7 @@ function render(){
   updProgress();
 }
 function mkChip(id,label,color){
-  const el=document.createElement('div');el.className='chip'+(filter===id?' on':'')+(id==='todos'?' all':'');
+  const el=document.createElement('button');el.type='button';el.setAttribute('aria-pressed',filter===id);el.className='chip'+(filter===id?' on':'')+(id==='todos'?' all':'');
   el.style.setProperty('--c',color);el.innerHTML=`<span class="d"></span>${esc(label)}`;
   el.onclick=()=>{filter=id;render();};return el;}
 function mkTask(t){
@@ -1919,7 +1942,7 @@ function renderTaskModal(){
   }
   const asg=document.getElementById('asg');
   if(!state.cooks.length)asg.innerHTML='<p style="font-size:13px;color:#94a3b8">Agrega cocineros en Más → Equipo.</p>';
-  state.cooks.forEach(c=>{const b=document.createElement('div');b.className='asg'+(editWho.includes(c.id)?' on':'');
+  state.cooks.forEach(c=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',editWho.includes(c.id));b.className='asg'+(editWho.includes(c.id)?' on':'');
     b.style.setProperty('--c',c.color);b.innerHTML=`<span class="d"></span>${esc(c.name)}${c.sub?' ↩︎':''}`;
     b.onclick=()=>{editWho.includes(c.id)?editWho=editWho.filter(x=>x!==c.id):editWho.push(c.id);openTaskRefresh();};
     asg.appendChild(b);});
@@ -2393,7 +2416,7 @@ function isRep(name){const c=state.cooks.find(x=>x.name===name);return !!(c&&c.s
    "Gabriel"≠"Gabriela" y "Camila"≠"Camilo" NO se confunden (personas distintas). --- */
 function _nrm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/([a-z])\1+/g,'$1');}
 function _toks(s){return _nrm(s).split(/[^a-z0-9]+/).filter(Boolean);}
-function _cookMatches(cookName,siteName){const ct=_toks(cookName),st=new Set(_toks(siteName));return ct.length>0&&ct.every(t=>st.has(t));}
+function _cookMatches(cookName,siteName){const ct=_toks(CocinaTeam.member(cookName)?.name||cookName),st=new Set(_toks(CocinaTeam.member(siteName)?.name||siteName));return ct.length>0&&ct.every(t=>st.has(t));}
 /* turno OFICIAL del sitio para un jueves (state.days[].team, nombres completos):
    mapea a los cocineros conocidos; los que no calzan quedan con su nombre completo. */
 function siteCrewForLabel(label){
@@ -2403,25 +2426,25 @@ function siteCrewForLabel(label){
   if(!day||!Array.isArray(day.team)||!day.team.length)return null;
   return day.team.map(sn=>{const c=state.cooks.find(k=>_cookMatches(k.name,sn));return c?c.name:sn;});
 }
-/* crew a mostrar: 1) lo marcado a mano, 2) el turno del sitio, 3) el equipo base */
-function crewForLabel(label){if(!label)return null;return state.crewOverride[label]||siteCrewForLabel(label)||defaultCrew();}
+/* Asistencia manual; desde el 22/10, equipo fijo. El sitio conserva los turnos anteriores. */
+function crewForLabel(label){if(!label)return null;return state.crewOverride[label]||(CocinaTeam.current(label,parseLabelDate)?defaultCrew():siteCrewForLabel(label))||defaultCrew();}
 function openCrewEdit(){if(!admin)return;const label=curCrewLabel();if(!label)return;
   crewPresent=new Set(crewForLabel(label));crewBoss=(state.encargado||{})[label]||'';drawCrewEdit();}
 function drawCrewEdit(){const label=curCrewLabel();
   const team=state.cooks.map(c=>{const on=crewPresent.has(c.name);
-    return `<div class="vol${on?' on':''}" onclick="crewToggle('${esc(jsq(c.name))}')"><span class="vdot" style="background:${c.color}"></span><span class="vn">${esc(c.name)}${c.sub?' ↩︎':''}</span><b>${on?'✓':'+'}</b></div>`;}).join('');
+    return `<button type="button" aria-pressed="${on}" class="vol${on?' on':''}" onclick="crewToggle('${esc(jsq(c.name))}')"><span class="vdot" style="background:${c.color}"></span><span class="vn">${esc(c.name)}${c.sub?' ↩︎':''}</span><b>${on?'✓':'+'}</b></button>`;}).join('');
   const tn=new Set(state.cooks.map(c=>c.name));
-  const extra=[...crewPresent].filter(n=>!tn.has(n)).map(n=>`<div class="vol on" onclick="crewToggle('${esc(jsq(n))}')"><span class="vdot" style="background:#64748b"></span><span class="vn">↩︎ ${esc(n)}</span><b>✓</b></div>`).join('');
+  const extra=[...crewPresent].filter(n=>!tn.has(n)).map(n=>`<button type="button" aria-pressed="true" class="vol on" onclick="crewToggle('${esc(jsq(n))}')"><span class="vdot" style="background:#64748b"></span><span class="vn">↩︎ ${esc(n)}</span><b>✓</b></button>`).join('');
   // selector de encargado entre los presentes
   const present=[...crewPresent];
   if(crewBoss&&!crewPresent.has(crewBoss))crewBoss='';
-  const bossChips=present.length?present.map(n=>`<div class="bosschip${crewBoss===n?' on':''}" onclick="crewSetBoss('${esc(jsq(n))}')">${crewBoss===n?'⭐ ':''}${esc(n)}</div>`).join(''):'<span class="desc">Marca primero quiénes vienen.</span>';
-  openModal(`<h2>¿Quiénes trabajan hoy?</h2><p class="desc">${esc((label||'').replace(/ de \d{4}$/,''))} · marca de tu equipo quiénes vienen. ↩︎ = reemplazo.</p>
+  const bossChips=present.length?present.map(n=>`<button type="button" aria-pressed="${crewBoss===n}" class="bosschip${crewBoss===n?' on':''}" onclick="crewSetBoss('${esc(jsq(n))}')">${crewBoss===n?'⭐ ':''}${esc(n)}</button>`).join(''):'<span class="desc">Marca primero quiénes vienen.</span>';
+  openModal(`<h2>Equipo del día</h2><p class="desc">${esc((label||'').replace(/ de \d{4}$/,''))} · el equipo fijo ya está seleccionado. Desmarca a quien falte o agrega un reemplazo.</p>
     <div class="volgrid">${team}${extra}</div>
     <div class="addrow"><input type="text" id="newVol" placeholder="Agregar reemplazo externo"><button onclick="crewAddExt()">Agregar</button></div>
     <h4 class="bosshead">⭐ Encargado del turno</h4>
     <div class="bossgrid">${bossChips}</div>
-    <div class="btns" style="margin-top:16px"><button class="btn ghost" onclick="crewReset()">Restaurar</button><button class="btn primary" onclick="crewSave()">Guardar</button></div>`);}
+    <div class="btns" style="margin-top:16px"><button class="btn ghost" onclick="crewReset()">Restaurar equipo</button><button class="btn primary" onclick="crewSave()">Guardar asistencia</button></div>`);}
 function crewToggle(name){if(crewPresent.has(name))crewPresent.delete(name);else crewPresent.add(name);if(crewBoss===name&&!crewPresent.has(name))crewBoss='';drawCrewEdit();}
 function crewAddExt(){const i=document.getElementById('newVol');if(i&&i.value.trim()){crewPresent.add(i.value.trim());}drawCrewEdit();}
 function crewSetBoss(name){crewBoss=(crewBoss===name)?'':name;drawCrewEdit();}
@@ -2605,30 +2628,44 @@ function saveBrkMenu(){if(!admin)return;const base=document.getElementById('brkB
   state.brkMenu={base:base.trim(),items:items.split('\n').map(s=>s.trim()).filter(Boolean)};save();closeModal();renderBrk();toast('Desayuno actualizado');}
 /* ---- equipo ---- */
 function openTeam(){
-  openModal(`<h2>Equipo de cocina</h2><p class="desc">${admin?'Toca el círculo para cambiar el color. ↩︎ marca quién reemplaza hoy.':'🔒 Solo el administrador puede editar el equipo.'}</p>
+  openModal(`<h2>Equipo de cocina</h2><p class="desc">El equipo fijo aparece cada jueves. Ajusta las ausencias desde «Equipo del día».</p>
     <div id="crewList"></div>
-    ${admin?`<div class="addrow"><input type="text" id="newCook" placeholder="Nombre del nuevo cocinero"><button onclick="addCook()">Agregar</button></div>`:''}
+    ${admin?`<details class="team-add"><summary>Agregar integrante</summary><label for="newCook">Nombre</label><div class="addrow"><input type="text" id="newCook" placeholder="Nombre y apellido"><button onclick="addCook()">Agregar</button></div></details><p class="desc team-help" role="status">Los cambios se guardan al editar cada campo.</p>`:'<p class="desc team-help">Activa el modo administrador para editar el equipo.</p>'}
     <div class="btns" style="margin-top:18px"><button class="btn primary" onclick="closeModal()">Listo</button></div>`);
   renderCrew();
 }
 function renderCrew(){
   const l=document.getElementById('crewList');l.innerHTML='';
-  state.cooks.forEach(c=>{const r=document.createElement('div');r.className='crow';
-    if(admin){
-      r.innerHTML=`<input type="color" value="${c.color}" onchange="setColor('${c.id}',this.value)">
-        <input type="text" value="${esc(c.name)}" onchange="setName('${c.id}',this.value)">
-        <span class="sub" onclick="toggleSub('${c.id}')">${c.sub?'↩︎ reempl.':'＋ reempl.'}</span>
-        <span class="rm" onclick="delCook('${c.id}')">🗑</span>`;
-    }else{
-      r.innerHTML=`<span style="width:28px;height:28px;border-radius:50%;background:${c.color};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0">${initials(c.name)}</span>
-        <span style="flex:1;font-size:14px;font-weight:600;color:#1e293b">${esc(c.name)}${c.sub?' <span style="color:#94a3b8;font-weight:600;font-size:12px">↩︎ reemplazo</span>':''}</span>`;
-    }
-    l.appendChild(r);});
+  [false,true].forEach(sub=>{
+    const group=state.cooks.filter(c=>!!c.sub===sub);if(!group.length)return;
+    const heading=document.createElement('h3');heading.className='team-heading';heading.textContent=(sub?'Reemplazos':'Equipo fijo')+' · '+group.length;l.appendChild(heading);
+    group.forEach(c=>{const r=document.createElement('div');r.className='team-card';r.style.setProperty('--member-color',c.color);
+      r.innerHTML=`<div class="team-card-main"><span class="team-avatar" aria-hidden="true">${initials(c.name)}</span><div class="team-identity"><strong>${esc(c.name)}</strong><span>${c.sub?'Apoyo cuando hace falta':'Todos los jueves'}</span></div></div>`;
+      if(admin){
+        const details=document.createElement('details');details.className='team-controls';
+        details.innerHTML=`<summary>Editar <span class="sr-only">a ${esc(c.name)}</span></summary>
+          <label>Nombre<input type="text" value="${esc(c.name)}" onchange="setName('${c.id}',this.value)"></label>
+          <div class="team-actions"><label class="team-color">Color<input type="color" value="${c.color}" onchange="setColor('${c.id}',this.value)"></label>
+          <label>Participación<select onchange="setSub('${c.id}',this.value==='replacement')"><option value="fixed" ${c.sub?'':'selected'}>Equipo fijo</option><option value="replacement" ${c.sub?'selected':''}>Reemplazo</option></select></label>
+          <button class="team-remove" onclick="delCook('${c.id}')" aria-label="Quitar a ${esc(c.name)}">Quitar</button></div>`;
+        r.appendChild(details);
+      }
+      l.appendChild(r);
+    });
+  });
 }
 function setColor(id,v){if(!admin)return;cook(id).color=v;save();renderCrew();render();}
-function setName(id,v){if(!admin)return;if(v.trim()){cook(id).name=v.trim();save();render();}}
+function setName(id,v){if(!admin)return;const c=cook(id),name=v.trim();
+  if(!name){toast('Escribe un nombre');return;}
+  if(state.cooks.some(x=>x.id!==id&&_nrm(x.name)===_nrm(name))){toast('Ese nombre ya está en el equipo');return;}
+  const prev=c.name;c.name=name;
+  Object.keys(state.crewOverride||{}).forEach(l=>{if(CocinaTeam.current(l,parseLabelDate))state.crewOverride[l]=state.crewOverride[l].map(n=>n===prev?name:n);});
+  Object.keys(state.encargado||{}).forEach(l=>{if(CocinaTeam.current(l,parseLabelDate)&&state.encargado[l]===prev)state.encargado[l]=name;});
+  save();renderCrew();render();}
+function setSub(id,sub){if(!admin)return;const c=cook(id);c.sub=sub;save();renderCrew();render();}
 function toggleSub(id){if(!admin)return;const c=cook(id);c.sub=!c.sub;save();renderCrew();render();}
 function addCook(){if(!admin)return;const i=document.getElementById('newCook');const n=i.value.trim();if(!n)return;
+  if(state.cooks.some(c=>_cookMatches(c.name,n)||_cookMatches(n,c.name))){toast('Esa persona ya está en el equipo');return;}
   const pal=['#2563eb','#db2777','#c2410c','#7c3aed','#0891b2','#ca8a04','#0d9488','#9333ea'];
   state.cooks.push({id:uid('c'),name:n,color:pal[state.cooks.length%pal.length],sub:false});
   i.value='';save();renderCrew();render();toast(n+' agregado');}
