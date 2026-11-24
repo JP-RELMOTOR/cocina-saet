@@ -1389,6 +1389,7 @@ function migrate(){
 }
 function cloudConfigured(){return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.databaseURL && FIREBASE_CONFIG.databaseURL.indexOf('PEGAR')!==0);}
 function docFromState(){const d={};STRUCT_KEYS.forEach(k=>{if(state[k]!==undefined)d[k]=state[k];});
+  d.selThuLabel=state.thursdays?.[state.selThu]?.label||null;
   d.tasks=state.tasks.map(t=>{const o={id:t.id,sec:t.sec,text:t.text,who:t.who||[]};if(t.fixed)o.fixed=true;return o;});
   d.brkTasks=(state.brkTasks||[]).map(t=>({id:t.id,text:t.text}));
   return d;}
@@ -1509,21 +1510,24 @@ function cloudStart(){
       firstCloudLoad=false;
     }
     applyingRemote=true;
-    const prevLabel=(state.selThu!=null&&state.thursdays&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
-    const beforeMenus=JSON.stringify([state.thursdays,state.onceDays]);
+    const plannedLabel=viewIdx==null?null:state.thursdays?.[viewIdx]?.label;
+    const prevLabel=state.thursdays?.[state.selThu]?.label;
+    const before=state.thursdays;
     if(v.doc)applyDoc(v.doc);
     applyDone(v.done,v.brkDone);
-    // si el robot actualizó los menús, refrescar el día cargado con los datos nuevos
-    if(JSON.stringify([state.thursdays,state.onceDays])!==beforeMenus){
-      // el robot puede correr la lista (se cae el jueves que ya pasó) → re-ubicar el día por FECHA, no por posición
-      if(prevLabel&&Array.isArray(state.thursdays)){
-        const ni=state.thursdays.findIndex(t=>t.label===prevLabel);
-        // Si terminó la escuela anterior, elegir el próximo jueves por fecha;
-        // su antigua posición podría apuntar a noviembre en la nueva lista.
-        state.selThu=ni>=0?ni:null;
+    if(Array.isArray(v.doc?.thursdays)){
+      // Los clientes antiguos guardaban solo la posición. En un calendario con
+      // fechas completas, esa posición puede corresponder a otra escuela.
+      const dated=!!v.doc.days?.[0]?.date;
+      if(dated || v.doc.selThuLabel || (prevLabel && JSON.stringify(before)!==JSON.stringify(state.thursdays))){
+        const label=v.doc.selThuLabel || (dated?null:prevLabel);
+        const i=state.thursdays.findIndex(t=>t.label===label);
+        state.selThu=i<0?null:i;
       }
-      const lbl=(state.selThu!=null&&state.thursdays[state.selThu])?state.thursdays[state.selThu].label:null;
-      if(lbl)loadDay(lbl);
+      if(plannedLabel){
+        const i=state.thursdays.findIndex(t=>t.label===plannedLabel);
+        viewIdx=i<0?null:i;
+      }
     }
     checkMenusUpdated();
     checkSiteUpdated();
@@ -2072,10 +2076,14 @@ function syncMenuFromData(){
   const oi=(state.onceDays||[]).findIndex(x=>x.label===lbl);
   if(on&&oi>=0){
     const o=state.onceDays[oi],txt=(o.menus||[]).join(' · ');
-    if(on.text!==txt||on.cant!==(o.cant||'')){
+    if(state.selOnce!==oi || on.text!==txt || on.cant!==(o.cant||'') || on.extra!==(o.extra||'') ||
+        JSON.stringify(on.menus||[])!==JSON.stringify(o.menus||[])){
       on.text=txt;on.menus=(o.menus||[]).slice();on.extra=o.extra||'';on.cant=o.cant||'';
       state.selOnce=oi;ch=true;
     }
+  }else if(on && (state.selOnce!=null || on.text!=='Por definir' || on.cant || on.extra || on.menus?.length)){
+    Object.assign(on,{text:'Por definir',menus:[],extra:'',cant:''});
+    state.selOnce=null;ch=true;
   }
   return ch;
 }
