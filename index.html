@@ -2329,10 +2329,18 @@ function openDayMenu(dt){
     <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cerrar</button></div>`);
 }
 /* detalle de la once para un día del calendario de onces */
+function onceCalendar(){
+  if(!(state.days||[]).some(d=>d.date))return ONCE_CAL;
+  const published=new Map((state.onceDays||[]).map(o=>[o.label,o]));
+  return (state.days||[]).filter(d=>d.wd==='jueves').map(d=>{
+    const label=thuLabelFromDate(calendarDate(d));
+    return published.get(label)||{dt:d.dt,wd:d.wd,date:d.date,label,menus:[]};
+  });
+}
 function openOnceMenu(dt){
-  const o=ONCE_CAL.find(x=>String(x.dt)===String(dt));
+  const o=onceCalendar().find(x=>String(x.dt)===String(dt));
   if(!o){toast('Sin detalle');return;}
-  const od=(state.onceDays||[]).find(x=>x.dt===o.dt);
+  const od=(state.onceDays||[]).find(x=>o.label?x.label===o.label:x.dt===o.dt);
   const th=thuByDt(o.dt);
   const label=(od&&od.label)||(th&&th.label)||(o.wd+' '+o.dt);
   const menus=(od&&od.menus&&od.menus.length)?od.menus:(o.menus||[]);
@@ -2385,22 +2393,28 @@ function switchView(v){currentView=v;
   if(v==='recetas')renderRecetas();
   try{window.scrollTo(0,0);}catch(e){}
 }
+function calendarDate(row){
+  if(row.date)return new Date(row.date+'T00:00:00');
+  if(row.label)return parseLabelDate(row.label);
+  const m=String(row.dt||'').match(/^(\d+)\s+(\w+)$/);
+  const month=m?MON_SHORT.indexOf(m[2]):-1;
+  return month<0?null:new Date(new Date().getFullYear(),month,+m[1]);
+}
 function renderTurnos(){
   const el=document.getElementById('turnosList');if(!el)return;
   const inter=(state.interTurnos||[]).length?'<button class="btn ghost" style="width:100%;margin-bottom:12px" onclick="openInterTurnos()">🏖️ Ver turnos interescuela</button>':'';
-  const dtDate=dt=>{const m=String(dt||'').match(/(\d+)\s+([a-záéíóúñ]+)/i);if(!m)return null;const i=MON_SHORT.indexOf(m[2].slice(0,3).toLowerCase());return i<0?null:new Date(new Date().getFullYear(),i,+m[1]);};
   const days=(state.days||[]).filter(d=>Array.isArray(d.team)&&d.team.length);
   if(!days.length){
     el.innerHTML=inter+'<p class="about">No hay turnos de almuerzo cargados para estas fechas. <a class="srclink" href="https://sites.google.com/view/residencia-saet/cocina/almuerzo" target="_blank" rel="noopener">Consultar la web oficial ↗</a></p>';
     return;
   }
   const n=new Date();const today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
-  const hereIdx=days.findIndex(d=>{const dd=dtDate(d.dt);return dd&&dd.getTime()>=today.getTime();});
+  const hereIdx=days.findIndex(d=>{const dd=calendarDate(d);return dd&&dd.getTime()>=today.getTime();});
   el.innerHTML=inter+days.map((d,i)=>{
-    const dd=dtDate(d.dt);const isToday=dd&&dd.getTime()===today.getTime();
+    const dd=calendarDate(d);const isToday=dd&&dd.getTime()===today.getTime();
     const here=i===hereIdx;const thu=/^juev/i.test(d.wd||'');
     return `<div ${here?'id="turnoHere" ':''}class="trow${here?' today':''}"><div class="td" style="text-transform:capitalize">${isToday?'🟢 ':'📅 '}${esc((d.wd||'')+' '+(d.dt||''))}${thu?' <span class="md-badge">JUEVES</span>':''}</div>
-      <div class="tn">${d.team.map(nm=>{const rep=thu&&!BASE_TEAM.includes(nm)&&!state.cooks.some(c=>c.name===nm&&!c.sub);return `<span class="${rep?'rot':''}">${rep?'↩︎ ':''}${esc(nm)}</span>`;}).join('')}</div></div>`;
+      <div class="tn">${d.team.map(nm=>{const rep=thu&&!BASE_TEAM.includes(nm)&&!state.cooks.some(c=>!c.sub&&_cookMatches(c.name,nm));return `<span class="${rep?'rot':''}">${rep?'↩︎ ':''}${esc(nm)}</span>`;}).join('')}</div></div>`;
   }).join('');
   const h=document.getElementById('turnoHere');if(h)setTimeout(()=>{try{h.scrollIntoView({block:'center'});}catch(e){}},60);
 }
@@ -2506,7 +2520,6 @@ function renderMenus(scrollHere){
   const toggle=`<div class="mtoggle">${cats.map(c=>`<button class="${menuCat===c[0]?'on':''}" onclick="menuCat='${c[0]}';renderMenus(true)">${c[1]}</button>`).join('')}</div>`;
   const q=(document.getElementById('menuSearch').value||'').toLowerCase();
   const _now=new Date(),_today=new Date(_now.getFullYear(),_now.getMonth(),_now.getDate());
-  const _dtDate=dt=>{const m=String(dt||'').match(/(\d+)\s+([a-záéíóúñ]+)/i);if(!m)return null;const i=MON_SHORT.indexOf(m[2].slice(0,3).toLowerCase());return i<0?null:new Date(new Date().getFullYear(),i,+m[1]);};
   const _todayWd=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][_now.getDay()];
   let body='';
   if(menuCat==='des'){
@@ -2514,17 +2527,17 @@ function renderMenus(scrollHere){
       + DESAYUNO_CAL.filter(d=>!q||(d.wd+' '+d.items.join(' ')).toLowerCase().includes(q)).map(d=>{const fri=d.wd==='Viernes';const here=d.wd===_todayWd;
         return `<div ${here?'id="menuHere" ':''}class="mday${fri?' thu':''}"><div class="md-top"><span class="md-date">${esc(d.wd)}</span>${fri?'<span class="md-badge">SE ADELANTA EL JUEVES</span>':''}</div><ul class="md-ul">${d.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;}).join('');
   } else if(menuCat==='once'){
-    const f=ONCE_CAL.filter(o=>!q||((o.menus.join(' ')+' '+o.dt+' '+o.wd).toLowerCase().includes(q)));
-    let hereDt=null;for(const o of f){const dd=_dtDate(o.dt);if(dd&&dd.getTime()>=_today.getTime()){hereDt=o.dt;break;}}
+    const f=onceCalendar().filter(o=>!q||((o.menus.join(' ')+' '+o.dt+' '+o.wd).toLowerCase().includes(q)));
+    let hereDt=null;for(const o of f){const dd=calendarDate(o);if(dd&&dd.getTime()>=_today.getTime()){hereDt=o.dt;break;}}
     body=!f.length?'<p class="about">Sin resultados</p>'
       :f.map(o=>{const thu=/^juev/i.test(o.wd);
         const tap=thu?` tap" onclick="openOnceMenu('${esc(jsq(o.dt))}')`:'';
         return `<div ${o.dt===hereDt?'id="menuHere" ':''}class="mday${thu?' thu':''}${tap}"><div class="md-top"><span class="md-date">${esc(o.wd+' '+o.dt)}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>
-        <div class="md-dish">${o.menus.map(m=>esc(m)).join(' · ')}${thu?' <span class="md-x">ⓘ</span>':''}</div></div>`;}).join('');
+        <div class="md-dish">${o.menus.length?o.menus.map(m=>esc(m)).join(' · '):'Pendiente de publicación'}${thu?' <span class="md-x">ⓘ</span>':''}</div></div>`;}).join('');
   } else {
     const arr=state.days||[];
     const f=arr.filter(d=>!q||(((d.dish||'')+' '+(d.ens||'')+' '+(d.dt||'')+' '+(d.wd||'')+' '+(d.cong||'')).toLowerCase().includes(q)));
-    let hereDt=null;for(const d of f){const dd=_dtDate(d.dt);if(dd&&dd.getTime()>=_today.getTime()){hereDt=d.dt;break;}}
+    let hereDt=null;for(const d of f){const dd=calendarDate(d);if(dd&&dd.getTime()>=_today.getTime()){hereDt=d.dt;break;}}
     let _prev=null;
     body=!arr.length?'<p class="about">Sin almuerzos cargados.</p>'
       :!f.length?'<p class="about">Sin resultados</p>'
@@ -2532,7 +2545,7 @@ function renderMenus(scrollHere){
         const td=thu?thuByDt(d.dt):null;
         const dish=td?td.dish:(d.dish||'');
         const ens=td?td.ens:(d.ens||'');
-        let sep='';const _dd=_dtDate(d.dt);
+        let sep='';const _dd=calendarDate(d);
         if(!q&&_prev&&_dd){const g=Math.round((_dd-_prev)/86400000);if(g>1){const hi=(state.interTurnos||[]).length;sep=`<div class="mbreak${hi?' tap':''}"${hi?' onclick="openInterTurnos()"':''}>🏖️ Pausa de la escuela · sin almuerzos durante ${g-1} días${hi?' · <b>👥 ver turnos interescuela ›</b>':' (vacaciones entre clases)'}</div>`;}}
         _prev=_dd||_prev;
         return sep+`<div ${d.dt===hereDt?'id="menuHere" ':''}class="mday tap${thu?' thu':''}" onclick="openDayMenu('${esc(jsq(d.dt))}')"><div class="md-top"><span class="md-date">${esc((d.wd||'')+' '+(d.dt||''))}</span>${thu?'<span class="md-badge">JUEVES</span>':''}</div>

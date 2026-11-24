@@ -170,3 +170,53 @@ test('verifica la escritura y detecta si Firebase no conserva lo enviado',async 
   });
   await assert.rejects(syncSection('Onces','/test.json',data),/verificar/);assert.equal(reads,2);
 });
+
+const {parseTurnos}=require('../scripts/sync-menus');
+const menu21=readFileSync(require('node:path').join(__dirname,'fixtures/almuerzo-esce-21.txt'),'utf8');
+
+test('selecciona la escuela enlazada en navegación y su propio turno aunque haya un botón antiguo',async t=>{
+  const root='/view/residencia-saet/cocina/almuerzo/';
+  const nav='<nav><a href="'+root+'menú-esce-21">Menú</a><a href="'+root+'turnos-esce-21">Turnos</a></nav>';
+  t.mock.method(globalThis,'fetch',async url=>new Response(url.endsWith('/almuerzo')
+    ? '<a href="'+root+'menú-esce-20">Anterior</a>'+nav+nav : menu21));
+  const lunch=await fetchLunchData();
+  assert.ok(lunch.url.endsWith('/men%C3%BA-esce-21'));
+  assert.ok(lunch.teamUrl.endsWith('/turnos-esce-21'));
+  const days=parseDays(lunch.html);
+  assert.deepEqual(days.map(d=>d.date),['2026-12-31','2027-01-01','2027-01-07']);
+  assert.deepEqual(parseAlm(lunch.html).map(d=>d.label),['Jueves 31 de diciembre de 2026','Jueves 7 de enero de 2027']);
+  assert.equal(days[0].dish,'Pescado a la plancha con puré');
+  assert.equal(days[0].ens,'Apio Palmito / Coliflor al limón');
+  assert.match(days[0].cant,/40 porciones de reineta/);
+  assert.equal(days[2].ens,'Pepino / Primavera (choclo+arveja)');
+});
+test('lee las ensaladas surtidas sin incluirlas en el plato ni perder decimales',()=>{
+  const [day]=parseDays('Viernes 18 de diciembre Menú: Fideos al pesto con pavo. Ensaladas surtidas. Ingredientes: 2.5 kg de pasta. SAET - REVISIÓN NOVIEMBRE 2026');
+  assert.deepEqual([day.dish,day.ens,day.cant],['Fideos al pesto con pavo','Ensaladas surtidas','2.5 kg de pasta']);
+});
+test('relaciona equipos por fecha completa, con o sin dos puntos',()=>{
+  const teams=parseTurnos('Jueves 31 de diciembre: Ana Pérez, Luis Gil. Semana 3 Viernes 1 de enero María Soto, José Díaz SAET - REVISIÓN NOVIEMBRE 2026');
+  assert.deepEqual([...teams],[['2026-12-31',['Ana Pérez','Luis Gil']],['2027-01-01',['María Soto','José Díaz']]]);
+});
+test('solo admite onces vencidas como pendientes antes de que empiece el ciclo verificado',()=>{
+  const once=parseOnce(onceFixture);
+  assert.equal(assertCurrentOnce(once,new Date('2026-11-24T12:00:00Z'),'2026-12-10'),false);
+  assert.throws(()=>assertCurrentOnce(once,new Date('2026-12-10T12:00:00Z'),'2026-12-10'),/vencidas/);
+  assert.throws(()=>assertCurrentOnce([],new Date('2026-11-24T12:00:00Z'),'2026-12-10'),/vacía/);
+});
+test('publica y verifica jueves y calendario juntos sin escribir en otras secciones', async t=>{
+  const data={days:[{date:'2027-01-07'}],thursdays:[{label:'Jueves 7 de enero de 2027'}]};
+  const db={notes:'conservar'}, writes=[];
+  t.mock.method(globalThis,'fetch',async (url,options)=>{
+    const path=new URL(url).pathname;
+    if(options?.method==='PATCH'){
+      assert.equal(path,'/cocina/doc.json');
+      const patch=JSON.parse(options.body);
+      writes.push(patch);Object.assign(db,patch);return Response.json(patch);
+    }
+    return Response.json(db[path.split('/').pop().replace('.json','')]||null);
+  });
+  await syncSection('Calendario','/cocina/doc.json',data,true);
+  await syncSection('Calendario','/cocina/doc.json',data,true);
+  assert.deepEqual(writes,[data]);assert.equal(db.notes,'conservar');
+});

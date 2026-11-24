@@ -55,14 +55,6 @@ function htmlToText(html){
     .replace(/\s+/g,' ');
 }
 
-// Localiza los encabezados de día ("Jueves, 4 de junio de 2027") y devuelve sus posiciones.
-// El año se toma del sitio de origen: así el robot no deja de funcionar al cambiar de año.
-function dayHeads(t){
-  const re = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo),?\s+(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+(\d{4})/gi;
-  let m, heads = [];
-  while(m = re.exec(t)) heads.push({i:m.index, end:re.lastIndex, wd:m[1].toLowerCase(), day:+m[2], mon:m[3].toLowerCase(), year:+m[4]});
-  return heads;
-}
 function byDate(a,b){
   const p = item => {
     const m = String(item.label || '').match(/(\d+) de (\w+) de (\d{4})/i);
@@ -73,46 +65,58 @@ function byDate(a,b){
 
 // La página de almuerzo enlaza el menú vigente, cuyo nombre cambia por escuela.
 // Solo seguimos enlaces de almuerzo del propio sitio; nunca menús de aseo/onces.
+function lunchLinks(html, pattern){
+  const urls = new Set();
+  for(const [,href] of html.matchAll(/href="([^"]+)"/g)){
+    try{
+      const url = new URL(href.replace(/&amp;/g,'&'), ALM_INDEX_URL);
+      const path = decodeURIComponent(url.pathname).replace(/\/$/, '');
+      if(url.origin !== 'https://sites.google.com' || !path.startsWith('/view/residencia-saet/cocina/almuerzo/')) continue;
+      if(pattern.test(path.slice('/view/residencia-saet/cocina/almuerzo/'.length))) urls.add(url.origin + encodeURI(path));
+    }catch{ /* enlace no utilizable */ }
+  }
+  return [...urls];
+}
 function lunchMenuLinks(html){
-  const urls = [...html.matchAll(/href="([^"]+)"/g)].map(m => {
-    try { return new URL(m[1].replace(/&amp;/g, '&'), ALM_INDEX_URL); } catch(e) { return null; }
-  }).filter(u => u && u.origin === 'https://sites.google.com' &&
-    /^\/view\/residencia-saet\/cocina\/almuerzo\/men[úu]-(?:almuerzo|(?:esce|eer)-\d+)\/?$/i.test(decodeURIComponent(u.pathname)));
-  return [...new Set(urls.map(u => u.origin + u.pathname))];
+  return lunchLinks(html, /^men[úu]-(?:almuerzo|(?:esce|eer)-\d+)$/i);
 }
 async function fetchLunchData(){
   const indexHtml = await fetchText(ALM_INDEX_URL);
-  const links = lunchMenuLinks(indexHtml);
-  if(links.length > 1) throw new Error('La web enlaza varios menús de almuerzo: revisar cuál corresponde antes de sincronizar.');
+  const nav = (indexHtml.match(/<nav\b[^>]*>[\s\S]*?<\/nav>/gi) || []).join(' ');
+  const navMenus = lunchMenuLinks(nav);
+  const links = navMenus.length ? navMenus : lunchMenuLinks(indexHtml);
+  if(links.length > 1) throw new Error('La navegación oficial enlaza varios menús de almuerzo.');
   const url = links[0] || ALM_URL;
+  const cycle = url.match(/(esce-\d+|eer-\d+)$/i);
+  const teams = lunchLinks(navMenus.length ? nav : indexHtml, /^turnos-(?:esce|eer)-\d+$/i);
+  const matches = cycle ? teams.filter(link => link.endsWith('/turnos-' + cycle[1])) : teams;
+  if(matches.length > 1) throw new Error('La navegación enlaza varios turnos sin identificar la escuela del menú.');
   console.log('  fuente vigente: ' + url);
-  return {url, html: await fetchText(url), indexHtml};
+  return {url, html: await fetchText(url), teamUrl: matches[0]};
 }
 
-/* ---------------- ONCES ---------------- */
-// Las onces pueden omitir el año. Se obtiene de la revisión publicada o de
-// otra fecha completa de la MISMA página, nunca del reloj del robot.
-function onceDayHeads(t){
+// La revisión de la propia página permite fechar encabezados sin año incluso al cruzar enero.
+function dayHeads(t){
   const re=/(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo),?\s+(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)(?:\s+de\s+(\d{4}))?/gi;
   const heads=[...t.matchAll(re)].map(m=>({i:m.index,end:m.index+m[0].length,wd:m[1].toLowerCase(),day:+m[2],mon:m[3].toLowerCase(),year:m[4]?+m[4]:null}));
   const revisions=[...t.matchAll(/REVISI[ÓO]N\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+(\d{4})/gi)];
-  if(new Set(revisions.map(m=>m[1].toLowerCase()+' '+m[2])).size>1)throw new Error('Onces: varias revisiones; año ambiguo.');
+  if(new Set(revisions.map(m=>m[1].toLowerCase()+' '+m[2])).size>1)throw new Error('Fechas: varias revisiones; año ambiguo.');
   const anchor=revisions.length?{mon:revisions[0][1].toLowerCase(),year:+revisions[0][2]}:heads.find(h=>h.year);
   for(const h of heads){
     if(h.year)continue;
-    if(!anchor)throw new Error('Onces: fechas sin año y sin revisión fechada; no se puede inferir el año.');
+    if(!anchor)throw new Error('Fechas: fechas sin año y sin revisión fechada; no se puede inferir el año.');
     const diff=MON.indexOf(h.mon)-MON.indexOf(anchor.mon);
     h.year=anchor.year+(diff < -6 ? 1 : diff > 6 ? -1 : 0);
     const date=new Date(Date.UTC(h.year,MON.indexOf(h.mon),h.day));
     const weekday=['domingo','lunes','martes','miercoles','jueves','viernes','sabado'][date.getUTCDay()];
     if(date.getUTCDate()!==h.day||weekday!==h.wd.normalize('NFD').replace(/[\u0300-\u036f]/g,'')){
-      throw new Error('Onces: fecha sin año incompatible con la revisión: '+h.wd+' '+h.day+' de '+h.mon+'.');
+      throw new Error('Fechas: fecha sin año incompatible con la revisión: '+h.wd+' '+h.day+' de '+h.mon+'.');
     }
   }
   return heads;
 }
 function parseOnce(html){
-  const t=htmlToText(html), heads=onceDayHeads(t), out=[];
+  const t=htmlToText(html), heads=dayHeads(t), out=[];
   for(let k=0;k<heads.length;k++){
     const h=heads[k];if(!/^juev/.test(h.wd))continue;
     const body=t.slice(h.end,k+1<heads.length?heads[k+1].i:t.length)
@@ -147,12 +151,16 @@ function saneOnce(list){
       &&o.dt===+m[1]+' '+SHORT[month]&&Array.isArray(o.menus)&&o.menus.length>0&&o.menus.every(m=>typeof m==='string'&&m.trim());
   });
 }
-function assertCurrentOnce(list, now=new Date()){
+function assertCurrentOnce(list, now=new Date(), nextSchoolStart){
+  // Durante interescuela se sigue consultando la fuente. El primer día de la
+  // próxima escuela vuelve a regir la alerta si solo hay onces vencidas.
   if(!saneOnce(list))throw new Error('Onces: lectura vacía, incompleta o fechas inválidas. Se conservan los datos anteriores.');
   const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Santiago',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
   const last=list.slice().sort(byDate).at(-1).label.match(/(\d+) de (\w+) de (\d{4})/);
   const lastDay=last[3]+'-'+String(MON.indexOf(last[2])+1).padStart(2,'0')+'-'+last[1].padStart(2,'0');
+  if(lastDay<today && nextSchoolStart && today<nextSchoolStart)return false;
   if(lastDay<today)throw new Error('Onces: la fuente solo contiene fechas vencidas (última: '+lastDay+'). Revisar la publicación oficial.');
+  return true;
 }
 
 /* ---------------- ONCES v2: Excel incrustado desde Google Drive ----------------
@@ -258,13 +266,19 @@ async function fetchOnceData(){
 }
 
 /* ---------------- ALMUERZOS ---------------- */
+function isoDate(h){
+  return new Date(Date.UTC(h.year, MON.indexOf(h.mon), h.day)).toISOString().slice(0,10);
+}
 function parseLunchBody(body){
   body = body.split(/\bSEMANA\s+\d+|SAET\s*[-–]\s*REVISI[ÓO]N|Google Sites|Report abuse/i)[0];
   // ESCE 20: Menú almuerzo / Ens. / Ingredientes. Separa por etiquetas,
   // no por números: las ensaladas e ingredientes pueden contener decimales.
-  const m = body.match(/Men[uú]\s+almuerzo\s*:\s*([\s\S]*?)(?:\.\s*Ens\.?\s+([\s\S]*?))?\s+Ingredientes\s*:\s*([\s\S]*)$/i);
+  const m = body.match(/Men[uú](?:\s+almuerzo)?\s*:\s*([\s\S]*?)\s+Ingredientes\s*:\s*([\s\S]*)$/i);
   if(!m) return null;
-  return {dish: clean(m[1]).replace(/\.\s+/g,' · '), ens: clean(m[2]), cant: clean(m[3])};
+  const salad = /\s+Ens(?:\.\s*|\s+)|\s+(?=Ensaladas?\s)/i.exec(m[1]);
+  const dish = salad ? m[1].slice(0,salad.index) : m[1];
+  const ens = salad ? m[1].slice(salad.index + salad[0].length) : '';
+  return {dish: clean(dish).replace(/\.\s+/g,' · '), ens: clean(ens), cant: clean(m[2])};
 }
 function parseAlm(html){
   const t = htmlToText(html);
@@ -278,7 +292,7 @@ function parseAlm(html){
     const current = parseLunchBody(body);
     if(current){
       ({dish, ens, cant} = current);
-    } else if(/Men[uú]\s+almuerzo\s*:/i.test(body)){
+    } else if(/Men[uú](?:\s+almuerzo)?\s*:/i.test(body)){
       // Conserva el jueves como inválido para avisar sin escribir datos parciales.
     } else if(/Men[uú]\s+principal\s*:/i.test(body)){
       // formato A: Menú principal / Ensaladas / Insumo principal / Insumo ensaladas
@@ -309,10 +323,6 @@ function parseAlm(html){
 function saneAlm(list){
   return Array.isArray(list) && list.length >= 1 && list.every(o => o.label && o.dish && o.cant);
 }
-function almValidos(list){
-  return (list || []).filter(o => o.label && o.dish && o.cant);
-}
-
 /* ---------------- CALENDARIO COMPLETO (todos los días) ---------------- */
 function parseDays(html){
   const t = htmlToText(html);
@@ -325,7 +335,7 @@ function parseDays(html){
     const current = parseLunchBody(body);
     if(current){
       ({dish, ens, cant} = current);
-    } else if(/Men[uú]\s+almuerzo\s*:/i.test(body)){
+    } else if(/Men[uú](?:\s+almuerzo)?\s*:/i.test(body)){
       // Menú aún incompleto en origen: no interpretar ingredientes como ensalada.
       continue;
     } else if(/Men[uú]\s+principal\s*:/i.test(body)){
@@ -349,10 +359,9 @@ function parseDays(html){
       else { ens = clean(after); cant = ''; }
     }
     if(!dish) continue;
-    out.push({wd:h.wd, dt:h.day+' '+SHORT[MON.indexOf(h.mon)], dish, ens, cong, cant});
+    out.push({date:isoDate(h), wd:h.wd, dt:h.day+' '+SHORT[MON.indexOf(h.mon)], dish, ens, cong, cant});
   }
-  const key=dt=>{const m=String(dt).match(/(\d+)\s+(\w+)/);return m?(SHORT.indexOf(m[2].slice(0,3))*100+(+m[1])):999;};
-  out.sort((a,b)=>key(a.dt)-key(b.dt));
+  out.sort((a,b)=>a.date.localeCompare(b.date));
   return out;
 }
 // Igual que los almuerzos: la ventana publicada puede acortarse (una o dos
@@ -361,43 +370,20 @@ function saneDays(list){
   return Array.isArray(list) && list.length >= 7 && list.every(d => d.dt && d.dish);
 }
 
-/* ---------------- TURNOS (quiénes trabajan cada día) ----------------
-   La web publica una página de turnos por ciclo EER (turnos-eer-37, -38, …).
-   Cada día: "Lunes 22 de junio : Nombre1, Nombre2, … Nombre5" (sin año).
-   Probamos varios ciclos; los que no existen (404) se ignoran. Se fusiona
-   todo en un mapa { 'dt' -> [nombres] } y luego se adjunta a cada día. */
-const TURNOS_URL = n => `https://sites.google.com/view/residencia-saet/cocina/almuerzo/turnos-eer-${n}`;
-const TURNOS_EERS = [37, 38, 39, 40, 41, 42];
-const TURNOS_STOP = /\b(Semana\b|SAET|Google Sites|Report abuse|Page details|Page updated|REVISI[ÓO]N)/i;
+/* ---------------- TURNOS DE LA ESCUELA DEL MENÚ ---------------- */
 function parseTurnos(html){
-  const t = htmlToText(html);
-  const re = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s*:/gi;
-  let m, heads = [];
-  while(m = re.exec(t)) heads.push({i:m.index, end:re.lastIndex, day:+m[2], mon:m[3].toLowerCase()});
-  const map = {};
-  for(let k=0;k<heads.length;k++){
+  const t = htmlToText(html), heads = dayHeads(t);
+  const teams = new Map();
+  for(let k=0; k<heads.length; k++){
     const h = heads[k];
-    let body = t.slice(h.end, k+1<heads.length ? heads[k+1].i : t.length);
-    body = body.split(TURNOS_STOP)[0];
-    const names = body.split(',').map(clean)
-      .filter(s => s && s.length >= 3 && /[a-záéíóúñ]/i.test(s) && !/^\d/.test(s))
-      .slice(0, 5);
-    if(names.length){ map[h.day + ' ' + SHORT[MON.indexOf(h.mon)]] = names; }
+    const body = t.slice(h.end, heads[k+1]?.i ?? t.length)
+      .split(/\b(?:Semana|SAET|Google Sites|Report abuse|REVISI[ÓO]N)\b/i)[0].replace(/^\s*:\s*/, '');
+    const names = body.split(',').map(clean).filter(Boolean);
+    const date = isoDate(h);
+    if(!names.length || teams.has(date)) throw new Error('Turno vacío o duplicado el ' + date);
+    teams.set(date, names);
   }
-  return map;
-}
-async function buildTurnos(){
-  const all = {};
-  for(const n of TURNOS_EERS){
-    try{
-      const res = await fetch(TURNOS_URL(n), {headers:{'User-Agent':'Mozilla/5.0 (compatible; CocinaSAET-sync/1.0)'}});
-      if(!res.ok) continue;                       // 404 → ese ciclo aún no existe
-      const part = parseTurnos(await res.text());
-      Object.assign(all, part);
-      console.log(`  turnos EER ${n}: ${Object.keys(part).length} días`);
-    }catch(e){ /* ignora errores de un ciclo puntual */ }
-  }
-  return all;
+  return teams;
 }
 
 /* ---------------- TURNOS INTERESCUELA (durante la pausa entre clases) ----------------
@@ -503,74 +489,82 @@ async function fetchText(url){
   if(!res.ok) throw new Error('HTTP '+res.status+' al leer '+url);
   return res.text();
 }
-async function syncSection(name, path, data){
-  let current = null;
-  try{ const c = await fetch(dbUrl(path)); if(c.ok) current = await c.json(); }catch(e){}
-  if(current && require('node:util').isDeepStrictEqual(current,data)){
-    console.log(`✓ ${name}: la nube ya está al día.`);
+const {isDeepStrictEqual} = require('node:util');
+async function readSection(path){
+  const response = await fetch(dbUrl(path));
+  if(!response.ok) throw new Error('Error al leer ' + path + ': HTTP ' + response.status);
+  return response.json();
+}
+
+async function syncSection(name, path, data, children=false){
+  // El calendario y sus jueves se publican juntos. PATCH solo modifica los dos
+  // campos del robot, manteniendo las asignaciones y los demás datos del equipo.
+  const matches = async () => {
+    if(!children) return isDeepStrictEqual(await readSection(path), data);
+    const base = path.replace(/\.json$/, '/');
+    const checks = await Promise.all(Object.entries(data).map(async ([key,value]) =>
+      isDeepStrictEqual(await readSection(base + key + '.json'), value)));
+    return checks.every(Boolean);
+  };
+  if(await matches()){
+    console.log('✓ ' + name + ': la nube ya está al día.');
     return;
   }
   if(process.env.DRY_RUN){
-    console.log(`— DRY RUN — ${name}: escribiría ${data.length} registros.`);
+    console.log('— DRY RUN — ' + name + ': hay cambios para publicar.');
     return;
   }
-  const put = await fetch(dbUrl(path), {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
-  if(!put.ok){ const b = await put.text().catch(()=> ''); throw new Error(`Firebase rechazó ${name}: HTTP ${put.status} ${b}`); }
-  const check=await fetch(dbUrl(path));
-  if(!check.ok||!require('node:util').isDeepStrictEqual(await check.json(),data))throw new Error('No se pudo verificar la escritura de '+name);
-  console.log(`✅ ${name}: ${data.length} registros actualizados y verificados en la nube.`);
+  const res = await fetch(dbUrl(path), {method: children ? 'PATCH' : 'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+  if(!res.ok) throw new Error('Firebase rechazó ' + name + ': HTTP ' + res.status);
+  if(!await matches()) throw new Error('No se pudo verificar la escritura de ' + name);
+  console.log('✅ ' + name + ': actualización verificada en la nube.');
+}
+
+async function readCalendar(lunch){
+  const thursdays = parseAlm(lunch.html), days = parseDays(lunch.html);
+  if(!saneDays(days) || new Set(days.map(d=>d.date)).size !== days.length)
+    throw new Error('Calendario vacío, incompleto o con fechas duplicadas.');
+  if(thursdays.length && !saneAlm(thursdays)) throw new Error('Hay jueves con plato o ingredientes pendientes.');
+  console.log('  ' + days.length + ' días (' + days[0].date + ' a ' + days.at(-1).date + '), ' + thursdays.length + ' jueves.');
+  if(lunch.teamUrl){
+    const teams = parseTurnos(await fetchText(lunch.teamUrl));
+    const assigned = days.filter(d=>teams.has(d.date));
+    if(!assigned.length) throw new Error('Los turnos enlazados no coinciden con el calendario.');
+    for(const d of assigned) d.team = teams.get(d.date);
+    console.log('  ' + assigned.length + '/' + days.length + ' días con equipo en ' + lunch.teamUrl);
+  }
+  const text = htmlToText(lunch.html);
+  const first = dayHeads(text)[0];
+  // Una ventana móvil puede comenzar mañana aunque la escuela ya esté en curso.
+  const schoolStart = /\bSemana\s+0\s*$/i.test(text.slice(0, first.i)) ? isoDate(first) : undefined;
+  return {days, thursdays, schoolStart};
 }
 
 async function main(){
   let failed = false;
   let lunchUrl = null;
-
+  let schoolStart;
   await authenticateFirebase();
 
-  // ONCES
+  try{
+    console.log('▶ Almuerzos, calendario y turnos…');
+    const lunch = await fetchLunchData();
+    lunchUrl = lunch.url;
+    const calendar = await readCalendar(lunch);
+    const {days, thursdays} = calendar;
+    await syncSection('Calendario y almuerzos', '/cocina/doc.json', thursdays.length ? {days, thursdays} : {days}, true);
+    schoolStart = calendar.schoolStart;
+  }catch(e){ console.error('❌ Almuerzos/Calendario:', e.message); failed = true; }
+
   try{
     console.log('▶ Onces…');
     const once = await fetchOnceData();
-    console.log(`  ${once.length} jueves: ${once.map(o=>o.dt).join(', ')}`);
-    assertCurrentOnce(once);
-    await syncSection('Onces', '/cocina/doc/onceDays.json', once);
-  }catch(e){ console.error('❌ Onces:', e.message); failed = true; }
-
-  // ALMUERZOS (jueves con cantidades) + CALENDARIO COMPLETO (todos los días)
-  try{
-    console.log('▶ Almuerzos…');
-    const lunch = await fetchLunchData();
-    lunchUrl = lunch.url;
-    const almHtml = lunch.html;
-    const alm = parseAlm(almHtml);
-    console.log(`  ${alm.length} jueves: ${alm.map(o=>o.label.replace('Jueves ','').replace(/ de \d{4}$/,'')).join(' · ')}`);
-    const almOk = almValidos(alm);
-    if(almOk.length < alm.length){
-      const perdidos = alm.filter(o => !almOk.includes(o)).map(o => o.label).join(' · ');
-      console.error(`  ⚠️ ${alm.length - almOk.length} jueves sin plato o sin insumos: ${perdidos}`);
+    if(assertCurrentOnce(once, new Date(), schoolStart)){
+      await syncSection('Onces', '/cocina/doc/onceDays.json', once);
+    }else{
+      console.warn('::warning::La escuela comienza el ' + schoolStart + '. Las onces del nuevo ciclo aún no están publicadas.');
     }
-    if(!alm.length){
-      // Sin jueves publicados (receso, página en blanco): no es un error del robot.
-      console.error('✋ Almuerzos: la página no trae jueves (¿receso?), NO escribo — datos a salvo.');
-    }else if(!saneAlm(almOk)){
-      // Hay jueves publicados pero ninguno se pudo leer → el formato SÍ cambió.
-      console.error('✋ Almuerzos: parseo inválido, NO escribo (datos a salvo).'); failed = true;
-    }else await syncSection('Almuerzos', '/cocina/doc/thursdays.json', almOk);
-
-    const days = parseDays(almHtml);
-    console.log(`  Calendario: ${days.length} días (${days[0]&&days[0].dt} → ${days.length&&days[days.length-1].dt})`);
-    // equipos por día: adjuntar quiénes trabajan (los días que el sitio ya publicó turnos)
-    try{
-      console.log('▶ Turnos por día…');
-      const turnos = await buildTurnos();
-      if(!Object.keys(turnos).length) console.log('  La web no tiene turnos de escuela disponibles; no se reutilizan equipos históricos.');
-      let conTurno = 0;
-      days.forEach(d => { const team = turnos[d.dt]; if(team && team.length){ d.team = team; conTurno++; } });
-      console.log(`  ${conTurno}/${days.length} días del calendario tienen equipo asignado.`);
-    }catch(e){ console.error('  (turnos no disponibles:', e.message, ') — sigo sin equipos.'); }
-    if(!saneDays(days)){ console.error('✋ Calendario: parseo inválido, NO escribo (datos a salvo).'); failed = true; }
-    else await syncSection('Calendario', '/cocina/doc/days.json', days);
-  }catch(e){ console.error('❌ Almuerzos/Calendario:', e.message); failed = true; }
+  }catch(e){ console.error('❌ Onces:', e.message); failed = true; }
 
   // TURNOS INTERESCUELA (durante la pausa entre clases) — supplementario: si falla NO marca el run como fallido
   try{
@@ -595,4 +589,4 @@ if(require.main === module){
   main().catch(e=>{ console.error('❌ Error general:', e.message); process.exit(1); });
 }
 
-module.exports = { onceDayHeads, assertCurrentOnce, syncSection, dayHeads, parseOnce, parseAlm, parseDays, parseInter, fetchOnceData, fetchLunchData, lunchMenuLinks, saneOnce, saneAlm, saneDays, saneInter, dbUrl };
+module.exports = { parseTurnos, readCalendar, onceDayHeads: dayHeads, assertCurrentOnce, syncSection, dayHeads, parseOnce, parseAlm, parseDays, parseInter, fetchOnceData, fetchLunchData, lunchMenuLinks, saneOnce, saneAlm, saneDays, saneInter, dbUrl };
